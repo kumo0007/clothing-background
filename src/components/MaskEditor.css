@@ -1,0 +1,249 @@
+.mask-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: min(70vh, 900px);
+}
+
+.mask-editor__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 0.5rem 0;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.mask-editor__title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.mask-editor__title span {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mask-editor__body {
+  display: grid;
+  gap: 0.9rem;
+  flex: 1;
+  min-height: 0;
+}
+
+@media (min-width: 960px) {
+  .mask-editor__body {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    align-items: stretch;
+  }
+}
+
+.mask-editor__viewport {
+  position: relative;
+  min-height: min(42vh, 360px);
+  height: min(58vh, 720px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+    linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+  background-size: 16px 16px;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
+  background-color: #1a1a1a;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.mask-editor__viewport--pan {
+  cursor: grab;
+}
+
+.mask-editor__canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  image-rendering: auto;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.mask-editor__brush-cursor {
+  position: absolute;
+  border: 1.5px solid #3ecf8e;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-sizing: border-box;
+  z-index: 2;
+}
+
+.mask-editor__loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: #ddd;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.mask-editor__side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  max-height: min(70vh, 720px);
+  overflow: auto;
+}
+
+.mask-toolbar,
+.background-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mask-toolbar__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.mask-toolbar h3,
+.background-panel h3 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.mask-toolbar__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.mask-toolbar__hint,
+.background-panel__hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.mask-toolbar__slider {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.mask-toolbar__check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.button--active {
+  border-color: var(--accent);
+  background: var(--uploader-active);
+}
+
+.background-panel__types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.background-panel__radio {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.background-panel__color,
+.background-panel__fit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.background-panel__color input[type='text'],
+.background-panel__fit select {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--uploader);
+  color: inherit;
+}
+
+.background-panel__image {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.background-panel__shared ul {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.app--editing {
+  max-width: 1400px;
+}
+
+.app--editing .app__main {
+  display: block;
+}
+
+@media (max-width: 719px) {
+  .mask-editor__header .button,
+  .adjust-studio__header .button {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .mask-editor__viewport,
+  .adjust-studio__preview {
+    height: min(48vh, 420px);
+    min-height: 240px;
+  }
+
+  .mask-editor__side,
+  .adjust-studio__side {
+    max-height: none;
+  }
+
+  .mask-toolbar__row .button {
+    flex: 1 1 calc(33.33% - 0.35rem);
+    text-align: center;
+    padding: 0.5rem 0.4rem;
+  }
+}
