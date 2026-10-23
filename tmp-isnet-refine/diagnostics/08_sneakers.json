@@ -1,0 +1,68 @@
+{
+  "file": "08_sneakers.jpg",
+  "methodUsed": "isnet-onnx",
+  "genuineModelInference": true,
+  "needsReview": true,
+  "reviewReasons": [
+    "isnet-refine-accepted: exterior-dark-bite",
+    "residual-after-refine: residual-lab-garment-gaps"
+  ],
+  "refine": {
+    "initialFgRatio": 0.3410243822614957,
+    "finalFgRatio": 0.35599738177057766,
+    "deltaFgRatio": 0.014972999509081986,
+    "initialComponentCount": 2,
+    "finalComponentCount": 1,
+    "initialInternalHoleRatio": 0.004184491666082241,
+    "finalInternalHoleRatio": 0.0028286228580779393,
+    "labAgreement": 0.5576361128643897,
+    "labBgContaminationRate": 0.002396821748694881,
+    "contourReliableBgContamination": 0,
+    "contourInternalHoleRatio": 0.008005366726296958,
+    "contourBorderTouchRatio": 0,
+    "pixelsReclaimed": 1281,
+    "pixelsStripped": 0,
+    "changedPixelCount": 1281,
+    "changedBBox": {
+      "minX": 17,
+      "minY": 81,
+      "maxX": 275,
+      "maxY": 226
+    },
+    "refinementAttempted": true,
+    "refinementAccepted": true,
+    "refinementCategory": "exterior-dark-bite",
+    "acceptReason": "exterior-dark-bite",
+    "failureModes": [
+      "possible-under-recall",
+      "residual-lab-garment-gaps"
+    ],
+    "gateValues": {
+      "deltaFg": 0.014972999509081986,
+      "corridorReclaimed": 0,
+      "underRecallReclaimed": 1144,
+      "darkBiteReclaimed": 137,
+      "stripped": 0,
+      "verticalStackSeverance": false,
+      "sideBySideMergeBlocked": false,
+      "cardShapedExpansionBlocked": false
+    },
+    "confidenceBefore": 0.6,
+    "confidenceAfter": 0.72,
+    "inferenceEngine": "isnet-onnx",
+    "refinementOps": [
+      "reclaimAdjacentUnderRecall",
+      "reclaimExteriorDarkUndercuts"
+    ]
+  },
+  "directRefineAccepted": true,
+  "fg": {
+    "raw": 0.341,
+    "refined": 0.356,
+    "lab": 0.1339,
+    "contour": 0.0928
+  },
+  "rgbUnchanged": true,
+  "contourMethod": "contour-first-fallback-seed",
+  "contourNeedsReview": true
+}

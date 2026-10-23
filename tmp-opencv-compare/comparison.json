@@ -1,0 +1,234 @@
+[
+  {
+    "file": "01_hoodie.jpg",
+    "width": 298,
+    "height": 292,
+    "metricSource": "proxy-vs-heuristics",
+    "baseline": {
+      "keepRatio": 0.47070653672887747,
+      "softRatio": 0.01566378597039625,
+      "removeRatio": 0.5136296773007263,
+      "elapsedMs": 6170,
+      "borderRemoveProxy": 0.9321646341463414
+    },
+    "opencv": {
+      "keepRatio": 0.5575066654408385,
+      "softRatio": 0.011825411418589685,
+      "removeRatio": 0.43066792314057184,
+      "elapsedMs": 191,
+      "methodUsed": "opencv-seed-fallback",
+      "borderRemoveProxy": 0.9547038327526133
+    },
+    "notes": []
+  },
+  {
+    "file": "02_blazer.jpg",
+    "width": 294,
+    "height": 292,
+    "metricSource": "proxy-vs-heuristics",
+    "baseline": {
+      "keepRatio": 0.7895815860590811,
+      "softRatio": 0.0072104184139409186,
+      "removeRatio": 0.2032079955269779,
+      "elapsedMs": 1490,
+      "borderRemoveProxy": 0.6606359649122807
+    },
+    "opencv": {
+      "keepRatio": 0.6535038673003448,
+      "softRatio": 0.004973907371167645,
+      "removeRatio": 0.3415222253284876,
+      "elapsedMs": 175,
+      "methodUsed": "opencv-seed-fallback",
+      "borderRemoveProxy": 0.8730263157894737
+    },
+    "notes": []
+  },
+  {
+    "file": "03_tshirt.jpg",
+    "width": 294,
+    "height": 292,
+    "metricSource": "proxy-vs-heuristics",
+    "baseline": {
+      "keepRatio": 0.5065464541981176,
+      "softRatio": 0.00363433044450657,
+      "removeRatio": 0.4898192153573758,
+      "elapsedMs": 40988,
+      "borderRemoveProxy": 1
+    },
+    "opencv": {
+      "keepRatio": 0.6129554561550647,
+      "softRatio": 0.013034665921162985,
+      "removeRatio": 0.37400987792377227,
+      "elapsedMs": 212,
+      "methodUsed": "opencv-seed-fallback",
+      "borderRemoveProxy": 0.831469298245614
+    },
+    "notes": []
+  },
+  {
+    "file": "04_jeans.jpg",
+    "width": 294,
+    "height": 292,
+    "metricSource": "proxy-vs-heuristics",
+    "baseline": {
+      "keepRatio": 0.5964495387195974,
+      "softRatio": 0.006569751188146492,
+      "removeRatio": 0.3969807100922561,
+      "elapsedMs": 13357,
+      "borderRemoveProxy": 0.7895833333333333
+    },
+    "opencv": {
+      "keepRatio": 0.39777280775323826,
+      "softRatio": 0.0039255428198676735,
+      "removeRatio": 0.598301649426894,
+      "elapsedMs": 160,
+      "methodUsed": "opencv-seed-fallback",
+      "borderRemoveProxy": 0.9583333333333334
+    },
+    "notes": []
+  },
+  {
+    "file": "05_coat.jpg",
+    "width": 296,
+    "height": 292,
+    "metricSource": "proxy-vs-heuristics",
+    "baseline": {
+      "keepRatio": 0.41485792299148466,
+      "softRatio": 0.002880877452795261,
+      "removeRatio": 0.5822611995557201,
+      "elapsedMs": 32945,
+      "borderRemoveProxy": 0.9560751748251748
+    },
+    "opencv": {
+      "keepRatio": 0.41859496482784153,
+      "softRatio": 0.002973435764531655,
+      "removeRatio": 0.5784315994076268,
+      "elapsedMs": 117,
+      "methodUsed": "opencv-seed-fallback",
+      "borderRemoveProxy": 0.9472246503496503
+    },
+    "notes": [
+      "Fringe: softRatio + visual magenta QA; no reviewed GT mask."
+    ]
+  },
+  {
+    "file": "06_sweater.jpg",
+    "width": 298,
+    "height": 291,
+    "metricSource": "proxy-vs-heuristics",
+    "baseline": {
+      "keepRatio": 0.4917087571207823,
+      "softRatio": 0.00403607094259554,
+      "removeRatio": 0.5042551719366222,
+      "elapsedMs": 17042,
+      "borderRemoveProxy": 1
+    },
+    "opencv": {
+      "keepRatio": 0.5064231186143592,
+      "softRatio": 0.020814594432528425,
+      "removeRatio": 0.4727622869531124,
+      "elapsedMs": 128,
+      "methodUsed": "opencv-seed-fallback",
+      "borderRemoveProxy": 0.9051047120418848
+    },
+    "notes": []
+  },
+  {
+    "file": "07_dress.jpg",
+    "width": 294,
+    "height": 291,
+    "metricSource": "proxy-vs-heuristics",
+    "baseline": {
+      "keepRatio": 0.20911938658624962,
+      "softRatio": 0.0023610818898005936,
+      "removeRatio": 0.7885195315239498,
+      "elapsedMs": 15211,
+      "borderRemoveProxy": 0.999780316344464
+    },
+    "opencv": {
+      "keepRatio": 0.21667017322392876,
+      "softRatio": 0.013652196273698482,
+      "removeRatio": 0.7696776305023728,
+      "elapsedMs": 123,
+      "methodUsed": "opencv-seed-fallback",
+      "borderRemoveProxy": 0.9000439367311072
+    },
+    "notes": [
+      "Fringe: softRatio + visual magenta QA; no reviewed GT mask."
+    ]
+  },
+  {
+    "file": "08_sneakers.jpg",
+    "width": 294,
+    "height": 291,
+    "metricSource": "proxy-vs-heuristics",
+    "baseline": {
+      "keepRatio": 0.21829487808869252,
+      "softRatio": 0.016235360123430815,
+      "removeRatio": 0.7654697617878766,
+      "elapsedMs": 27944,
+      "borderRemoveProxy": 1
+    },
+    "opencv": {
+      "keepRatio": 0.2642307782219417,
+      "softRatio": 0.0325291628678963,
+      "removeRatio": 0.7032400589101621,
+      "elapsedMs": 194,
+      "methodUsed": "opencv-seed-fallback",
+      "borderRemoveProxy": 0.9105887521968365
+    },
+    "notes": [
+      "White-on-near-white: prefer FG retention over aggressive BG wipe; inspect leather panels manually."
+    ]
+  },
+  {
+    "file": "09_handbag.jpg",
+    "width": 294,
+    "height": 291,
+    "metricSource": "proxy-vs-heuristics",
+    "baseline": {
+      "keepRatio": 0.385522593917292,
+      "softRatio": 0.0070715571451948475,
+      "removeRatio": 0.6074058489375131,
+      "elapsedMs": 22692,
+      "borderRemoveProxy": 1
+    },
+    "opencv": {
+      "keepRatio": 0.39006942983378917,
+      "softRatio": 0.015791196203567337,
+      "removeRatio": 0.5941393739626435,
+      "elapsedMs": 167,
+      "methodUsed": "opencv-seed-fallback",
+      "borderRemoveProxy": 0.9108084358523726
+    },
+    "notes": [
+      "Handle interiors: enclosed studio strip is proxy for hole cleanup."
+    ]
+  },
+  {
+    "file": "10_cap.jpg",
+    "width": 296,
+    "height": 291,
+    "metricSource": "proxy-vs-heuristics",
+    "baseline": {
+      "keepRatio": 0.2959273706696387,
+      "softRatio": 0.005711897464474784,
+      "removeRatio": 0.6983607318658865,
+      "elapsedMs": 20252,
+      "borderRemoveProxy": 1,
+      "capFooterClean": 1
+    },
+    "opencv": {
+      "keepRatio": 0.3037638153617535,
+      "softRatio": 0.010413764279743661,
+      "removeRatio": 0.6858224203585028,
+      "elapsedMs": 176,
+      "methodUsed": "opencv-seed-fallback",
+      "borderRemoveProxy": 0.9375,
+      "capFooterClean": 1
+    },
+    "notes": [
+      "Footer cleanup: bottom-12 REMOVE ratio is a targeted proxy."
+    ]
+  }
+]

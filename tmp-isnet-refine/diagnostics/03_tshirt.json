@@ -1,0 +1,67 @@
+{
+  "file": "03_tshirt.jpg",
+  "methodUsed": "isnet-onnx",
+  "genuineModelInference": true,
+  "needsReview": true,
+  "reviewReasons": [
+    "weak dark structure with pale mass",
+    "isnet-refine-accepted: stripped-studio"
+  ],
+  "refine": {
+    "initialFgRatio": 0.49142670766936913,
+    "finalFgRatio": 0.49393113409747463,
+    "deltaFgRatio": 0.0025044264281054995,
+    "initialComponentCount": 1,
+    "finalComponentCount": 2,
+    "initialInternalHoleRatio": 0,
+    "finalInternalHoleRatio": 0.00032615786040443573,
+    "labAgreement": 0.8285574503774112,
+    "labBgContaminationRate": 0.006839138740183478,
+    "contourReliableBgContamination": 0,
+    "contourInternalHoleRatio": 0,
+    "contourBorderTouchRatio": 0,
+    "pixelsReclaimed": 338,
+    "pixelsStripped": 123,
+    "changedPixelCount": 461,
+    "changedBBox": {
+      "minX": 65,
+      "minY": 24,
+      "maxX": 270,
+      "maxY": 270
+    },
+    "refinementAttempted": true,
+    "refinementAccepted": true,
+    "refinementCategory": "studio-strip",
+    "acceptReason": "stripped-studio",
+    "failureModes": [
+      "lab-disagrees-studio-keep"
+    ],
+    "gateValues": {
+      "deltaFg": 0.0025044264281054995,
+      "corridorReclaimed": 0,
+      "underRecallReclaimed": 338,
+      "darkBiteReclaimed": 0,
+      "stripped": 123,
+      "verticalStackSeverance": false,
+      "sideBySideMergeBlocked": false,
+      "cardShapedExpansionBlocked": false
+    },
+    "confidenceBefore": 0.6,
+    "confidenceAfter": 0.6,
+    "inferenceEngine": "isnet-onnx",
+    "refinementOps": [
+      "reclaimAdjacentUnderRecall",
+      "peelExteriorStudioKeep"
+    ]
+  },
+  "directRefineAccepted": true,
+  "fg": {
+    "raw": 0.4914,
+    "refined": 0.4939,
+    "lab": 0.6286,
+    "contour": 0.6139
+  },
+  "rgbUnchanged": true,
+  "contourMethod": "contour-first-fallback-seed",
+  "contourNeedsReview": true
+}

@@ -1,0 +1,61 @@
+{
+  "file": "06_sweater.jpg",
+  "methodUsed": "isnet-onnx",
+  "genuineModelInference": true,
+  "needsReview": false,
+  "reviewReasons": [
+    "isnet-refine-rejected: ambiguous-evidence (residual-lab-garment-gaps,residual-dark-exterior-bites)"
+  ],
+  "refine": {
+    "initialFgRatio": 0.4717820982956249,
+    "finalFgRatio": 0.4717820982956249,
+    "deltaFgRatio": 0,
+    "initialComponentCount": 1,
+    "finalComponentCount": 1,
+    "initialInternalHoleRatio": 0,
+    "finalInternalHoleRatio": 0,
+    "labAgreement": 0.6866048571230886,
+    "labBgContaminationRate": 0,
+    "contourReliableBgContamination": 0,
+    "contourInternalHoleRatio": 0,
+    "contourBorderTouchRatio": 0,
+    "pixelsReclaimed": 0,
+    "pixelsStripped": 0,
+    "changedPixelCount": 0,
+    "changedBBox": null,
+    "refinementAttempted": true,
+    "refinementAccepted": false,
+    "refinementCategory": "none",
+    "rejectReason": "ambiguous-evidence",
+    "failureModes": [
+      "residual-lab-garment-gaps",
+      "residual-dark-exterior-bites"
+    ],
+    "gateValues": {
+      "deltaFg": 0,
+      "corridorReclaimed": 0,
+      "underRecallReclaimed": 1579,
+      "darkBiteReclaimed": 0,
+      "stripped": 0,
+      "verticalStackSeverance": false,
+      "sideBySideMergeBlocked": false,
+      "cardShapedExpansionBlocked": false
+    },
+    "confidenceBefore": 0.84,
+    "confidenceAfter": 0.84,
+    "inferenceEngine": "isnet-onnx",
+    "refinementOps": [
+      "reclaimAdjacentUnderRecall"
+    ]
+  },
+  "directRefineAccepted": false,
+  "fg": {
+    "raw": 0.4718,
+    "refined": 0.4718,
+    "lab": 0.4826,
+    "contour": 0.4816
+  },
+  "rgbUnchanged": true,
+  "contourMethod": "contour-first-fallback-seed",
+  "contourNeedsReview": true
+}

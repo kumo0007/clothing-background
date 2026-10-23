@@ -7,6 +7,7 @@ import { MaskEditor } from './components/MaskEditor'
 import { ThumbnailGallery } from './components/ThumbnailGallery'
 import { autoMaskCornersForImage } from './lib/batch/autoMaskCorners'
 import { buildResultsZip, downloadBlob } from './lib/batch/exportZip'
+import type { BatchAutoMaskStrategy } from './components/BatchPanel'
 import type { ExportFormat } from './lib/export/exportImage'
 import { clearAllMasks, deleteMask } from './lib/mask/maskStore'
 import {
@@ -57,6 +58,9 @@ function App() {
   const [batchBusy, setBatchBusy] = useState(false)
   const [batchProgress, setBatchProgress] = useState<string | null>(null)
   const [zipFormat, setZipFormat] = useState<ExportFormat>('png')
+  /** Lab-seed default; contour / ISNet only when the user opts in. */
+  const [autoMaskStrategy, setAutoMaskStrategy] =
+    useState<BatchAutoMaskStrategy>('auto')
   const imagesRef = useRef(images)
   imagesRef.current = images
   const sharedBackgroundsRef = useRef(sharedBackgrounds)
@@ -223,8 +227,10 @@ function App() {
     updateSelectedProject((current) => ({
       ...current,
       maskMeta: {
+        ...current.maskMeta,
         revision: current.maskMeta.revision + 1,
         hasEdits: true,
+        // Keep auto-mask review flags; polygon/brush edits do not clear needsReview.
       },
     }))
   }, [updateSelectedProject])
@@ -284,44 +290,86 @@ function App() {
   const handleAutoMaskAll = useCallback(async () => {
     setBatchBusy(true)
     setError(null)
+    const requested = autoMaskStrategy
     try {
+      let reviewCount = 0
+      const methodsSeen = new Set<string>()
       for (let index = 0; index < images.length; index += 1) {
         const image = images[index]
         setBatchProgress(
-          `Auto-masking ${index + 1}/${images.length}: ${image.name}`,
+          `Auto-masking ${index + 1}/${images.length}: ${image.name} [${requested}]`,
         )
-        await autoMaskCornersForImage(
+        // Yield so React can paint progress (rAF alone is not enough under ONNX).
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => {
+            setTimeout(resolve, 0)
+          })
+        })
+        const auto = await autoMaskCornersForImage(
           image.id,
           image.objectUrl,
           image.width,
           image.height,
+          40,
+          requested,
+          (progress) => {
+            if (progress.kind !== 'isnet-download' || progress.total <= 0) {
+              return
+            }
+            const pct = Math.min(
+              100,
+              Math.round((100 * progress.current) / progress.total),
+            )
+            const label = progress.key.startsWith('stage:')
+              ? progress.key.slice('stage:'.length)
+              : progress.key.startsWith('fetch:')
+                ? `download ${progress.key.slice('fetch:'.length)}`
+                : progress.key
+            setBatchProgress(
+              `Auto-masking ${index + 1}/${images.length}: ${image.name} [isnet] · ${label} ${pct}%`,
+            )
+          },
         )
-      }
-      setProjects((previous) => {
-        const next = { ...previous }
-        for (const image of images) {
-          const current = next[image.id] ?? createProjectFields()
-          next[image.id] = {
-            ...current,
-            maskMeta: {
-              revision: current.maskMeta.revision + 1,
-              hasEdits: true,
+        methodsSeen.add(auto.methodUsed)
+        if (auto.needsReview) reviewCount += 1
+        setProjects((previous) => {
+          const current = previous[image.id] ?? createProjectFields()
+          return {
+            ...previous,
+            [image.id]: {
+              ...current,
+              maskMeta: {
+                revision: current.maskMeta.revision + 1,
+                hasEdits: true,
+                autoConfidence: auto.confidence,
+                needsReview: auto.needsReview,
+                autoMethodUsed: auto.methodUsed,
+                // Clear stale reasons when the latest run does not need review.
+                reviewReason: auto.needsReview
+                  ? auto.reviewReason
+                  : undefined,
+              },
             },
           }
-        }
-        return next
-      })
-      setBatchProgress(`Auto-masked ${images.length} images.`)
+        })
+      }
+      const used = [...methodsSeen].join(', ')
+      setBatchProgress(
+        reviewCount > 0
+          ? `Auto-masked ${images.length} images via ${used} (${reviewCount} flagged for review).`
+          : `Auto-masked ${images.length} images via ${used}.`,
+      )
     } catch (caught) {
-      setError(
+      const message =
         caught instanceof Error
           ? caught.message
-          : 'Batch auto-mask failed.',
-      )
+          : 'Batch auto-mask failed.'
+      setError(message)
+      setBatchProgress(`Auto-mask stopped: ${message}`)
     } finally {
       setBatchBusy(false)
     }
-  }, [images])
+  }, [images, autoMaskStrategy])
 
   const handleExportZip = useCallback(
     async (scope: 'all' | 'masked') => {
@@ -526,10 +574,21 @@ function App() {
               }
             />
             {selectedProject?.maskMeta.hasEdits ? (
-              <p className="app__status">
+              <p className="app__status" data-testid="mask-status">
                 Mask saved for this image
+                {selectedProject.maskMeta.autoMethodUsed
+                  ? ` · method ${selectedProject.maskMeta.autoMethodUsed}`
+                  : ''}
+                {selectedProject.maskMeta.hasEdits
+                  ? ' · includes manual edits'
+                  : ''}
                 {selectedProject.background.type !== 'transparent'
                   ? ' · showing composited result'
+                  : ''}
+                {selectedProject.maskMeta.needsReview
+                  ? selectedProject.maskMeta.reviewReason
+                    ? ` · review: ${selectedProject.maskMeta.reviewReason}`
+                    : ' · review recommended (uncertain auto-mask)'
                   : ''}
                 .
               </p>
@@ -548,6 +607,8 @@ function App() {
             progress={batchProgress}
             exportFormat={zipFormat}
             onExportFormatChange={setZipFormat}
+            autoMaskStrategy={autoMaskStrategy}
+            onAutoMaskStrategyChange={setAutoMaskStrategy}
             onApplyBackgroundToAll={handleApplyBackgroundToAll}
             onApplyAdjustmentsToAll={handleApplyAdjustmentsToAll}
             onAutoMaskAll={() => void handleAutoMaskAll()}

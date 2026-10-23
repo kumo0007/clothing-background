@@ -1,0 +1,60 @@
+{
+  "file": "04_jeans.jpg",
+  "methodUsed": "isnet-onnx",
+  "genuineModelInference": true,
+  "needsReview": false,
+  "reviewReasons": [
+    "isnet-refine-rejected: ambiguous-evidence (residual-lab-garment-gaps)"
+  ],
+  "refine": {
+    "initialFgRatio": 0.36794101202124685,
+    "finalFgRatio": 0.36794101202124685,
+    "deltaFgRatio": 0,
+    "initialComponentCount": 1,
+    "finalComponentCount": 1,
+    "initialInternalHoleRatio": 0,
+    "finalInternalHoleRatio": 0,
+    "labAgreement": 0.9621074457180132,
+    "labBgContaminationRate": 0.0005381960933295343,
+    "contourReliableBgContamination": 0,
+    "contourInternalHoleRatio": 0,
+    "contourBorderTouchRatio": 0,
+    "pixelsReclaimed": 0,
+    "pixelsStripped": 0,
+    "changedPixelCount": 0,
+    "changedBBox": null,
+    "refinementAttempted": true,
+    "refinementAccepted": false,
+    "refinementCategory": "none",
+    "rejectReason": "ambiguous-evidence",
+    "failureModes": [
+      "residual-lab-garment-gaps"
+    ],
+    "gateValues": {
+      "deltaFg": 0,
+      "corridorReclaimed": 0,
+      "underRecallReclaimed": 1680,
+      "darkBiteReclaimed": 0,
+      "stripped": 0,
+      "verticalStackSeverance": false,
+      "sideBySideMergeBlocked": false,
+      "cardShapedExpansionBlocked": false
+    },
+    "confidenceBefore": 0.72,
+    "confidenceAfter": 0.72,
+    "inferenceEngine": "isnet-onnx",
+    "refinementOps": [
+      "reclaimAdjacentUnderRecall"
+    ]
+  },
+  "directRefineAccepted": false,
+  "fg": {
+    "raw": 0.3679,
+    "refined": 0.3679,
+    "lab": 0.3807,
+    "contour": 0.3794
+  },
+  "rgbUnchanged": true,
+  "contourMethod": "contour-first",
+  "contourNeedsReview": false
+}

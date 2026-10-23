@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# IMG.LY ISNet browser WASM/ONNX chunks (fetch via scripts/fetchImglyBrowserData.mts)
+public/imgly-bg-data/**
+!public/imgly-bg-data/.gitkeep
+!public/imgly-bg-data/**/.gitkeep
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,4 +1,5 @@
 import type { BrushMode, EditorTool, EditorViewMode } from '../types/mask'
+import type { PolygonApplyMode } from '../lib/mask/polygonMask'
 
 type MaskToolbarProps = {
   tool: EditorTool
@@ -10,6 +11,8 @@ type MaskToolbarProps = {
   canUndo: boolean
   canRedo: boolean
   polygonPointCount: number
+  polygonReadyToClose: boolean
+  polygonApplyMode: PolygonApplyMode
   similarTolerance: number
   similarConnected: boolean
   onToolChange: (tool: EditorTool) => void
@@ -25,8 +28,11 @@ type MaskToolbarProps = {
   onZoomOut: () => void
   onZoomReset: () => void
   onFit: () => void
-  onApplyPolygon: (mode: BrushMode) => void
+  onPolygonApplyModeChange: (mode: PolygonApplyMode) => void
+  onApplyPolygon: () => void
+  onUndoPolygonVertex: () => void
   onCancelPolygon: () => void
+  onTraceMaskContour: () => void
   onSimilarToleranceChange: (value: number) => void
   onSimilarConnectedChange: (value: boolean) => void
   onRemoveCornerBackground: () => void
@@ -50,6 +56,8 @@ export function MaskToolbar({
   canUndo,
   canRedo,
   polygonPointCount,
+  polygonReadyToClose,
+  polygonApplyMode,
   onToolChange,
   onBrushModeChange,
   onBrushSizeChange,
@@ -63,8 +71,11 @@ export function MaskToolbar({
   onZoomOut,
   onZoomReset,
   onFit,
+  onPolygonApplyModeChange,
   onApplyPolygon,
+  onUndoPolygonVertex,
   onCancelPolygon,
+  onTraceMaskContour,
   similarTolerance,
   similarConnected,
   onSimilarToleranceChange,
@@ -132,7 +143,7 @@ export function MaskToolbar({
             onClick={() => onToolChange('polygon')}
             data-testid="tool-polygon"
           >
-            Polygon
+            Polygon Select
           </button>
           <button
             type="button"
@@ -247,37 +258,79 @@ export function MaskToolbar({
       </section>
 
       {tool === 'polygon' ? (
-        <section className="mask-toolbar__section">
-          <h3>Polygon</h3>
+        <section className="mask-toolbar__section" data-testid="polygon-panel">
+          <h3>Polygon Select</h3>
           <p className="mask-toolbar__hint">
-            Click to add points. Double-click to close. Points: {polygonPointCount}
+            Click to place vertices in image space. Hover previews the next edge.
+            Click the first vertex (or Finish) to apply. Esc cancels · Backspace
+            undoes last vertex. Points: {polygonPointCount}
+            {polygonReadyToClose ? ' · ready to close' : ''}
           </p>
+          <div className="mask-toolbar__row" role="group" aria-label="Polygon operation">
+            <button
+              type="button"
+              className={`button${polygonApplyMode === 'add' ? ' button--active' : ''}`}
+              aria-pressed={polygonApplyMode === 'add'}
+              onClick={() => onPolygonApplyModeChange('add')}
+              data-testid="polygon-mode-add"
+            >
+              Add (keep inside)
+            </button>
+            <button
+              type="button"
+              className={`button${polygonApplyMode === 'subtract' ? ' button--active' : ''}`}
+              aria-pressed={polygonApplyMode === 'subtract'}
+              onClick={() => onPolygonApplyModeChange('subtract')}
+              data-testid="polygon-mode-subtract"
+            >
+              Subtract (remove inside)
+            </button>
+            <button
+              type="button"
+              className={`button${polygonApplyMode === 'replace' ? ' button--active' : ''}`}
+              aria-pressed={polygonApplyMode === 'replace'}
+              onClick={() => onPolygonApplyModeChange('replace')}
+              data-testid="polygon-mode-replace"
+            >
+              Replace mask
+            </button>
+          </div>
           <div className="mask-toolbar__row">
             <button
               type="button"
-              className="button"
+              className="button button--primary"
               disabled={polygonPointCount < 3}
-              onClick={() => onApplyPolygon('keep')}
-              data-testid="polygon-add"
+              onClick={onApplyPolygon}
+              data-testid="polygon-apply"
             >
-              Add to mask
+              Finish / Apply
             </button>
             <button
               type="button"
               className="button"
-              disabled={polygonPointCount < 3}
-              onClick={() => onApplyPolygon('remove')}
-              data-testid="polygon-remove"
+              disabled={polygonPointCount === 0}
+              onClick={onUndoPolygonVertex}
+              data-testid="polygon-undo-vertex"
             >
-              Remove from mask
+              Undo vertex
             </button>
             <button
               type="button"
               className="button button--ghost"
               disabled={polygonPointCount === 0}
               onClick={onCancelPolygon}
+              data-testid="polygon-cancel"
             >
               Cancel
+            </button>
+            <button
+              type="button"
+              className="button"
+              onClick={onTraceMaskContour}
+              data-testid="polygon-trace-mask"
+              title="Trace the current mask silhouette into editable polygon rings (does not change the mask until you Apply)"
+            >
+              Trace mask contour
             </button>
           </div>
         </section>

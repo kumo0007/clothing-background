@@ -1,5 +1,11 @@
 import type { ExportFormat } from '../lib/export/exportImage'
+import type { AutoMaskMethod } from '../lib/mask/autoMaskPipeline'
 import './BatchPanel.css'
+
+export type BatchAutoMaskStrategy = Extract<
+  AutoMaskMethod,
+  'auto' | 'contour' | 'isnet'
+>
 
 type BatchPanelProps = {
   imageCount: number
@@ -8,6 +14,9 @@ type BatchPanelProps = {
   progress: string | null
   exportFormat: ExportFormat
   onExportFormatChange: (format: ExportFormat) => void
+  /** Default Lab-seed (`auto`). Contour / ISNet are explicit opt-in. */
+  autoMaskStrategy: BatchAutoMaskStrategy
+  onAutoMaskStrategyChange: (strategy: BatchAutoMaskStrategy) => void
   onApplyBackgroundToAll: () => void
   onApplyAdjustmentsToAll: () => void
   onAutoMaskAll: () => void
@@ -22,6 +31,8 @@ export function BatchPanel({
   progress,
   exportFormat,
   onExportFormatChange,
+  autoMaskStrategy,
+  onAutoMaskStrategyChange,
   onApplyBackgroundToAll,
   onApplyAdjustmentsToAll,
   onAutoMaskAll,
@@ -55,6 +66,27 @@ export function BatchPanel({
       <div className="batch-panel__groups">
         <div className="batch-panel__group">
           <h3 className="batch-panel__group-title">Actions</h3>
+          <div className="batch-panel__strategy">
+            <label className="batch-panel__format">
+              Auto-mask strategy
+              <select
+                value={autoMaskStrategy}
+                disabled={busy}
+                onChange={(event) =>
+                  onAutoMaskStrategyChange(
+                    event.target.value as BatchAutoMaskStrategy,
+                  )
+                }
+                data-testid="batch-auto-mask-strategy"
+              >
+                <option value="auto">Lab-seed (default)</option>
+                <option value="contour">Contour-first (opt-in)</option>
+                <option value="isnet">
+                  ISNet ONNX (opt-in · needs local model assets)
+                </option>
+              </select>
+            </label>
+          </div>
           <div className="batch-panel__row">
             <button
               type="button"

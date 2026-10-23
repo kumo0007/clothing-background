@@ -1,0 +1,32 @@
+{
+  "methodUsed": "contour-first",
+  "needsReview": true,
+  "contourAccepted": true,
+  "validation": {
+    "decision": "accept",
+    "reason": "accepted",
+    "areaRatio": 0.2966289255428199,
+    "exteriorRatio": 0.5878296524089087,
+    "gapAddedRatio": 0.01949958065417948,
+    "substantialGapCompletion": true,
+    "seedAgreement": 0.7316267310233868,
+    "reliableFgAgreement": 0.7686618974312536,
+    "reliableFgRatio": 0.3859029913335197,
+    "reliableBgContamination": 0,
+    "borderTouchRatio": 0,
+    "boundarySupport": 0.936382393397524,
+    "componentCount": 18,
+    "largestComponentRatio": 0.999096799528765,
+    "internalHoleRatio": 0.19904715762273903,
+    "bounds": {
+      "minX": 76,
+      "minY": 28,
+      "maxX": 219,
+      "maxY": 285,
+      "spanX": 0.4897959183673469,
+      "spanY": 0.8835616438356164,
+      "bboxAreaRatio": 0.43276488677662844,
+      "fillRatio": 0.6854274332472007
+    }
+  }
+}

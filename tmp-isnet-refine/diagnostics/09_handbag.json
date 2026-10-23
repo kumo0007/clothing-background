@@ -1,0 +1,62 @@
+{
+  "file": "09_handbag.jpg",
+  "methodUsed": "isnet-onnx",
+  "genuineModelInference": true,
+  "needsReview": true,
+  "reviewReasons": [
+    "isnet-refine-rejected: ambiguous-evidence (possible-under-recall,residual-lab-garment-gaps,residual-dark-exterior-bites)"
+  ],
+  "refine": {
+    "initialFgRatio": 0.3574701358206513,
+    "finalFgRatio": 0.3574701358206513,
+    "deltaFgRatio": 0,
+    "initialComponentCount": 1,
+    "finalComponentCount": 1,
+    "initialInternalHoleRatio": 0.06193748977254132,
+    "finalInternalHoleRatio": 0.06193748977254132,
+    "labAgreement": 0.5516515884704397,
+    "labBgContaminationRate": 0,
+    "contourReliableBgContamination": 0,
+    "contourInternalHoleRatio": 0.09984173041413875,
+    "contourBorderTouchRatio": 0,
+    "pixelsReclaimed": 0,
+    "pixelsStripped": 0,
+    "changedPixelCount": 0,
+    "changedBBox": null,
+    "refinementAttempted": true,
+    "refinementAccepted": false,
+    "refinementCategory": "none",
+    "rejectReason": "ambiguous-evidence",
+    "failureModes": [
+      "possible-under-recall",
+      "residual-lab-garment-gaps",
+      "residual-dark-exterior-bites"
+    ],
+    "gateValues": {
+      "deltaFg": 0,
+      "corridorReclaimed": 0,
+      "underRecallReclaimed": 920,
+      "darkBiteReclaimed": 0,
+      "stripped": 0,
+      "verticalStackSeverance": false,
+      "sideBySideMergeBlocked": false,
+      "cardShapedExpansionBlocked": false
+    },
+    "confidenceBefore": 0.84,
+    "confidenceAfter": 0.84,
+    "inferenceEngine": "isnet-onnx",
+    "refinementOps": [
+      "reclaimAdjacentUnderRecall"
+    ]
+  },
+  "directRefineAccepted": false,
+  "fg": {
+    "raw": 0.3575,
+    "refined": 0.3575,
+    "lab": 0.3621,
+    "contour": 0.5044
+  },
+  "rgbUnchanged": true,
+  "contourMethod": "contour-first",
+  "contourNeedsReview": true
+}

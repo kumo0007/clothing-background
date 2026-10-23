@@ -13,8 +13,13 @@ import { invertMaskBuffer } from '../lib/mask/invertMask'
 import { MaskHistory } from '../lib/mask/maskHistory'
 import { getOrCreateMask, setMask } from '../lib/mask/maskStore'
 import { paintMaskStroke } from '../lib/mask/paintMask'
+import { extractMaskContours } from '../lib/mask/maskContour'
 import {
+  clampPolygonPoint,
   fillPolygonOnMask,
+  isDegeneratePolygon,
+  isNearFirstVertex,
+  type PolygonApplyMode,
   type PolygonPoint,
 } from '../lib/mask/polygonMask'
 import {
@@ -31,6 +36,7 @@ import {
   removeSimilarToCorners,
   stripBorderConnectedStudio,
   stripEnclosedFlatStudio,
+  stripForeignBorderBands,
 } from '../lib/mask/selectSimilar'
 import {
   clampScale,
@@ -109,12 +115,22 @@ export function MaskEditor({
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
   const [polygonPoints, setPolygonPoints] = useState<PolygonPoint[]>([])
+  const [polygonApplyMode, setPolygonApplyMode] =
+    useState<PolygonApplyMode>('add')
+  const [polygonCursor, setPolygonCursor] = useState<PolygonPoint | null>(null)
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null)
   const [ready, setReady] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [similarTolerance, setSimilarTolerance] = useState(36)
   const [featherRadius, setFeatherRadius] = useState(2)
   const [similarConnected, setSimilarConnected] = useState(true)
+
+  const closeThresholdImagePx = 10 / Math.max(transform.scale, 0.001)
+  const polygonReadyToClose = isNearFirstVertex(
+    polygonPoints,
+    polygonCursor ?? { x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY },
+    closeThresholdImagePx,
+  )
 
   transformRef.current = transform
 
@@ -156,6 +172,7 @@ export function MaskEditor({
     historyRef.current = new MaskHistory()
     maskRef.current = getOrCreateMask(image.id, image.width, image.height)
     setPolygonPoints([])
+    setPolygonCursor(null)
     syncHistoryFlags()
 
     loadHtmlImage(image.objectUrl)
@@ -277,36 +294,112 @@ export function MaskEditor({
 
     // Draw polygon overlay into a separate pass on the same canvas (edit aids only).
     if (
+      tool === 'polygon' &&
       (viewMode === 'edit' || viewMode === 'original') &&
-      polygonPoints.length > 0
+      (polygonPoints.length > 0 || polygonCursor)
     ) {
       const ctx = canvas.getContext('2d')
       if (ctx) {
+        const scale = transformRef.current.scale
+        const lineW = Math.max(1, 2 / scale)
+        const vertexR = Math.max(2.5, 5 / scale)
+        const isSubtract =
+          polygonApplyMode === 'subtract' ||
+          polygonApplyMode === 'remove-inside'
+        const stroke = isSubtract ? '#ff7b72' : '#3ecf8e'
+        const fill = isSubtract
+          ? 'rgba(255, 123, 114, 0.22)'
+          : 'rgba(62, 207, 142, 0.22)'
+        const closePx = 10 / Math.max(scale, 0.001)
+        const readyClose = isNearFirstVertex(
+          polygonPoints,
+          polygonCursor ?? { x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY },
+          closePx,
+        )
+
         ctx.save()
-        ctx.strokeStyle = '#3ecf8e'
-        ctx.fillStyle = 'rgba(62, 207, 142, 0.2)'
-        ctx.lineWidth = Math.max(1, 2 / transformRef.current.scale)
-        ctx.beginPath()
-        ctx.moveTo(polygonPoints[0].x, polygonPoints[0].y)
-        for (let i = 1; i < polygonPoints.length; i += 1) {
-          ctx.lineTo(polygonPoints[i].x, polygonPoints[i].y)
-        }
-        ctx.stroke()
-        for (const point of polygonPoints) {
+        ctx.lineJoin = 'round'
+        ctx.lineCap = 'round'
+        ctx.lineWidth = lineW
+
+        // Dual-stroke outline for contrast on light and dark garments.
+        if (polygonPoints.length > 0) {
           ctx.beginPath()
-          ctx.arc(point.x, point.y, Math.max(2, 4 / transformRef.current.scale), 0, Math.PI * 2)
+          ctx.moveTo(polygonPoints[0]!.x, polygonPoints[0]!.y)
+          for (let i = 1; i < polygonPoints.length; i += 1) {
+            ctx.lineTo(polygonPoints[i]!.x, polygonPoints[i]!.y)
+          }
+          if (polygonCursor && !readyClose) {
+            ctx.lineTo(polygonCursor.x, polygonCursor.y)
+          }
+          if (readyClose && polygonPoints.length >= 3) {
+            ctx.closePath()
+            ctx.fillStyle = fill
+            ctx.fill()
+          }
+          ctx.strokeStyle = 'rgba(0,0,0,0.85)'
+          ctx.lineWidth = lineW + 2 / scale
+          ctx.stroke()
+          ctx.strokeStyle = stroke
+          ctx.lineWidth = lineW
+          ctx.setLineDash(readyClose ? [] : [6 / scale, 4 / scale])
+          ctx.stroke()
+          ctx.setLineDash([])
+        } else if (polygonCursor) {
+          ctx.beginPath()
+          ctx.arc(polygonCursor.x, polygonCursor.y, vertexR, 0, Math.PI * 2)
+          ctx.fillStyle = stroke
           ctx.fill()
+        }
+
+        for (let i = 0; i < polygonPoints.length; i += 1) {
+          const point = polygonPoints[i]!
+          const isFirst = i === 0
+          const highlight = isFirst && readyClose
+          ctx.beginPath()
+          ctx.arc(
+            point.x,
+            point.y,
+            highlight ? vertexR * 1.6 : vertexR,
+            0,
+            Math.PI * 2,
+          )
+          ctx.fillStyle = highlight ? '#ffffff' : stroke
+          ctx.strokeStyle = highlight ? stroke : 'rgba(0,0,0,0.9)'
+          ctx.lineWidth = Math.max(1, 1.5 / scale)
+          ctx.fill()
+          ctx.stroke()
         }
         ctx.restore()
       }
     }
 
     dirtyRef.current = false
-  }, [background, image.height, image.width, polygonPoints, showOverlay, viewMode])
+  }, [
+    background,
+    image.height,
+    image.width,
+    polygonApplyMode,
+    polygonCursor,
+    polygonPoints,
+    showOverlay,
+    tool,
+    viewMode,
+  ])
 
   useEffect(() => {
     markDirty()
-  }, [background, viewMode, showOverlay, polygonPoints, transform, markDirty])
+  }, [
+    background,
+    viewMode,
+    showOverlay,
+    polygonPoints,
+    polygonCursor,
+    polygonApplyMode,
+    tool,
+    transform,
+    markDirty,
+  ])
 
   useEffect(() => {
     if (!ready) {
@@ -393,6 +486,53 @@ export function MaskEditor({
     commitMaskChange()
   }, [commitMaskChange])
 
+  const cancelPolygon = useCallback(() => {
+    setPolygonPoints([])
+    setPolygonCursor(null)
+    markDirty()
+  }, [markDirty])
+
+  const undoPolygonVertex = useCallback(() => {
+    setPolygonPoints((prev) => prev.slice(0, -1))
+    markDirty()
+  }, [markDirty])
+
+  const applyPolygonRing = useCallback(
+    (points: PolygonPoint[]) => {
+      if (points.length < 3 || isDegeneratePolygon(points)) {
+        return
+      }
+      withHistory(() => {
+        fillPolygonOnMask(maskRef.current, points, polygonApplyMode)
+      })
+      setPolygonPoints([])
+      setPolygonCursor(null)
+    },
+    [polygonApplyMode, withHistory],
+  )
+
+  const handleApplyPolygon = useCallback(() => {
+    applyPolygonRing(polygonPoints)
+  }, [applyPolygonRing, polygonPoints])
+
+  const handleTraceMaskContour = useCallback(() => {
+    const rings = extractMaskContours(maskRef.current, {
+      simplifyTolerance: 1.25,
+    })
+    const exterior = rings.find((r) => !r.isHole)
+    if (!exterior || exterior.points.length < 3) {
+      return
+    }
+    setPolygonPoints(
+      exterior.points.map((p) =>
+        clampPolygonPoint(p, image.width, image.height),
+      ),
+    )
+    setPolygonCursor(null)
+    setTool('polygon')
+    markDirty()
+  }, [image.height, image.width, markDirty])
+
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!ready || viewMode === 'mask' || viewMode === 'result') {
       return
@@ -418,24 +558,30 @@ export function MaskEditor({
 
     if (tool === 'polygon' && event.button === 0) {
       event.preventDefault()
-      if (event.detail >= 2 && polygonPoints.length >= 3) {
-        // Double-click closes the polygon; apply via toolbar Add/Remove.
-        markDirty()
+      const clamped = clampPolygonPoint(
+        imagePoint,
+        image.width,
+        image.height,
+      )
+      // Reject clicks clearly outside the image (before clamp would snap them).
+      if (
+        imagePoint.x < -0.5 ||
+        imagePoint.y < -0.5 ||
+        imagePoint.x > image.width - 0.5 ||
+        imagePoint.y > image.height - 0.5
+      ) {
         return
       }
-      setPolygonPoints((prev) => {
-        if (prev.length >= 3) {
-          const first = prev[0]
-          const closeDistance = 8 / transformRef.current.scale
-          if (
-            Math.hypot(imagePoint.x - first.x, imagePoint.y - first.y) <=
-            closeDistance
-          ) {
-            return prev
-          }
-        }
-        return [...prev, imagePoint]
-      })
+      const closePx = 10 / Math.max(transformRef.current.scale, 0.001)
+      if (isNearFirstVertex(polygonPoints, clamped, closePx)) {
+        applyPolygonRing(polygonPoints)
+        return
+      }
+      if (event.detail >= 2 && polygonPoints.length >= 3) {
+        applyPolygonRing(polygonPoints)
+        return
+      }
+      setPolygonPoints((prev) => [...prev, clamped])
       markDirty()
       return
     }
@@ -503,8 +649,14 @@ export function MaskEditor({
       return
     }
 
+    const imagePoint = screenToImage(local.x, local.y, transformRef.current)
+    if (tool === 'polygon' && viewMode === 'edit') {
+      setPolygonCursor(
+        clampPolygonPoint(imagePoint, image.width, image.height),
+      )
+    }
+
     if (paintingRef.current) {
-      const imagePoint = screenToImage(local.x, local.y, transformRef.current)
       continueStroke(imagePoint)
     }
   }
@@ -520,11 +672,12 @@ export function MaskEditor({
     }
   }
 
-  const onDoubleClick = () => {
-    if (tool === 'polygon' && polygonPoints.length >= 3) {
-      // Leave points; user chooses Add/Remove in toolbar.
-      markDirty()
+  const onDoubleClick = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (tool !== 'polygon' || polygonPoints.length < 3) {
+      return
     }
+    event.preventDefault()
+    applyPolygonRing(polygonPoints)
   }
 
   const handleUndo = useCallback(() => {
@@ -552,6 +705,28 @@ export function MaskEditor({
         setSpaceDown(true)
         event.preventDefault()
       }
+      if (tool === 'polygon') {
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          cancelPolygon()
+          return
+        }
+        if (
+          (event.key === 'Backspace' || event.key === 'Delete') &&
+          polygonPoints.length > 0 &&
+          !(event.target instanceof HTMLInputElement) &&
+          !(event.target instanceof HTMLTextAreaElement)
+        ) {
+          event.preventDefault()
+          undoPolygonVertex()
+          return
+        }
+        if (event.key === 'Enter' && polygonPoints.length >= 3) {
+          event.preventDefault()
+          handleApplyPolygon()
+          return
+        }
+      }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault()
         if (event.shiftKey) {
@@ -573,7 +748,15 @@ export function MaskEditor({
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [handleRedo, handleUndo])
+  }, [
+    cancelPolygon,
+    handleApplyPolygon,
+    handleRedo,
+    handleUndo,
+    polygonPoints.length,
+    tool,
+    undoPolygonVertex,
+  ])
 
   const handleClear = () => {
     if (!window.confirm('Clear the mask? Everything will become background (black).')) {
@@ -593,16 +776,6 @@ export function MaskEditor({
     })
   }
 
-  const handleApplyPolygon = (mode: BrushMode) => {
-    if (polygonPoints.length < 3) {
-      return
-    }
-    withHistory(() => {
-      fillPolygonOnMask(maskRef.current, polygonPoints, mode)
-    })
-    setPolygonPoints([])
-  }
-
   /** Close/feather can reintroduce studio fringe + chrome — clean again. */
   const cleanupEdgesIfPossible = () => {
     const source = originalImageDataRef.current
@@ -611,6 +784,7 @@ export function MaskEditor({
     }
     chokeMaskEdgeFringe(maskRef.current, source, 40, { restoreTexture: false })
     removeBrightEdgeChrome(maskRef.current, source)
+    stripForeignBorderBands(maskRef.current, source)
     stripBorderConnectedStudio(maskRef.current, source)
     stripEnclosedFlatStudio(maskRef.current, source)
   }
@@ -725,6 +899,9 @@ export function MaskEditor({
         <div className="mask-editor__title">
           <strong>Mask Editor</strong>
           <span>{image.name}</span>
+          <span className="mask-editor__manual-hint" data-testid="manual-edit-hint">
+            Auto-mask stays until you edit · Polygon Select for precise boundaries
+          </span>
         </div>
         <button
           type="button"
@@ -761,7 +938,15 @@ export function MaskEditor({
         <div
           ref={viewportRef}
           className={`mask-editor__viewport${
-            tool === 'pan' || spaceDown ? ' mask-editor__viewport--pan' : ''
+            tool === 'pan' || spaceDown
+              ? ' mask-editor__viewport--pan'
+              : tool === 'polygon'
+                ? ' mask-editor__viewport--polygon'
+                : ''
+          }${
+            tool === 'polygon' && polygonReadyToClose
+              ? ' mask-editor__viewport--polygon-close'
+              : ''
           }`}
           data-testid="mask-viewport"
           onPointerDown={onPointerDown}
@@ -769,6 +954,7 @@ export function MaskEditor({
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           onDoubleClick={onDoubleClick}
+          onPointerLeave={() => setPolygonCursor(null)}
           onWheel={handleWheel}
         >
           <canvas
@@ -810,9 +996,16 @@ export function MaskEditor({
             canUndo={canUndo}
             canRedo={canRedo}
             polygonPointCount={polygonPoints.length}
+            polygonReadyToClose={polygonReadyToClose}
+            polygonApplyMode={polygonApplyMode}
             similarTolerance={similarTolerance}
             similarConnected={similarConnected}
-            onToolChange={setTool}
+            onToolChange={(next) => {
+              if (next !== 'polygon') {
+                cancelPolygon()
+              }
+              setTool(next)
+            }}
             onBrushModeChange={setBrushMode}
             onBrushSizeChange={setBrushSize}
             onViewModeChange={setViewMode}
@@ -851,8 +1044,11 @@ export function MaskEditor({
                 ),
               )
             }}
+            onPolygonApplyModeChange={setPolygonApplyMode}
             onApplyPolygon={handleApplyPolygon}
-            onCancelPolygon={() => setPolygonPoints([])}
+            onUndoPolygonVertex={undoPolygonVertex}
+            onCancelPolygon={cancelPolygon}
+            onTraceMaskContour={handleTraceMaskContour}
             onSimilarToleranceChange={setSimilarTolerance}
             onSimilarConnectedChange={setSimilarConnected}
             onRemoveCornerBackground={handleRemoveCornerBackground}

@@ -58,4 +58,26 @@ describe('renderComposite compositing path', () => {
     expect(drawImage).toHaveBeenCalled()
     expect(ops).toContain('destination-in')
   })
+
+  it('transparent background clears the canvas instead of baking checkerboard', () => {
+    const target = document.createElement('canvas')
+    const original = document.createElement('canvas')
+    original.width = 4
+    original.height = 4
+    const mask = createMaskBuffer(4, 4, 0)
+    mask.data[0] = 255
+
+    renderComposite(
+      target,
+      original,
+      mask,
+      { ...createDefaultBackground(), type: 'transparent' },
+      null,
+    )
+
+    expect(clearRect).toHaveBeenCalled()
+    // Must not fill a solid/checkerboard under transparent exports.
+    expect(fillRect).not.toHaveBeenCalled()
+    expect(ops).toContain('destination-in')
+  })
 })

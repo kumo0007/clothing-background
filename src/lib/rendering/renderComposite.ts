@@ -25,7 +25,13 @@ export function renderComposite(
     return
   }
 
-  renderBackground(ctx, width, height, background, backgroundImage)
+  // Transparent: leave clear alpha (PNG export). Checkerboard is CSS/preview only —
+  // never bake it into the canvas (would force opaque ZIP/PNG backgrounds).
+  if (background.type === 'transparent') {
+    ctx.clearRect(0, 0, width, height)
+  } else {
+    renderBackground(ctx, width, height, background, backgroundImage)
+  }
 
   // Build a garment layer, then clip it with the mask via drawImage.
   // IMPORTANT: putImageData ignores globalCompositeOperation, so the mask

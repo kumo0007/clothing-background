@@ -1,0 +1,382 @@
+[
+  {
+    "fixture": "03_tshirt",
+    "role": "white-tee",
+    "contourDirect": {
+      "methodUsed": "contour-first-fallback-seed",
+      "accepted": false,
+      "rejectReason": "follows-studio-card",
+      "fallbackReason": "seed-prior after follows-studio-card",
+      "validation": {
+        "decision": "reject",
+        "reason": "follows-studio-card",
+        "areaRatio": 0.5171698816512906,
+        "exteriorRatio": 0.31733994967850154,
+        "gapAddedRatio": 0.009330444506569752,
+        "substantialGapCompletion": false,
+        "seedAgreement": 0.7916904422253923,
+        "reliableFgAgreement": 0,
+        "reliableFgRatio": 0.005113689311340975,
+        "reliableBgContamination": 0,
+        "borderTouchRatio": 0.07934027777777777,
+        "boundarySupport": 0.5220900594732371,
+        "componentCount": 6,
+        "largestComponentRatio": 0.7376908869768909,
+        "internalHoleRatio": 0.1534051534051534,
+        "bounds": {
+          "minX": 2,
+          "minY": 4,
+          "maxX": 223,
+          "maxY": 289,
+          "spanX": 0.7551020408163265,
+          "spanY": 0.9794520547945206,
+          "bboxAreaRatio": 0.739586245457087,
+          "fillRatio": 0.6992691992691993
+        }
+      },
+      "needsReview": true
+    },
+    "strategies": {
+      "auto": {
+        "requested": "auto",
+        "methodUsed": "opencv-seed-fallback",
+        "checksum": "091460c5b33da35a",
+        "storeMatchesPipeline": true,
+        "needsReview": true,
+        "confidence": 0.42000000000000004,
+        "fg": 52529,
+        "bg": 31843,
+        "soft": 1476
+      },
+      "contour": {
+        "requested": "contour",
+        "methodUsed": "contour-first-fallback-seed",
+        "checksum": "7d89acef95bb94e1",
+        "storeMatchesPipeline": true,
+        "needsReview": true,
+        "confidence": 0.42000000000000004,
+        "contourAccepted": false,
+        "rejectReason": "follows-studio-card",
+        "fallbackReason": "seed-prior after follows-studio-card",
+        "validation": {
+          "decision": "reject",
+          "reason": "follows-studio-card",
+          "areaRatio": 0.5171698816512906,
+          "exteriorRatio": 0.31733994967850154,
+          "gapAddedRatio": 0.009330444506569752,
+          "substantialGapCompletion": false,
+          "seedAgreement": 0.7916904422253923,
+          "reliableFgAgreement": 0,
+          "reliableFgRatio": 0.005113689311340975,
+          "reliableBgContamination": 0,
+          "borderTouchRatio": 0.07934027777777777,
+          "boundarySupport": 0.5220900594732371,
+          "componentCount": 6,
+          "largestComponentRatio": 0.7376908869768909,
+          "internalHoleRatio": 0.1534051534051534,
+          "bounds": {
+            "minX": 2,
+            "minY": 4,
+            "maxX": 223,
+            "maxY": 289,
+            "spanX": 0.7551020408163265,
+            "spanY": 0.9794520547945206,
+            "bboxAreaRatio": 0.739586245457087,
+            "fillRatio": 0.6992691992691993
+          }
+        },
+        "fg": 50728,
+        "bg": 33016,
+        "soft": 2104
+      }
+    },
+    "isnet": {
+      "attempted": true,
+      "available": false,
+      "error": "Unsupported format: "
+    }
+  },
+  {
+    "fixture": "08_sneakers",
+    "role": "sneakers",
+    "contourDirect": {
+      "methodUsed": "contour-first-fallback-seed",
+      "accepted": false,
+      "rejectReason": "excessive-gap-weak-agreement",
+      "fallbackReason": "seed-prior after excessive-gap-weak-agreement",
+      "validation": {
+        "decision": "reject",
+        "reason": "excessive-gap-weak-agreement",
+        "areaRatio": 0.1682796830072235,
+        "exteriorRatio": 0.48664001683147484,
+        "gapAddedRatio": 0.03294994973934591,
+        "substantialGapCompletion": true,
+        "seedAgreement": 0.26831056571737283,
+        "reliableFgAgreement": 0,
+        "reliableFgRatio": 0.09575239030320032,
+        "reliableBgContamination": 0,
+        "borderTouchRatio": 0,
+        "boundarySupport": 0.5285087719298246,
+        "componentCount": 22,
+        "largestComponentRatio": 0.8992151142599153,
+        "internalHoleRatio": 0.34581589958159,
+        "bounds": {
+          "minX": 34,
+          "minY": 32,
+          "maxX": 272,
+          "maxY": 151,
+          "spanX": 0.8129251700680272,
+          "spanY": 0.41237113402061853,
+          "bboxAreaRatio": 0.3352268742548566,
+          "fillRatio": 0.5019874476987448
+        }
+      },
+      "needsReview": true
+    },
+    "strategies": {
+      "auto": {
+        "requested": "auto",
+        "methodUsed": "opencv-seed-fallback",
+        "checksum": "5ce7827e05a62f41",
+        "storeMatchesPipeline": true,
+        "needsReview": true,
+        "confidence": 0.33999999999999997,
+        "fg": 7848,
+        "bg": 73418,
+        "soft": 4288
+      },
+      "contour": {
+        "requested": "contour",
+        "methodUsed": "contour-first-fallback-seed",
+        "checksum": "a2a4888348b8f43b",
+        "storeMatchesPipeline": true,
+        "needsReview": true,
+        "confidence": 0.62,
+        "contourAccepted": false,
+        "rejectReason": "excessive-gap-weak-agreement",
+        "fallbackReason": "seed-prior after excessive-gap-weak-agreement",
+        "validation": {
+          "decision": "reject",
+          "reason": "excessive-gap-weak-agreement",
+          "areaRatio": 0.1682796830072235,
+          "exteriorRatio": 0.48664001683147484,
+          "gapAddedRatio": 0.03294994973934591,
+          "substantialGapCompletion": true,
+          "seedAgreement": 0.26831056571737283,
+          "reliableFgAgreement": 0,
+          "reliableFgRatio": 0.09575239030320032,
+          "reliableBgContamination": 0,
+          "borderTouchRatio": 0,
+          "boundarySupport": 0.5285087719298246,
+          "componentCount": 22,
+          "largestComponentRatio": 0.8992151142599153,
+          "internalHoleRatio": 0.34581589958159,
+          "bounds": {
+            "minX": 34,
+            "minY": 32,
+            "maxX": 272,
+            "maxY": 151,
+            "spanX": 0.8129251700680272,
+            "spanY": 0.41237113402061853,
+            "bboxAreaRatio": 0.3352268742548566,
+            "fillRatio": 0.5019874476987448
+          }
+        },
+        "fg": 4830,
+        "bg": 77014,
+        "soft": 3710
+      }
+    },
+    "isnet": {
+      "attempted": true,
+      "available": false,
+      "error": "Unsupported format: "
+    }
+  },
+  {
+    "fixture": "02_blazer",
+    "role": "dark-garment",
+    "contourDirect": {
+      "methodUsed": "contour-first",
+      "accepted": true,
+      "validation": {
+        "decision": "accept",
+        "reason": "accepted",
+        "areaRatio": 0.5138500605721741,
+        "exteriorRatio": 0.4079069984158047,
+        "gapAddedRatio": 0.005486441151803187,
+        "substantialGapCompletion": false,
+        "seedAgreement": 0.8414015411612116,
+        "reliableFgAgreement": 0.8802705884700577,
+        "reliableFgRatio": 0.5837410306588389,
+        "reliableBgContamination": 0,
+        "borderTouchRatio": 0,
+        "boundarySupport": 0.6802213666987488,
+        "componentCount": 3,
+        "largestComponentRatio": 0.9999546618910525,
+        "internalHoleRatio": 0.10216502912790192,
+        "bounds": {
+          "minX": 37,
+          "minY": 16,
+          "maxX": 253,
+          "maxY": 280,
+          "spanX": 0.7380952380952381,
+          "spanY": 0.9075342465753424,
+          "bboxAreaRatio": 0.6698467058056099,
+          "fillRatio": 0.7671159029649596
+        }
+      },
+      "needsReview": false
+    },
+    "strategies": {
+      "auto": {
+        "requested": "auto",
+        "methodUsed": "opencv-seed-fallback",
+        "checksum": "fd9f116cc39ea807",
+        "storeMatchesPipeline": true,
+        "needsReview": false,
+        "confidence": 0.84,
+        "fg": 47919,
+        "bg": 36056,
+        "soft": 1873
+      },
+      "contour": {
+        "requested": "contour",
+        "methodUsed": "contour-first",
+        "checksum": "314632af5f1f7003",
+        "storeMatchesPipeline": true,
+        "needsReview": false,
+        "confidence": 0.84,
+        "contourAccepted": true,
+        "validation": {
+          "decision": "accept",
+          "reason": "accepted",
+          "areaRatio": 0.5138500605721741,
+          "exteriorRatio": 0.4079069984158047,
+          "gapAddedRatio": 0.005486441151803187,
+          "substantialGapCompletion": false,
+          "seedAgreement": 0.8414015411612116,
+          "reliableFgAgreement": 0.8802705884700577,
+          "reliableFgRatio": 0.5837410306588389,
+          "reliableBgContamination": 0,
+          "borderTouchRatio": 0,
+          "boundarySupport": 0.6802213666987488,
+          "componentCount": 3,
+          "largestComponentRatio": 0.9999546618910525,
+          "internalHoleRatio": 0.10216502912790192,
+          "bounds": {
+            "minX": 37,
+            "minY": 16,
+            "maxX": 253,
+            "maxY": 280,
+            "spanX": 0.7380952380952381,
+            "spanY": 0.9075342465753424,
+            "bboxAreaRatio": 0.6698467058056099,
+            "fillRatio": 0.7671159029649596
+          }
+        },
+        "fg": 48686,
+        "bg": 36192,
+        "soft": 970
+      }
+    },
+    "isnet": {
+      "attempted": true,
+      "available": false,
+      "error": "Unsupported format: "
+    }
+  },
+  {
+    "fixture": "04_jeans",
+    "role": "dark-garment-regression",
+    "contourDirect": {
+      "methodUsed": "contour-first",
+      "accepted": true,
+      "validation": {
+        "decision": "accept",
+        "reason": "accepted",
+        "areaRatio": 0.2966289255428199,
+        "exteriorRatio": 0.5878296524089087,
+        "gapAddedRatio": 0.01949958065417948,
+        "substantialGapCompletion": true,
+        "seedAgreement": 0.7316267310233868,
+        "reliableFgAgreement": 0.7686618974312536,
+        "reliableFgRatio": 0.3859029913335197,
+        "reliableBgContamination": 0,
+        "borderTouchRatio": 0,
+        "boundarySupport": 0.936382393397524,
+        "componentCount": 18,
+        "largestComponentRatio": 0.999096799528765,
+        "internalHoleRatio": 0.19904715762273903,
+        "bounds": {
+          "minX": 76,
+          "minY": 28,
+          "maxX": 219,
+          "maxY": 285,
+          "spanX": 0.4897959183673469,
+          "spanY": 0.8835616438356164,
+          "bboxAreaRatio": 0.43276488677662844,
+          "fillRatio": 0.6854274332472007
+        }
+      },
+      "needsReview": true
+    },
+    "strategies": {
+      "auto": {
+        "requested": "auto",
+        "methodUsed": "opencv-seed-fallback",
+        "checksum": "60bb62d92b3f52cd",
+        "storeMatchesPipeline": true,
+        "needsReview": false,
+        "confidence": 0.72,
+        "fg": 30694,
+        "bg": 53091,
+        "soft": 2063
+      },
+      "contour": {
+        "requested": "contour",
+        "methodUsed": "contour-first",
+        "checksum": "0e9d24b2b4dab4b5",
+        "storeMatchesPipeline": true,
+        "needsReview": true,
+        "confidence": 0.72,
+        "contourAccepted": true,
+        "validation": {
+          "decision": "accept",
+          "reason": "accepted",
+          "areaRatio": 0.2966289255428199,
+          "exteriorRatio": 0.5878296524089087,
+          "gapAddedRatio": 0.01949958065417948,
+          "substantialGapCompletion": true,
+          "seedAgreement": 0.7316267310233868,
+          "reliableFgAgreement": 0.7686618974312536,
+          "reliableFgRatio": 0.3859029913335197,
+          "reliableBgContamination": 0,
+          "borderTouchRatio": 0,
+          "boundarySupport": 0.936382393397524,
+          "componentCount": 18,
+          "largestComponentRatio": 0.999096799528765,
+          "internalHoleRatio": 0.19904715762273903,
+          "bounds": {
+            "minX": 76,
+            "minY": 28,
+            "maxX": 219,
+            "maxY": 285,
+            "spanX": 0.4897959183673469,
+            "spanY": 0.8835616438356164,
+            "bboxAreaRatio": 0.43276488677662844,
+            "fillRatio": 0.6854274332472007
+          }
+        },
+        "fg": 31536,
+        "bg": 53263,
+        "soft": 1049
+      }
+    },
+    "isnet": {
+      "attempted": true,
+      "available": false,
+      "error": "Unsupported format: "
+    }
+  }
+]

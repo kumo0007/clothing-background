@@ -75,6 +75,20 @@
   cursor: grab;
 }
 
+.mask-editor__viewport--polygon {
+  cursor: crosshair;
+}
+
+.mask-editor__viewport--polygon-close {
+  cursor: pointer;
+}
+
+.mask-editor__manual-hint {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
 .mask-editor__canvas {
   position: absolute;
   left: 0;

@@ -346,6 +346,32 @@ describe('selectSimilar', () => {
     expect(mask.data[12 * width + 20]).toBe(255)
   })
 
+  it('clears enclosed flat studio between dark garment walls (handle holes)', () => {
+    const width = 40
+    const height = 40
+    const image = makeImageData(width, height, [228, 228, 228])
+    const set = (x: number, y: number, rgb: [number, number, number]) => {
+      const o = (y * width + x) * 4
+      image.data[o] = rgb[0]
+      image.data[o + 1] = rgb[1]
+      image.data[o + 2] = rgb[2]
+    }
+    // Dark U-shaped bag: walls leave an enclosed studio pocket in the center.
+    for (let y = 10; y < 30; y += 1) {
+      for (let x = 10; x < 14; x += 1) set(x, y, [30, 30, 30])
+      for (let x = 26; x < 30; x += 1) set(x, y, [30, 30, 30])
+    }
+    for (let x = 10; x < 30; x += 1) {
+      for (let y = 26; y < 30; y += 1) set(x, y, [30, 30, 30])
+    }
+
+    const mask = createMaskBuffer(width, height, 255)
+    removeSimilarToCorners(mask, image, 40)
+    expect(mask.data[2 * width + 2]).toBe(0)
+    expect(mask.data[18 * width + 12]).toBe(255) // dark wall kept
+    expect(mask.data[18 * width + 20]).toBe(0) // enclosed card cleared
+  })
+
   it('reclaims light garment fabric around a dark logo after corner remove', () => {
     const size = 21
     const image = makeImageData(size, size, [230, 230, 230])

@@ -1,0 +1,466 @@
+[
+  {
+    "fixture": "01_hoodie",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "iou": 0.9886,
+      "confidence": 0.72,
+      "needsReview": false,
+      "nearWhitePct": 0.26,
+      "sourceRgbUnchanged": true
+    },
+    "contour": {
+      "methodUsed": "contour-first",
+      "iou": 0.7566,
+      "confidence": 0.72,
+      "needsReview": true,
+      "nearWhitePct": 0.07,
+      "sourceRgbUnchanged": true,
+      "accepted": false,
+      "rejectReason": "rejects-seed-garment-mass",
+      "stages": [
+        "seed-prior",
+        "edge-detect",
+        "build-barriers",
+        "close-gaps",
+        "exterior-flood",
+        "validate",
+        "reject:rejects-seed-garment-mass",
+        "fallback-seed",
+        "holes-open-arch",
+        "studio-border-cleanup",
+        "alpha-refine"
+      ],
+      "seedAgreement": 0.179,
+      "areaRatio": 0.114
+    },
+    "refCoverage": {
+      "definiteFg": 36210,
+      "definiteBg": 37169,
+      "uncertain": 13637,
+      "uncertainRatio": 0.1567,
+      "notes": [
+        "Reference is appearance+border derived, not manual pixel paint.",
+        "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+        "Soft contact shadows and thin AA rings are UNCERTAIN.",
+        "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+      ]
+    }
+  },
+  {
+    "fixture": "02_blazer",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "iou": 0.9846,
+      "confidence": 0.84,
+      "needsReview": false,
+      "nearWhitePct": 0.26,
+      "sourceRgbUnchanged": true
+    },
+    "contour": {
+      "methodUsed": "contour-first",
+      "iou": 0.9856,
+      "confidence": 0.84,
+      "needsReview": false,
+      "nearWhitePct": 0.1,
+      "sourceRgbUnchanged": true,
+      "accepted": true,
+      "stages": [
+        "seed-prior",
+        "edge-detect",
+        "build-barriers",
+        "close-gaps",
+        "exterior-flood",
+        "validate",
+        "fill-interior",
+        "holes-open-arch",
+        "studio-border-cleanup",
+        "alpha-refine"
+      ],
+      "seedAgreement": 0.841,
+      "areaRatio": 0.514
+    },
+    "refCoverage": {
+      "definiteFg": 49568,
+      "definiteBg": 34379,
+      "uncertain": 1901,
+      "uncertainRatio": 0.0221,
+      "notes": [
+        "Reference is appearance+border derived, not manual pixel paint.",
+        "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+        "Soft contact shadows and thin AA rings are UNCERTAIN.",
+        "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+      ]
+    }
+  },
+  {
+    "fixture": "03_tshirt",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "iou": 0.0307,
+      "confidence": 0.42000000000000004,
+      "needsReview": true,
+      "nearWhitePct": 62.2,
+      "sourceRgbUnchanged": true
+    },
+    "contour": {
+      "methodUsed": "contour-first",
+      "iou": 0.0264,
+      "confidence": 0.42000000000000004,
+      "needsReview": true,
+      "nearWhitePct": 59.34,
+      "sourceRgbUnchanged": true,
+      "accepted": true,
+      "stages": [
+        "seed-prior",
+        "edge-detect",
+        "build-barriers",
+        "close-gaps",
+        "exterior-flood",
+        "validate",
+        "fill-interior",
+        "holes-open-arch",
+        "studio-border-cleanup",
+        "alpha-refine"
+      ],
+      "seedAgreement": 0.792,
+      "areaRatio": 0.517
+    },
+    "refCoverage": {
+      "definiteFg": 380,
+      "definiteBg": 43298,
+      "uncertain": 42170,
+      "uncertainRatio": 0.4912,
+      "notes": [
+        "Reference is appearance+border derived, not manual pixel paint.",
+        "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+        "Soft contact shadows and thin AA rings are UNCERTAIN.",
+        "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+      ]
+    }
+  },
+  {
+    "fixture": "04_jeans",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "iou": 0.941,
+      "confidence": 0.72,
+      "needsReview": false,
+      "nearWhitePct": 0.3,
+      "sourceRgbUnchanged": true
+    },
+    "contour": {
+      "methodUsed": "contour-first",
+      "iou": 0.9445,
+      "confidence": 0.72,
+      "needsReview": true,
+      "nearWhitePct": 0.04,
+      "sourceRgbUnchanged": true,
+      "accepted": true,
+      "stages": [
+        "seed-prior",
+        "edge-detect",
+        "build-barriers",
+        "close-gaps",
+        "exterior-flood",
+        "validate",
+        "fill-interior",
+        "holes-open-arch",
+        "studio-border-cleanup",
+        "alpha-refine"
+      ],
+      "seedAgreement": 0.732,
+      "areaRatio": 0.297
+    },
+    "refCoverage": {
+      "definiteFg": 31732,
+      "definiteBg": 53510,
+      "uncertain": 606,
+      "uncertainRatio": 0.0071,
+      "notes": [
+        "Reference is appearance+border derived, not manual pixel paint.",
+        "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+        "Soft contact shadows and thin AA rings are UNCERTAIN.",
+        "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+      ]
+    }
+  },
+  {
+    "fixture": "05_coat",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "iou": 0.9588,
+      "confidence": 0.84,
+      "needsReview": false,
+      "nearWhitePct": 0.01,
+      "sourceRgbUnchanged": true
+    },
+    "contour": {
+      "methodUsed": "contour-first",
+      "iou": 0.9453,
+      "confidence": 0.84,
+      "needsReview": true,
+      "nearWhitePct": 0,
+      "sourceRgbUnchanged": true,
+      "accepted": false,
+      "rejectReason": "rejects-seed-garment-mass",
+      "stages": [
+        "seed-prior",
+        "edge-detect",
+        "build-barriers",
+        "close-gaps",
+        "exterior-flood",
+        "validate",
+        "reject:rejects-seed-garment-mass",
+        "fallback-seed",
+        "holes-open-arch",
+        "studio-border-cleanup",
+        "alpha-refine"
+      ],
+      "seedAgreement": 0.178,
+      "areaRatio": 0.076
+    },
+    "refCoverage": {
+      "definiteFg": 33764,
+      "definiteBg": 51235,
+      "uncertain": 1433,
+      "uncertainRatio": 0.0166,
+      "notes": [
+        "Reference is appearance+border derived, not manual pixel paint.",
+        "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+        "Soft contact shadows and thin AA rings are UNCERTAIN.",
+        "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+      ]
+    }
+  },
+  {
+    "fixture": "06_sweater",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "iou": 0.8942,
+      "confidence": 0.84,
+      "needsReview": false,
+      "nearWhitePct": 0.19,
+      "sourceRgbUnchanged": true
+    },
+    "contour": {
+      "methodUsed": "contour-first",
+      "iou": 0.7612,
+      "confidence": 0.5599999999999999,
+      "needsReview": true,
+      "nearWhitePct": 9.52,
+      "sourceRgbUnchanged": true,
+      "accepted": true,
+      "stages": [
+        "seed-prior",
+        "edge-detect",
+        "build-barriers",
+        "close-gaps",
+        "exterior-flood",
+        "validate",
+        "fill-interior",
+        "holes-open-arch",
+        "studio-border-cleanup",
+        "alpha-refine"
+      ],
+      "seedAgreement": 0.568,
+      "areaRatio": 0.446
+    },
+    "refCoverage": {
+      "definiteFg": 46421,
+      "definiteBg": 35648,
+      "uncertain": 4649,
+      "uncertainRatio": 0.0536,
+      "notes": [
+        "Reference is appearance+border derived, not manual pixel paint.",
+        "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+        "Soft contact shadows and thin AA rings are UNCERTAIN.",
+        "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+      ]
+    }
+  },
+  {
+    "fixture": "07_dress",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "iou": 0.9059,
+      "confidence": 0.84,
+      "needsReview": false,
+      "nearWhitePct": 0.09,
+      "sourceRgbUnchanged": true
+    },
+    "contour": {
+      "methodUsed": "contour-first",
+      "iou": 0.2296,
+      "confidence": 0.44000000000000006,
+      "needsReview": true,
+      "nearWhitePct": 61.34,
+      "sourceRgbUnchanged": true,
+      "accepted": true,
+      "stages": [
+        "seed-prior",
+        "edge-detect",
+        "build-barriers",
+        "close-gaps",
+        "exterior-flood",
+        "validate",
+        "fill-interior",
+        "holes-open-arch",
+        "studio-border-cleanup",
+        "alpha-refine"
+      ],
+      "seedAgreement": 0.674,
+      "areaRatio": 0.661
+    },
+    "refCoverage": {
+      "definiteFg": 18667,
+      "definiteBg": 63519,
+      "uncertain": 3368,
+      "uncertainRatio": 0.0394,
+      "notes": [
+        "Reference is appearance+border derived, not manual pixel paint.",
+        "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+        "Soft contact shadows and thin AA rings are UNCERTAIN.",
+        "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+      ]
+    }
+  },
+  {
+    "fixture": "08_sneakers",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "iou": 0.4531,
+      "confidence": 0.33999999999999997,
+      "needsReview": true,
+      "nearWhitePct": 6.22,
+      "sourceRgbUnchanged": true
+    },
+    "contour": {
+      "methodUsed": "contour-first",
+      "iou": 0.1294,
+      "confidence": 0.33999999999999997,
+      "needsReview": true,
+      "nearWhitePct": 18.77,
+      "sourceRgbUnchanged": true,
+      "accepted": true,
+      "stages": [
+        "seed-prior",
+        "edge-detect",
+        "build-barriers",
+        "close-gaps",
+        "exterior-flood",
+        "validate",
+        "fill-interior",
+        "holes-open-arch",
+        "studio-border-cleanup",
+        "alpha-refine"
+      ],
+      "seedAgreement": 0.268,
+      "areaRatio": 0.168
+    },
+    "refCoverage": {
+      "definiteFg": 6385,
+      "definiteBg": 65915,
+      "uncertain": 13254,
+      "uncertainRatio": 0.1549,
+      "notes": [
+        "Reference is appearance+border derived, not manual pixel paint.",
+        "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+        "Soft contact shadows and thin AA rings are UNCERTAIN.",
+        "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+      ]
+    }
+  },
+  {
+    "fixture": "09_handbag",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "iou": 0.9459,
+      "confidence": 0.84,
+      "needsReview": false,
+      "nearWhitePct": 0.61,
+      "sourceRgbUnchanged": true
+    },
+    "contour": {
+      "methodUsed": "contour-first",
+      "iou": 0.7005,
+      "confidence": 0.44000000000000006,
+      "needsReview": true,
+      "nearWhitePct": 14.26,
+      "sourceRgbUnchanged": true,
+      "accepted": true,
+      "stages": [
+        "seed-prior",
+        "edge-detect",
+        "build-barriers",
+        "close-gaps",
+        "exterior-flood",
+        "validate",
+        "fill-interior",
+        "holes-open-arch",
+        "studio-border-cleanup",
+        "alpha-refine"
+      ],
+      "seedAgreement": 0.381,
+      "areaRatio": 0.307
+    },
+    "refCoverage": {
+      "definiteFg": 32021,
+      "definiteBg": 45174,
+      "uncertain": 8359,
+      "uncertainRatio": 0.0977,
+      "notes": [
+        "Reference is appearance+border derived, not manual pixel paint.",
+        "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+        "Soft contact shadows and thin AA rings are UNCERTAIN.",
+        "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+      ]
+    }
+  },
+  {
+    "fixture": "10_cap",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "iou": 0.9082,
+      "confidence": 0.84,
+      "needsReview": false,
+      "nearWhitePct": 0.18,
+      "sourceRgbUnchanged": true
+    },
+    "contour": {
+      "methodUsed": "contour-first",
+      "iou": 0.5774,
+      "confidence": 0.44000000000000006,
+      "needsReview": true,
+      "nearWhitePct": 18.81,
+      "sourceRgbUnchanged": true,
+      "accepted": true,
+      "stages": [
+        "seed-prior",
+        "edge-detect",
+        "build-barriers",
+        "close-gaps",
+        "exterior-flood",
+        "validate",
+        "fill-interior",
+        "holes-open-arch",
+        "studio-border-cleanup",
+        "alpha-refine"
+      ],
+      "seedAgreement": 0.695,
+      "areaRatio": 0.667
+    },
+    "refCoverage": {
+      "definiteFg": 25999,
+      "definiteBg": 56858,
+      "uncertain": 3279,
+      "uncertainRatio": 0.0381,
+      "notes": [
+        "Reference is appearance+border derived, not manual pixel paint.",
+        "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+        "Soft contact shadows and thin AA rings are UNCERTAIN.",
+        "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+      ]
+    }
+  }
+]

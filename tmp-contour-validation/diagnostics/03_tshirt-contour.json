@@ -1,0 +1,34 @@
+{
+  "methodUsed": "contour-first-fallback-seed",
+  "needsReview": true,
+  "contourAccepted": false,
+  "rejectReason": "follows-studio-card",
+  "fallbackReason": "seed-prior after follows-studio-card",
+  "validation": {
+    "decision": "reject",
+    "reason": "follows-studio-card",
+    "areaRatio": 0.5171698816512906,
+    "exteriorRatio": 0.31733994967850154,
+    "gapAddedRatio": 0.009330444506569752,
+    "substantialGapCompletion": false,
+    "seedAgreement": 0.7916904422253923,
+    "reliableFgAgreement": 0,
+    "reliableFgRatio": 0.005113689311340975,
+    "reliableBgContamination": 0,
+    "borderTouchRatio": 0.07934027777777777,
+    "boundarySupport": 0.5220900594732371,
+    "componentCount": 6,
+    "largestComponentRatio": 0.7376908869768909,
+    "internalHoleRatio": 0.1534051534051534,
+    "bounds": {
+      "minX": 2,
+      "minY": 4,
+      "maxX": 223,
+      "maxY": 289,
+      "spanX": 0.7551020408163265,
+      "spanY": 0.9794520547945206,
+      "bboxAreaRatio": 0.739586245457087,
+      "fillRatio": 0.6992691992691993
+    }
+  }
+}

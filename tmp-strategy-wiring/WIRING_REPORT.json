@@ -1,0 +1,340 @@
+[
+  {
+    "fixture": "01_hoodie",
+    "uiBatchDefault": {
+      "requested": "auto",
+      "methodUsed": "opencv-seed-fallback",
+      "checksum": "4900de503a208188"
+    },
+    "strategies": {
+      "auto": {
+        "fg": 37033,
+        "bg": 46646,
+        "soft": 3337,
+        "total": 87016,
+        "checksum": "4900de503a208188",
+        "methodUsed": "opencv-seed-fallback",
+        "requested": "auto"
+      },
+      "contour": {
+        "fg": 24895,
+        "bg": 56055,
+        "soft": 6066,
+        "total": 87016,
+        "checksum": "656e58aad48504bb",
+        "methodUsed": "contour-first-fallback-seed",
+        "requested": "contour"
+      }
+    },
+    "labVsContourDisagree": {
+      "n": 12831,
+      "pct": 14.745564034200607
+    },
+    "masksIdentical": false,
+    "storeExportParity": true,
+    "storeChecksumMatchesPipeline": true
+  },
+  {
+    "fixture": "02_blazer",
+    "uiBatchDefault": {
+      "requested": "auto",
+      "methodUsed": "opencv-seed-fallback",
+      "checksum": "fd9f116cc39ea807"
+    },
+    "strategies": {
+      "auto": {
+        "fg": 47919,
+        "bg": 36056,
+        "soft": 1873,
+        "total": 85848,
+        "checksum": "fd9f116cc39ea807",
+        "methodUsed": "opencv-seed-fallback",
+        "requested": "auto"
+      },
+      "contour": {
+        "fg": 48686,
+        "bg": 36192,
+        "soft": 970,
+        "total": 85848,
+        "checksum": "314632af5f1f7003",
+        "methodUsed": "contour-first",
+        "requested": "contour"
+      }
+    },
+    "labVsContourDisagree": {
+      "n": 1779,
+      "pct": 2.0722672630696115
+    },
+    "masksIdentical": false,
+    "storeExportParity": true,
+    "storeChecksumMatchesPipeline": true
+  },
+  {
+    "fixture": "03_tshirt",
+    "uiBatchDefault": {
+      "requested": "auto",
+      "methodUsed": "opencv-seed-fallback",
+      "checksum": "091460c5b33da35a"
+    },
+    "strategies": {
+      "auto": {
+        "fg": 52529,
+        "bg": 31843,
+        "soft": 1476,
+        "total": 85848,
+        "checksum": "091460c5b33da35a",
+        "methodUsed": "opencv-seed-fallback",
+        "requested": "auto"
+      },
+      "contour": {
+        "fg": 49374,
+        "bg": 34379,
+        "soft": 2095,
+        "total": 85848,
+        "checksum": "965cb9d8aaf6589a",
+        "methodUsed": "contour-first",
+        "requested": "contour"
+      }
+    },
+    "labVsContourDisagree": {
+      "n": 2945,
+      "pct": 3.4304817817537976
+    },
+    "masksIdentical": false,
+    "storeExportParity": true,
+    "storeChecksumMatchesPipeline": true
+  },
+  {
+    "fixture": "04_jeans",
+    "uiBatchDefault": {
+      "requested": "auto",
+      "methodUsed": "opencv-seed-fallback",
+      "checksum": "60bb62d92b3f52cd"
+    },
+    "strategies": {
+      "auto": {
+        "fg": 30694,
+        "bg": 53091,
+        "soft": 2063,
+        "total": 85848,
+        "checksum": "60bb62d92b3f52cd",
+        "methodUsed": "opencv-seed-fallback",
+        "requested": "auto"
+      },
+      "contour": {
+        "fg": 31536,
+        "bg": 53263,
+        "soft": 1049,
+        "total": 85848,
+        "checksum": "0e9d24b2b4dab4b5",
+        "methodUsed": "contour-first",
+        "requested": "contour"
+      }
+    },
+    "labVsContourDisagree": {
+      "n": 1649,
+      "pct": 1.9208368278818377
+    },
+    "masksIdentical": false,
+    "storeExportParity": true,
+    "storeChecksumMatchesPipeline": true
+  },
+  {
+    "fixture": "08_sneakers",
+    "uiBatchDefault": {
+      "requested": "auto",
+      "methodUsed": "opencv-seed-fallback",
+      "checksum": "5ce7827e05a62f41"
+    },
+    "strategies": {
+      "auto": {
+        "fg": 7848,
+        "bg": 73418,
+        "soft": 4288,
+        "total": 85554,
+        "checksum": "5ce7827e05a62f41",
+        "methodUsed": "opencv-seed-fallback",
+        "requested": "auto"
+      },
+      "contour": {
+        "fg": 14500,
+        "bg": 66030,
+        "soft": 5024,
+        "total": 85554,
+        "checksum": "29e7dc3ef9ddc71a",
+        "methodUsed": "contour-first",
+        "requested": "contour"
+      }
+    },
+    "labVsContourDisagree": {
+      "n": 16741,
+      "pct": 19.567758374827594
+    },
+    "masksIdentical": false,
+    "storeExportParity": true,
+    "storeChecksumMatchesPipeline": true
+  },
+  {
+    "fixture": "09_handbag",
+    "uiBatchDefault": {
+      "requested": "auto",
+      "methodUsed": "opencv-seed-fallback",
+      "checksum": "cdfc41de331ecb3f"
+    },
+    "strategies": {
+      "auto": {
+        "fg": 28740,
+        "bg": 54382,
+        "soft": 2432,
+        "total": 85554,
+        "checksum": "cdfc41de331ecb3f",
+        "methodUsed": "opencv-seed-fallback",
+        "requested": "auto"
+      },
+      "contour": {
+        "fg": 40325,
+        "bg": 42347,
+        "soft": 2882,
+        "total": 85554,
+        "checksum": "1013da31f8f3585a",
+        "methodUsed": "contour-first",
+        "requested": "contour"
+      }
+    },
+    "labVsContourDisagree": {
+      "n": 13597,
+      "pct": 15.89288636416766
+    },
+    "masksIdentical": false,
+    "storeExportParity": true,
+    "storeChecksumMatchesPipeline": true
+  },
+  {
+    "contourStageProbe": {
+      "fixture": "03_tshirt",
+      "firstFail": "B-exterior-flood:interior-too-large (edge barrier followed card or missed garment edge)",
+      "stages": [
+        {
+          "stage": "seed-prior",
+          "fg": 53461,
+          "bg": 28387,
+          "soft": 4000,
+          "total": 85848,
+          "checksum": "ea662c016e4f73b8"
+        },
+        {
+          "stage": "A-edges",
+          "strongEdgePx": 17824,
+          "edgeDensity": 0.2076
+        },
+        {
+          "stage": "A-barriers",
+          "barrierPx": 8533,
+          "edgeThr": 38
+        },
+        {
+          "stage": "C-gap-close",
+          "gapClosed": true,
+          "substantial": false,
+          "barrierPx": 9334
+        },
+        {
+          "stage": "B-exterior-flood",
+          "floodedBg": 27243,
+          "interiorFg": 49271,
+          "interiorPct": 57.39
+        },
+        {
+          "stage": "D-validate",
+          "ok": true,
+          "areaRatio": 0.573932997856677,
+          "seedAgreement": 0.8774607703281027,
+          "borderTouchRatio": 0.0890625
+        },
+        {
+          "stage": "E-fill",
+          "fg": 53784,
+          "bg": 32064,
+          "soft": 0,
+          "total": 85848,
+          "checksum": "d7f311b662515c3e"
+        },
+        {
+          "stage": "final",
+          "accepted": true,
+          "methodUsed": "contour-first",
+          "fg": 49374,
+          "bg": 34379,
+          "soft": 2095,
+          "total": 85848,
+          "checksum": "965cb9d8aaf6589a",
+          "fillToFinalDrop": 4410
+        }
+      ]
+    }
+  },
+  {
+    "contourStageProbe": {
+      "fixture": "08_sneakers",
+      "firstFail": "C-gap-close:substantial + D-validate:accepted-weak-seedAgreement (unrelated edges joined; wrong silhouette accepted)",
+      "stages": [
+        {
+          "stage": "seed-prior",
+          "fg": 35892,
+          "bg": 29911,
+          "soft": 19751,
+          "total": 85554,
+          "checksum": "d74c6aa51c8e10b0"
+        },
+        {
+          "stage": "A-edges",
+          "strongEdgePx": 17976,
+          "edgeDensity": 0.2101
+        },
+        {
+          "stage": "A-barriers",
+          "barrierPx": 13686,
+          "edgeThr": 58
+        },
+        {
+          "stage": "C-gap-close",
+          "gapClosed": true,
+          "substantial": true,
+          "barrierPx": 16501
+        },
+        {
+          "stage": "B-exterior-flood",
+          "floodedBg": 41634,
+          "interiorFg": 27419,
+          "interiorPct": 32.05
+        },
+        {
+          "stage": "D-validate",
+          "ok": true,
+          "areaRatio": 0.3204876452299133,
+          "seedAgreement": 0.44010959327004706,
+          "borderTouchRatio": 0
+        },
+        {
+          "stage": "E-fill",
+          "fg": 44294,
+          "bg": 41260,
+          "soft": 0,
+          "total": 85554,
+          "checksum": "c4e394e455422f3b"
+        },
+        {
+          "stage": "final",
+          "accepted": true,
+          "methodUsed": "contour-first",
+          "fg": 14500,
+          "bg": 66030,
+          "soft": 5024,
+          "total": 85554,
+          "checksum": "29e7dc3ef9ddc71a",
+          "fillToFinalDrop": 29794
+        }
+      ]
+    }
+  }
+]

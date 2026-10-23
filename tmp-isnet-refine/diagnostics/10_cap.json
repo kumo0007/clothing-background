@@ -1,0 +1,69 @@
+{
+  "file": "10_cap.jpg",
+  "methodUsed": "isnet-onnx",
+  "genuineModelInference": true,
+  "needsReview": true,
+  "reviewReasons": [
+    "isnet-refine-accepted: reclaimed-under-recall",
+    "residual-after-refine: residual-lab-garment-gaps,residual-dark-exterior-bites"
+  ],
+  "refine": {
+    "initialFgRatio": 0.2525192718491688,
+    "finalFgRatio": 0.2859315501068078,
+    "deltaFgRatio": 0.03341227825763904,
+    "initialComponentCount": 1,
+    "finalComponentCount": 1,
+    "initialInternalHoleRatio": 0,
+    "finalInternalHoleRatio": 0.00010448592922819726,
+    "labAgreement": 0.4774078201913253,
+    "labBgContaminationRate": 0,
+    "contourReliableBgContamination": 0,
+    "contourInternalHoleRatio": 0,
+    "contourBorderTouchRatio": 0,
+    "pixelsReclaimed": 2878,
+    "pixelsStripped": 0,
+    "changedPixelCount": 2878,
+    "changedBBox": {
+      "minX": 26,
+      "minY": 67,
+      "maxX": 263,
+      "maxY": 217
+    },
+    "refinementAttempted": true,
+    "refinementAccepted": true,
+    "refinementCategory": "under-recall",
+    "acceptReason": "reclaimed-under-recall",
+    "failureModes": [
+      "possible-under-recall",
+      "residual-lab-garment-gaps",
+      "residual-dark-exterior-bites"
+    ],
+    "gateValues": {
+      "deltaFg": 0.03341227825763904,
+      "corridorReclaimed": 0,
+      "underRecallReclaimed": 2502,
+      "darkBiteReclaimed": 376,
+      "stripped": 0,
+      "verticalStackSeverance": false,
+      "sideBySideMergeBlocked": false,
+      "cardShapedExpansionBlocked": false
+    },
+    "confidenceBefore": 0.84,
+    "confidenceAfter": 0.84,
+    "inferenceEngine": "isnet-onnx",
+    "refinementOps": [
+      "reclaimAdjacentUnderRecall",
+      "reclaimExteriorDarkUndercuts"
+    ]
+  },
+  "directRefineAccepted": true,
+  "fg": {
+    "raw": 0.2525,
+    "refined": 0.2859,
+    "lab": 0.2769,
+    "contour": 0.3068
+  },
+  "rgbUnchanged": true,
+  "contourMethod": "contour-first-fallback-seed",
+  "contourNeedsReview": true
+}

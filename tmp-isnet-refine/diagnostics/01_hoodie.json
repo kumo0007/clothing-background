@@ -1,0 +1,68 @@
+{
+  "file": "01_hoodie.jpg",
+  "methodUsed": "isnet-onnx",
+  "genuineModelInference": true,
+  "needsReview": false,
+  "reviewReasons": [
+    "isnet-refine-accepted: healed-severance+stripped-studio"
+  ],
+  "refine": {
+    "initialFgRatio": 0.5215477613312495,
+    "finalFgRatio": 0.5785602647788912,
+    "deltaFgRatio": 0.05701250344764175,
+    "initialComponentCount": 4,
+    "finalComponentCount": 3,
+    "initialInternalHoleRatio": 0,
+    "finalInternalHoleRatio": 0.0006205755263399835,
+    "labAgreement": 0.789716833685759,
+    "labBgContaminationRate": 0.09401318925790561,
+    "contourReliableBgContamination": 0,
+    "contourInternalHoleRatio": 0,
+    "contourBorderTouchRatio": 0,
+    "pixelsReclaimed": 5384,
+    "pixelsStripped": 423,
+    "changedPixelCount": 5807,
+    "changedBBox": {
+      "minX": 34,
+      "minY": 15,
+      "maxX": 268,
+      "maxY": 280
+    },
+    "refinementAttempted": true,
+    "refinementAccepted": true,
+    "refinementCategory": "mixed",
+    "acceptReason": "healed-severance+stripped-studio",
+    "failureModes": [
+      "stacked-keep-components",
+      "lab-disagrees-studio-keep"
+    ],
+    "gateValues": {
+      "deltaFg": 0.05701250344764175,
+      "corridorReclaimed": 3566,
+      "underRecallReclaimed": 1818,
+      "darkBiteReclaimed": 0,
+      "stripped": 423,
+      "verticalStackSeverance": true,
+      "sideBySideMergeBlocked": false,
+      "cardShapedExpansionBlocked": false
+    },
+    "confidenceBefore": 0.72,
+    "confidenceAfter": 0.72,
+    "inferenceEngine": "isnet-onnx",
+    "refinementOps": [
+      "reclaimSeveranceCorridors",
+      "reclaimAdjacentUnderRecall",
+      "peelExteriorStudioKeep"
+    ]
+  },
+  "directRefineAccepted": true,
+  "fg": {
+    "raw": 0.5215,
+    "refined": 0.5786,
+    "lab": 0.4619,
+    "contour": 0.3508
+  },
+  "rgbUnchanged": true,
+  "contourMethod": "contour-first-fallback-seed",
+  "contourNeedsReview": true
+}

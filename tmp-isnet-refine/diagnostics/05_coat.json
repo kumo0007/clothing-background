@@ -1,0 +1,64 @@
+{
+  "file": "05_coat.jpg",
+  "methodUsed": "isnet-onnx",
+  "genuineModelInference": true,
+  "needsReview": true,
+  "reviewReasons": [
+    "isnet-refine-accepted: reclaimed-under-recall",
+    "large-under-recall-accepted: boundary QC recommended"
+  ],
+  "refine": {
+    "initialFgRatio": 0.32036745649759346,
+    "finalFgRatio": 0.40505831173639395,
+    "deltaFgRatio": 0.08469085523880049,
+    "initialComponentCount": 11,
+    "finalComponentCount": 1,
+    "initialInternalHoleRatio": 0,
+    "finalInternalHoleRatio": 0.0007867456497593484,
+    "labAgreement": 0.8929678822658275,
+    "labBgContaminationRate": 0,
+    "contourReliableBgContamination": 0,
+    "contourInternalHoleRatio": 0,
+    "contourBorderTouchRatio": 0,
+    "pixelsReclaimed": 7320,
+    "pixelsStripped": 0,
+    "changedPixelCount": 7320,
+    "changedBBox": {
+      "minX": 61,
+      "minY": 14,
+      "maxX": 231,
+      "maxY": 285
+    },
+    "refinementAttempted": true,
+    "refinementAccepted": true,
+    "refinementCategory": "under-recall",
+    "acceptReason": "reclaimed-under-recall",
+    "failureModes": [],
+    "gateValues": {
+      "deltaFg": 0.08469085523880049,
+      "corridorReclaimed": 0,
+      "underRecallReclaimed": 7320,
+      "darkBiteReclaimed": 0,
+      "stripped": 0,
+      "verticalStackSeverance": false,
+      "sideBySideMergeBlocked": false,
+      "cardShapedExpansionBlocked": false
+    },
+    "confidenceBefore": 0.84,
+    "confidenceAfter": 0.84,
+    "inferenceEngine": "isnet-onnx",
+    "refinementOps": [
+      "reclaimAdjacentUnderRecall"
+    ]
+  },
+  "directRefineAccepted": true,
+  "fg": {
+    "raw": 0.3204,
+    "refined": 0.4051,
+    "lab": 0.4103,
+    "contour": 0.4008
+  },
+  "rgbUnchanged": true,
+  "contourMethod": "contour-first-fallback-seed",
+  "contourNeedsReview": true
+}

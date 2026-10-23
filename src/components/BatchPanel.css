@@ -90,6 +90,17 @@
   color: var(--text-muted);
 }
 
+.batch-panel__strategy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: flex-end;
+}
+
+.batch-panel__strategy .batch-panel__format select {
+  min-width: 12rem;
+}
+
 .batch-panel__row,
 .batch-panel__export {
   display: flex;

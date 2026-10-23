@@ -1,0 +1,65 @@
+[
+  {
+    "file": "03_tshirt.jpg",
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 428,
+    "dims": "294x292",
+    "keep": 51866,
+    "studioKeepEdge": 1266,
+    "studioKeepEdgeRatio": 0.024409054100952454
+  },
+  {
+    "file": "05_coat.jpg",
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 341,
+    "dims": "296x292",
+    "keep": 35530,
+    "studioKeepEdge": 213,
+    "studioKeepEdgeRatio": 0.005994933858710949
+  },
+  {
+    "file": "06_sweater.jpg",
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 276,
+    "dims": "298x291",
+    "keep": 43132,
+    "studioKeepEdge": 478,
+    "studioKeepEdgeRatio": 0.0110822591115645
+  },
+  {
+    "file": "07_dress.jpg",
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 253,
+    "dims": "294x291",
+    "keep": 17998,
+    "studioKeepEdge": 87,
+    "studioKeepEdgeRatio": 0.0048338704300477835
+  },
+  {
+    "file": "08_sneakers.jpg",
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 310,
+    "dims": "294x291",
+    "keep": 21806,
+    "studioKeepEdge": 0,
+    "studioKeepEdgeRatio": 0
+  },
+  {
+    "file": "09_handbag.jpg",
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 199,
+    "dims": "294x291",
+    "keep": 32862,
+    "studioKeepEdge": 0,
+    "studioKeepEdgeRatio": 0
+  },
+  {
+    "file": "10_cap.jpg",
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 286,
+    "dims": "296x291",
+    "keep": 24769,
+    "studioKeepEdge": 66,
+    "studioKeepEdgeRatio": 0.002664621098954338
+  }
+]

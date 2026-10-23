@@ -22,6 +22,14 @@ export type MaskStateMeta = {
   revision: number
   /** True after the user has painted or otherwise edited the mask. */
   hasEdits: boolean
+  /** Heuristic 0–1 auto-mask confidence (undefined until auto-mask runs). */
+  autoConfidence?: number
+  /** True when auto-mask signals likely white-on-white / leakage — review recommended. */
+  needsReview?: boolean
+  /** Actual strategy that produced the mask (`methodUsed`). */
+  autoMethodUsed?: string
+  /** Human-readable reject / fallback note when contour/ISNet needs review. */
+  reviewReason?: string
 }
 
 export function createEmptyMaskMeta(): MaskStateMeta {

@@ -20,4 +20,16 @@ describe('compositePixelBuffers', () => {
     const result = compositePixelBuffers(original, mask, background)
     expect(result[0]).toBe(50)
   })
+
+  it('transparent mode sets output alpha = sourceA × maskA', () => {
+    const original = new Uint8ClampedArray([10, 20, 30, 255, 40, 50, 60, 255])
+    const mask = new Uint8ClampedArray([255, 0])
+    const background = new Uint8ClampedArray([9, 9, 9, 255, 9, 9, 9, 255])
+    const result = compositePixelBuffers(original, mask, background, {
+      transparentBackground: true,
+    })
+    expect(result[3]).toBe(255)
+    expect(result[7]).toBe(0)
+    expect(Array.from(result.slice(0, 3))).toEqual([10, 20, 30])
+  })
 })

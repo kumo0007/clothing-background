@@ -1,0 +1,61 @@
+{
+  "file": "07_dress.jpg",
+  "methodUsed": "isnet-onnx",
+  "genuineModelInference": true,
+  "needsReview": false,
+  "reviewReasons": [
+    "isnet-refine-rejected: ambiguous-evidence (possible-under-recall,residual-lab-garment-gaps)"
+  ],
+  "refine": {
+    "initialFgRatio": 0.19134114126750357,
+    "finalFgRatio": 0.19134114126750357,
+    "deltaFgRatio": 0,
+    "initialComponentCount": 1,
+    "finalComponentCount": 1,
+    "initialInternalHoleRatio": 0,
+    "finalInternalHoleRatio": 0,
+    "labAgreement": 0.210463566870047,
+    "labBgContaminationRate": 0,
+    "contourReliableBgContamination": 0,
+    "contourInternalHoleRatio": 0,
+    "contourBorderTouchRatio": 0,
+    "pixelsReclaimed": 0,
+    "pixelsStripped": 0,
+    "changedPixelCount": 0,
+    "changedBBox": null,
+    "refinementAttempted": true,
+    "refinementAccepted": false,
+    "refinementCategory": "none",
+    "rejectReason": "ambiguous-evidence",
+    "failureModes": [
+      "possible-under-recall",
+      "residual-lab-garment-gaps"
+    ],
+    "gateValues": {
+      "deltaFg": 0,
+      "corridorReclaimed": 0,
+      "underRecallReclaimed": 810,
+      "darkBiteReclaimed": 0,
+      "stripped": 0,
+      "verticalStackSeverance": false,
+      "sideBySideMergeBlocked": false,
+      "cardShapedExpansionBlocked": false
+    },
+    "confidenceBefore": 0.84,
+    "confidenceAfter": 0.84,
+    "inferenceEngine": "isnet-onnx",
+    "refinementOps": [
+      "reclaimAdjacentUnderRecall"
+    ]
+  },
+  "directRefineAccepted": false,
+  "fg": {
+    "raw": 0.1913,
+    "refined": 0.1913,
+    "lab": 0.2016,
+    "contour": 0.1921
+  },
+  "rgbUnchanged": true,
+  "contourMethod": "contour-first-fallback-seed",
+  "contourNeedsReview": true
+}

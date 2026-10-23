@@ -1,4 +1,5 @@
 import type { BrushMode, MaskPixelBuffer } from '../../types/mask'
+import { markCompetitionProtectedPale } from './paleCompetition'
 
 export type Rgb = { r: number; g: number; b: number }
 
@@ -212,7 +213,7 @@ function collectBorderFlatSamples(imageData: ImageData): BorderSample[] {
  * Prefers the lighter mode when both light card and dark garment touch the edge
  * (common for fill-the-frame product crops like puffers).
  */
-function averageCornerColor(imageData: ImageData): Rgb {
+export function averageCornerColor(imageData: ImageData): Rgb {
   const samples = collectBorderFlatSamples(imageData)
   if (samples.length === 0) {
     return readRgb(imageData, 2, 2)
@@ -351,14 +352,23 @@ function isBrighterThanStudio(
   }
   // Gray / mid studio card: whites clearly above the card are garment.
   if (studioLuma < 218) {
+    // Texture helps when the lift is modest (sneaker leather ≈ card + 6–10).
+    if (variance > 12 && luma >= studioLuma + 6) {
+      return true
+    }
     return luma >= Math.max(studioLuma + margin, 226)
   }
-  // Near-white studio: even mild micro-texture marks leather/suede as garment;
-  // truly flat card (var≈0–2) stays removable via border flood/strip.
-  if (variance > 2.5 && luma >= 210) {
+  // Near-white studio: same-card / +1 band is never garment (estimate noise +
+  // hem adjacency). Flat leather at card+3–4 must count as garment for flood
+  // gates; reclaim separately refuses near-card neutrals so blazer slabs do
+  // not grow back from dark hems via inflated edge variance.
+  if (luma <= studioLuma + 1) {
+    return false
+  }
+  if (variance > 20 && luma >= studioLuma + 2) {
     return true
   }
-  return luma >= studioLuma + 5 && luma >= 218
+  return luma >= studioLuma + 3
 }
 
 /** Bright-garment gate that samples local variance at the pixel. */
@@ -381,7 +391,9 @@ function isBrightGarmentAt(
 function isWarmGarmentFabric(rgb: Rgb, luma: number): boolean {
   const chroma =
     Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b)
-  return rgb.r > rgb.b + 10 && chroma >= 12 && luma >= 130 && luma <= 220
+  // Require clear warmth — chroma 12 matched warm studio cards and blocked
+  // flood-remove of the entire backdrop in beige-on-beige product shots.
+  return rgb.r > rgb.b + 12 && chroma >= 16 && luma >= 130 && luma <= 220
 }
 
 /**
@@ -540,8 +552,14 @@ function restoreTexturedKeeps(
         (y > 0 && mask.data[index - width] === 0) ||
         (y + 1 < height && mask.data[index + width] === 0)
 
-      // Never put bright edge blowout back on the silhouette.
-      if (touchesRemove && luma >= 220 && isNearNeutralBright(rgb)) {
+      // Never put flat bright card AA back on the silhouette. Textured bright
+      // neutrals (sneaker leather / tee weave) at the edge must still restore.
+      if (
+        touchesRemove &&
+        luma >= 220 &&
+        isNearNeutralBright(rgb) &&
+        localLumaVariance(imageData, x, y) <= 8
+      ) {
         continue
       }
 
@@ -612,7 +630,7 @@ function touchesKeep(
  * backdrop. Recovers light garments (beige caps, white shirts) around logos /
  * seams that survived the corner flood.
  */
-function reclaimGarmentFromKeep(
+export function reclaimGarmentFromKeep(
   mask: MaskPixelBuffer,
   imageData: ImageData,
   corner: Rgb,
@@ -643,7 +661,14 @@ function reclaimGarmentFromKeep(
         // distance to gray is small (tees / sneaker panels). Grow from a bright
         // KEEP body, or from dark accents (soles/logos) when the pixel is
         // textured / semi-interior — never from a lone dark edge into flat AA.
-        if (isBrighterThanStudio(rgb, luma, studioLuma, 12, variance)) {
+        // Near-white card: also reclaim modest lifts (+2) that failed the
+        // brighter-than-studio gate due to low variance (flat leather panels).
+        const nearWhiteLeather =
+          studioLuma >= 218 &&
+          isNearNeutralBright(rgb) &&
+          luma >= studioLuma + 3 &&
+          luma < 250
+        if (isBrighterThanStudio(rgb, luma, studioLuma, 12, variance) || nearWhiteLeather) {
           let brightKeepNeighbor = false
           let darkKeepNeighbor = false
           let keepNeighbors = 0
@@ -668,15 +693,26 @@ function reclaimGarmentFromKeep(
               darkKeepNeighbor = true
             }
           }
+          // fromSole recovers white leather next to dark soles — but must NOT
+          // fire for flat studio AA that only touches a dark/chromatic hem.
+          // Require clear lift above the card; modest JPEG lift (+2–5) next to
+          // a blazer/jeans silhouette is studio, not leather.
           const fromSole =
             darkKeepNeighbor &&
-            (variance > 3 ||
-              keepNeighbors >= 2 ||
-              colorDistance(rgb, corner) > backdropTolerance * 0.4)
+            (nearWhiteLeather ||
+              (luma >= studioLuma + 7 &&
+                keepNeighbors >= 2 &&
+                variance >= 6))
           if (brightKeepNeighbor || fromSole) {
             next[index] = 255
             gained += 1
           }
+          continue
+        }
+        // Tight-neutral near-whites only reclaim via the bright path above —
+        // otherwise slightly-off-card studio AA grows onto mauve hems. Beige /
+        // warm fabric (higher chroma) still uses the paths below.
+        if (isNearNeutral(rgb, 14) && luma >= 200) {
           continue
         }
         // Never reclaim pixels that still match the studio color — even when
@@ -690,6 +726,40 @@ function reclaimGarmentFromKeep(
           luma >= 70 &&
           luma <= studioLuma - 28 &&
           rgb.r <= rgb.b + 10
+        ) {
+          continue
+        }
+        // Border bands: never reclaim mid-tone neutrals / foreign footers
+        // (concrete under caps). Interior warm/beige fabric may still reclaim.
+        const borderBand = Math.max(6, Math.floor(height * 0.05))
+        if (y < borderBand || y >= height - borderBand) {
+          const distCorner = colorDistance(rgb, corner)
+          if (
+            distCorner >= 26 &&
+            isNearNeutralBright(rgb) &&
+            luma >= 55 &&
+            luma <= 210
+          ) {
+            continue
+          }
+          if (
+            isNearNeutralBright(rgb) &&
+            luma >= 60 &&
+            luma <= 210 &&
+            !isWarmGarmentFabric(rgb, luma)
+          ) {
+            continue
+          }
+        }
+        // Flat near-card neutrals are studio — never grow false FG around dark
+        // silhouettes (blazer / jeans angular card slabs). White leather uses
+        // the brighter-than-studio path above instead.
+        if (
+          isNearNeutralBright(rgb) &&
+          luma >= studioLuma - 10 &&
+          luma <= studioLuma + 8 &&
+          variance <= 22 &&
+          !isWarmGarmentFabric(rgb, luma)
         ) {
           continue
         }
@@ -721,18 +791,22 @@ function isBackdropFringePixel(
 ): boolean {
   const rgb = readRgb(imageData, x, y)
   const luma = luminanceAt(imageData, x, y)
-  // Near-studio bright AA / card blowout only. White garments sit well above a
-  // gray studio card — never peel those (tshirt / sneaker leather). Shallow
-  // studio-matching / brightHalo passes still clear bag AA above this margin.
+  // Never peel protected bright garment (sneaker leather / white tee weave).
+  if (isBrightGarmentAt(imageData, x, y, studioLuma)) {
+    return false
+  }
+  // Near-studio bright AA / card blowout only. White garments often sit only
+  // +2–6 above a near-white card — never peel any clear lift (sneakers/tees).
+  // Flat card AA at ≈ studio luma remains peelable for dark-bag silhouettes.
   if (luma >= 220 && isNearNeutralBright(rgb)) {
-    if (luma > studioLuma + 8) {
+    if (luma > studioLuma + 1) {
       return false
     }
     // Specular leather / textured white panels must not become a BFS tunnel.
-    if (localLumaVariance(imageData, x, y) > 22) {
+    if (localLumaVariance(imageData, x, y) > 16) {
       return false
     }
-    return depth <= 3
+    return depth <= 2
   }
   // Soft shadow / floor contact clearly darker than the studio card.
   // Skip warm fabric folds (beige hoodie hems) — true soft shadows are neutral.
@@ -744,6 +818,47 @@ function isBackdropFringePixel(
     return true
   }
   return false
+}
+
+/**
+ * True when the pixel itself is dark fabric inside a dark KEEP body.
+ * Soft-shadow gray next to a hem must NOT match — those still need peeling.
+ */
+function isInteriorDarkGarment(
+  mask: MaskPixelBuffer,
+  imageData: ImageData,
+  x: number,
+  y: number,
+): boolean {
+  const selfLuma = luminanceAt(imageData, x, y)
+  if (selfLuma >= 50) {
+    return false
+  }
+  const width = mask.width
+  const height = mask.height
+  let darkKeep = 0
+  let keep = 0
+  for (let dy = -1; dy <= 1; dy += 1) {
+    for (let dx = -1; dx <= 1; dx += 1) {
+      if (dx === 0 && dy === 0) {
+        continue
+      }
+      const nx = x + dx
+      const ny = y + dy
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+        continue
+      }
+      const index = ny * width + nx
+      if (mask.data[index] !== 255) {
+        continue
+      }
+      keep += 1
+      if (luminanceAt(imageData, nx, ny) < 50) {
+        darkKeep += 1
+      }
+    }
+  }
+  return keep >= 4 && darkKeep >= 3
 }
 
 /**
@@ -828,7 +943,36 @@ function chokeBackdropFringe(
       }
       const nx = neighbor % width
       const ny = (neighbor / width) | 0
-      if (!isBackdropFringePixel(imageData, nx, ny, studioLuma, d + 1)) {
+      // Never tunnel into black garment interiors (JPEG mid-gray noise).
+      if (isInteriorDarkGarment(mask, imageData, nx, ny)) {
+        continue
+      }
+      // Bright neutrals above the card are usually garment — but flat AA that
+      // hugs a dark hem must still peel (sweater/cap/handbag halos). Require
+      // a dark KEEP neighbor + low variance so sneaker leather is not tunneled.
+      if (isBrightGarmentAt(imageData, nx, ny, studioLuma)) {
+        const rgbBright = readRgb(imageData, nx, ny)
+        const lumaBright = luminanceAt(imageData, nx, ny)
+        const varBright = localLumaVariance(imageData, nx, ny)
+        let darkKeep = 0
+        for (const n2 of [neighbor - 1, neighbor + 1, neighbor - width, neighbor + width]) {
+          if (n2 < 0 || n2 >= mask.data.length || mask.data[n2] !== 255) {
+            continue
+          }
+          if (luminanceAt(imageData, n2 % width, (n2 / width) | 0) < 100) {
+            darkKeep += 1
+          }
+        }
+        if (
+          darkKeep < 1 ||
+          varBright > 6 ||
+          !isNearNeutralBright(rgbBright) ||
+          lumaBright > studioLuma + 6 ||
+          d >= 5
+        ) {
+          continue
+        }
+      } else if (!isBackdropFringePixel(imageData, nx, ny, studioLuma, d + 1)) {
         continue
       }
       mask.data[neighbor] = 0
@@ -842,7 +986,7 @@ function chokeBackdropFringe(
   // plus soft mid-gray still hugging a darker garment hem (puffer bottom).
   // Extra passes: peel bright AA first (touches REMOVE), then soft-shadow gray
   // that was trapped behind the AA ring, then any leftover halo.
-  for (let pass = 0; pass < 6; pass += 1) {
+  for (let pass = 0; pass < 10; pass += 1) {
     const next = new Uint8Array(mask.data)
     let gained = 0
     for (let y = 1; y < height - 1; y += 1) {
@@ -859,6 +1003,9 @@ function chokeBackdropFringe(
         if (!touchesRemove) {
           continue
         }
+        if (isInteriorDarkGarment(mask, imageData, x, y)) {
+          continue
+        }
         const rgb = readRgb(imageData, x, y)
         const matchesStudio = colorDistance(rgb, corner) <= fringeTolerance
         const lumaPeek = luminanceAt(imageData, x, y)
@@ -869,10 +1016,14 @@ function chokeBackdropFringe(
         let softOnDark = false
         let brightHaloOnDark = false
         let isolatedBrightFringe = false
-        if (!matchesStudio && isNearNeutralBright(rgb)) {
-          const luma = luminanceAt(imageData, x, y)
+        // Fringe signals must run even when RGB is within studio tolerance —
+        // near-white AA rings around dark bags often match the card closely,
+        // and skipping them left KEEP halos (handbag / fringe tests).
+        if (isNearNeutralBright(rgb)) {
+          const luma = lumaPeek
           let minKeep = 255
           let darkKeep = 0
+          let garmentKeep = 0
           let interiorBrightKeep = 0
           for (const neighbor of [
             index - 1,
@@ -885,10 +1036,23 @@ function chokeBackdropFringe(
             }
             const nx = neighbor % width
             const ny = (neighbor / width) | 0
+            const neighborRgb = readRgb(imageData, nx, ny)
             const neighborLuma = luminanceAt(imageData, nx, ny)
             minKeep = Math.min(minKeep, neighborLuma)
             if (neighborLuma < 100) {
               darkKeep += 1
+              garmentKeep += 1
+            } else if (isWarmGarmentFabric(neighborRgb, neighborLuma)) {
+              // Camel coat / beige hem — treat as garment for AA peel.
+              garmentKeep += 1
+            } else {
+              const nChroma =
+                Math.max(neighborRgb.r, neighborRgb.g, neighborRgb.b) -
+                Math.min(neighborRgb.r, neighborRgb.g, neighborRgb.b)
+              // Mauve/satin dress and other chromatic mid-tones.
+              if (nChroma >= 18 && neighborLuma <= studioLuma - 15) {
+                garmentKeep += 1
+              }
             }
             if (neighborLuma >= 200) {
               // Interior bright fabric does not itself touch REMOVE (white tee
@@ -904,7 +1068,7 @@ function chokeBackdropFringe(
             }
           }
           if (luma >= 70 && luma <= 160) {
-            softOnDark = darkKeep >= 1 && luma >= minKeep + 12
+            softOnDark = garmentKeep >= 1 && luma >= minKeep + 12
           }
           // Mid-gray soft halo trapped behind a bright AA ring never 4-connects
           // to the dark body (corner geometry). Once AA is peeled it touches
@@ -920,12 +1084,16 @@ function chokeBackdropFringe(
           ) {
             softOnDark = true
           }
-          // White AA ring around dark bag/hoodie — safe because white tees
-          // rarely sit next to a dark keep neighbor at the silhouette.
+          // White AA ring around dark OR chromatic garment (dress/coat/bag).
+          // Flat 3×3 AA only — textured leather next to dark soles stays.
           brightHaloOnDark =
-            luma >= 190 && darkKeep >= 1 && luma >= minKeep + 40
+            luma >= 190 &&
+            garmentKeep >= 1 &&
+            luma >= minKeep + 30 &&
+            localLumaVariance(imageData, x, y, 1) <= 8
           // Near-white edge AA with no interior bright body (bags / AA rings).
-          // White tees keep an interior bright neighbor that does not touch REMOVE.
+          // White tees / sneaker panels keep an interior bright neighbor that
+          // does not touch REMOVE — that blocks this signal.
           isolatedBrightFringe = luma >= 220 && interiorBrightKeep === 0
         }
         if (
@@ -933,6 +1101,18 @@ function chokeBackdropFringe(
           !softOnDark &&
           !brightHaloOnDark &&
           !isolatedBrightFringe
+        ) {
+          continue
+        }
+        // Studio-color match alone must not peel white leather/tees. Allow peel
+        // only when an explicit fringe signal fires (AA ring / soft shadow), or
+        // the pixel is not a protected bright garment.
+        if (
+          matchesStudio &&
+          !softOnDark &&
+          !brightHaloOnDark &&
+          !isolatedBrightFringe &&
+          isBrightGarmentAt(imageData, x, y, studioLuma)
         ) {
           continue
         }
@@ -986,7 +1166,32 @@ function chokeBackdropFringe(
       }
       const nx = neighbor % width
       const ny = (neighbor / width) | 0
-      if (!isBackdropFringePixel(imageData, nx, ny, studioLuma, d + 1)) {
+      if (isInteriorDarkGarment(mask, imageData, nx, ny)) {
+        continue
+      }
+      if (isBrightGarmentAt(imageData, nx, ny, studioLuma)) {
+        const rgbBright = readRgb(imageData, nx, ny)
+        const lumaBright = luminanceAt(imageData, nx, ny)
+        const varBright = localLumaVariance(imageData, nx, ny)
+        let darkKeep = 0
+        for (const n2 of [neighbor - 1, neighbor + 1, neighbor - width, neighbor + width]) {
+          if (n2 < 0 || n2 >= mask.data.length || mask.data[n2] !== 255) {
+            continue
+          }
+          if (luminanceAt(imageData, n2 % width, (n2 / width) | 0) < 100) {
+            darkKeep += 1
+          }
+        }
+        if (
+          darkKeep < 1 ||
+          varBright > 6 ||
+          !isNearNeutralBright(rgbBright) ||
+          lumaBright > studioLuma + 6 ||
+          d >= 5
+        ) {
+          continue
+        }
+      } else if (!isBackdropFringePixel(imageData, nx, ny, studioLuma, d + 1)) {
         continue
       }
       mask.data[neighbor] = 0
@@ -1067,6 +1272,20 @@ export function removeBrightEdgeChrome(
     return false
   }
 
+  /** White soles / leather near the frame look like chrome — keep if dark-adjacent. */
+  const touchesDarkKeep = (x: number, y: number): boolean => {
+    for (let dy = -2; dy <= 2; dy += 1) {
+      for (let dx = -2; dx <= 2; dx += 1) {
+        const nx = x + dx
+        const ny = y + dy
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue
+        if (mask.data[ny * width + nx]! < 128) continue
+        if (luminanceAt(imageData, nx, ny) < 110) return true
+      }
+    }
+    return false
+  }
+
   const clearColumn = (x: number) => {
     for (let y = 0; y < height; y += 1) {
       const index = y * width + x
@@ -1074,6 +1293,9 @@ export function removeBrightEdgeChrome(
         continue
       }
       if (!looksLikeChromePixel(x, y)) {
+        continue
+      }
+      if (touchesDarkKeep(x, y)) {
         continue
       }
       mask.data[index] = 0
@@ -1088,6 +1310,9 @@ export function removeBrightEdgeChrome(
         continue
       }
       if (!looksLikeChromePixel(x, y)) {
+        continue
+      }
+      if (touchesDarkKeep(x, y)) {
         continue
       }
       mask.data[index] = 0
@@ -1197,6 +1422,341 @@ export function removeBrightEdgeChrome(
 }
 
 /**
+ * Clear foreign header/footer bands baked into scraped catalog photos
+ * (blue UI bars, concrete strips, room-scene footers, multi-color scrapes).
+ * Uses border connectivity + row/region evidence — not a fixed strip height.
+ * Stops before dark garment hems/brims/soles. Mask only — never modifies RGB.
+ */
+export function stripForeignBorderBands(
+  mask: MaskPixelBuffer,
+  imageData: ImageData,
+): number {
+  const width = mask.width
+  const height = mask.height
+  const corner = averageCornerColor(imageData)
+  // Search window only — clearing stops on garment evidence, not at this depth.
+  const maxInset = Math.max(16, Math.floor(height * 0.28))
+  let painted = 0
+
+  const rowProfile = (y: number) => {
+    let sumR = 0
+    let sumG = 0
+    let sumB = 0
+    let sumL = 0
+    let sumSq = 0
+    let dark = 0
+    let chromatic = 0
+    let foreignPx = 0
+    let minL = 255
+    let maxL = 0
+    let leftR = 0
+    let leftG = 0
+    let leftB = 0
+    let rightR = 0
+    let rightG = 0
+    let rightB = 0
+    const mid = (width / 2) | 0
+    for (let x = 0; x < width; x += 1) {
+      const rgb = readRgb(imageData, x, y)
+      const luma = 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b
+      sumR += rgb.r
+      sumG += rgb.g
+      sumB += rgb.b
+      sumL += luma
+      sumSq += luma * luma
+      if (luma < minL) minL = luma
+      if (luma > maxL) maxL = luma
+      if (luma < 55) {
+        dark += 1
+      }
+      const chroma =
+        Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b)
+      if (chroma >= 28) {
+        chromatic += 1
+      }
+      if (colorDistance(rgb, corner) >= 28) {
+        foreignPx += 1
+      }
+      if (x < mid) {
+        leftR += rgb.r
+        leftG += rgb.g
+        leftB += rgb.b
+      } else {
+        rightR += rgb.r
+        rightG += rgb.g
+        rightB += rgb.b
+      }
+    }
+    const n = width
+    const nLeft = Math.max(1, mid)
+    const nRight = Math.max(1, width - mid)
+    const mean = {
+      r: sumR / n,
+      g: sumG / n,
+      b: sumB / n,
+    }
+    const meanLuma = sumL / n
+    const left = {
+      r: leftR / nLeft,
+      g: leftG / nLeft,
+      b: leftB / nLeft,
+    }
+    const right = {
+      r: rightR / nRight,
+      g: rightG / nRight,
+      b: rightB / nRight,
+    }
+    return {
+      mean,
+      meanLuma,
+      variance: sumSq / n - meanLuma * meanLuma,
+      darkRatio: dark / n,
+      chromaticRatio: chromatic / n,
+      foreignRatio: foreignPx / n,
+      lumaSpan: maxL - minL,
+      halfDist: colorDistance(left, right),
+      dist: colorDistance(mean, corner),
+      chroma:
+        Math.max(mean.r, mean.g, mean.b) - Math.min(mean.r, mean.g, mean.b),
+    }
+  }
+
+  type RowProfile = ReturnType<typeof rowProfile>
+
+  /** Real garment hem / sole / brim row — stop peeling here. */
+  const isGarmentHemRow = (profile: RowProfile): boolean => {
+    // Blue UI / scrape chrome is never a hem, even with dark speckles.
+    if (profile.chromaticRatio >= 0.3) {
+      return false
+    }
+    // Mostly-foreign mottled concrete without a solid dark garment mass.
+    if (profile.foreignRatio >= 0.55 && profile.darkRatio < 0.2) {
+      return false
+    }
+    if (profile.darkRatio >= 0.12 && profile.dist < 40) {
+      return true
+    }
+    // Garment touching the border: row mean is mixed with studio so dist is
+    // large — still stop when a solid dark mass dominates the row.
+    if (
+      profile.darkRatio >= 0.2 &&
+      profile.meanLuma < 150 &&
+      profile.chromaticRatio < 0.25
+    ) {
+      return true
+    }
+    return false
+  }
+
+  const isForeignRow = (profile: RowProfile): boolean => {
+    if (isGarmentHemRow(profile)) {
+      return false
+    }
+    // Blue/teal UI chrome footers (solid or gradient).
+    if (profile.chromaticRatio >= 0.35 && profile.mean.b >= profile.mean.r + 8) {
+      return true
+    }
+    // Abrupt left/right color break across a full-width scrape band.
+    if (profile.halfDist >= 40 && profile.foreignRatio >= 0.35) {
+      return true
+    }
+    // Multi-color / high-span rows still mostly off-card (room-scene footers).
+    if (profile.lumaSpan >= 60 && profile.foreignRatio >= 0.4) {
+      return true
+    }
+    // Concrete / room-scene / mismatched floor vs studio card.
+    if (profile.dist >= 24) {
+      return true
+    }
+    // Majority of pixels individually foreign even if mean is washed.
+    if (profile.foreignRatio >= 0.55) {
+      return true
+    }
+    // High-texture foreign strip still off the card.
+    if (profile.variance >= 160 && profile.dist >= 14) {
+      return true
+    }
+    return false
+  }
+
+  const isWhiteSeparator = (profile: RowProfile): boolean =>
+    profile.meanLuma >= 225 &&
+    isNearNeutral(profile.mean, 22) &&
+    profile.variance < 100 &&
+    profile.chromaticRatio < 0.15
+
+  const clearRowFully = (y: number) => {
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x
+      if (mask.data[index] === 0) {
+        continue
+      }
+      mask.data[index] = 0
+      painted += 1
+    }
+  }
+
+  const walkEdge = (fromBottom: boolean) => {
+    let cleared = 0
+    const start = fromBottom ? height - 1 : 0
+    const end = fromBottom ? height - maxInset : maxInset
+    const step = fromBottom ? -1 : 1
+    for (
+      let y = start;
+      fromBottom ? y >= end : y < end;
+      y += step
+    ) {
+      const profile = rowProfile(y)
+      if (isGarmentHemRow(profile)) {
+        break
+      }
+      if (isForeignRow(profile)) {
+        clearRowFully(y)
+        cleared += 1
+        continue
+      }
+      // Thin white separator between studio and foreign footer/header.
+      if (cleared > 0 && isWhiteSeparator(profile)) {
+        clearRowFully(y)
+        cleared += 1
+        continue
+      }
+      // Peek ahead: white at the outer edge with foreign just inside — clear both.
+      if (cleared === 0 && isWhiteSeparator(profile)) {
+        const peekY = y + step
+        const peekOk = fromBottom ? peekY >= end : peekY < end
+        if (peekOk) {
+          const peek = rowProfile(peekY)
+          if (isForeignRow(peek)) {
+            clearRowFully(y)
+            cleared += 1
+            continue
+          }
+        }
+      }
+      break
+    }
+  }
+
+  walkEdge(true)
+  walkEdge(false)
+
+  // Connectivity: any remaining KEEP touching the bottom (or top) border that
+  // looks foreign gets flooded off — catches speckled multi-color leftovers
+  // that survive row-mean checks without eating interior garment islands.
+  painted += stripBorderConnectedForeignPixels(mask, imageData, corner, true)
+  painted += stripBorderConnectedForeignPixels(mask, imageData, corner, false)
+
+  return painted
+}
+
+/**
+ * Flood-clear KEEP pixels connected to the top or bottom image border when
+ * they look like foreign scrape (not dark/chromatic/warm garment fabric).
+ */
+function stripBorderConnectedForeignPixels(
+  mask: MaskPixelBuffer,
+  imageData: ImageData,
+  corner: Rgb,
+  fromBottom: boolean,
+): number {
+  const width = mask.width
+  const height = mask.height
+  const visited = new Uint8Array(width * height)
+  const queue: number[] = []
+  let painted = 0
+
+  const seedY = fromBottom ? height - 1 : 0
+  for (let x = 0; x < width; x += 1) {
+    const index = seedY * width + x
+    if (mask.data[index]! === 0) {
+      continue
+    }
+    if (!isForeignBorderPixel(imageData, x, seedY, corner)) {
+      continue
+    }
+    queue.push(index)
+    visited[index] = 1
+  }
+
+  let head = 0
+  const bandLimit = Math.max(16, Math.floor(height * 0.28))
+  while (head < queue.length) {
+    const index = queue[head++]!
+    const x = index % width
+    const y = (index / width) | 0
+    mask.data[index] = 0
+    painted += 1
+
+    const neighbors = [
+      x > 0 ? index - 1 : -1,
+      x + 1 < width ? index + 1 : -1,
+      y > 0 ? index - width : -1,
+      y + 1 < height ? index + width : -1,
+    ]
+    for (const n of neighbors) {
+      if (n < 0 || visited[n] || mask.data[n]! === 0) {
+        continue
+      }
+      const nx = n % width
+      const ny = (n / width) | 0
+      const inset = fromBottom ? height - 1 - ny : ny
+      if (inset > bandLimit) {
+        continue
+      }
+      if (!isForeignBorderPixel(imageData, nx, ny, corner)) {
+        continue
+      }
+      visited[n] = 1
+      queue.push(n)
+    }
+  }
+  return painted
+}
+
+function isForeignBorderPixel(
+  imageData: ImageData,
+  x: number,
+  y: number,
+  corner: Rgb,
+): boolean {
+  const rgb = readRgb(imageData, x, y)
+  const luma = luminanceAt(imageData, x, y)
+  const chroma =
+    Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b)
+  const dist = colorDistance(rgb, corner)
+  // Preserve dark garment / soft contact shadow (dist to a bright card is large).
+  if (luma < 75 && chroma < 30) {
+    return false
+  }
+  // Preserve warm / chromatic garment fabric.
+  if (isWarmGarmentFabric(rgb, luma)) {
+    return false
+  }
+  if (chroma >= 36 && luma < 200) {
+    // Saturated garment (not blue UI alone — blue UI is foreign)
+    if (rgb.b >= rgb.r + 25 && rgb.b >= 140) {
+      return true
+    }
+    if (chroma >= 40 && dist < 30) {
+      return false
+    }
+  }
+  // White leather / bright neutrals near card — not foreign footer.
+  if (isNearNeutralBright(rgb) && luma >= cornerLuma(corner) - 4 && dist < 36) {
+    const variance = localLumaVariance(imageData, x, y, 1)
+    if (variance > 8 || luma > cornerLuma(corner) + 2) {
+      return false
+    }
+  }
+  return dist >= 26 || (chroma >= 40 && rgb.b > rgb.r + 15)
+}
+
+function cornerLuma(corner: Rgb): number {
+  return 0.299 * corner.r + 0.587 * corner.g + 0.114 * corner.b
+}
+
+/**
  * True when a KEEP pixel is leftover studio card (flat gray/white), not garment.
  * Textured bright neutrals (white tee weave) are protected; flat card blowout
  * that still matches the corner color can be peeled.
@@ -1218,42 +1778,182 @@ function isRemovableStudioPixel(
   const nearVerticalBorder = y < borderBand || y >= height - borderBand
 
   // Scraped catalog footers often look warm-beige; allow peeling flat bands
-  // on the top/bottom edge only — never interior camel/beige hems.
+  // on the top/bottom edge only — never interior camel/beige garment. Require
+  // clear distance from the studio card so near-card warm fabric (caps) stays.
   if (isWarmGarmentFabric(rgb, luma)) {
     if (
       nearVerticalBorder &&
-      variance <= 18 &&
+      variance <= 8 &&
       luma >= 140 &&
-      luma <= 210
+      luma <= 200 &&
+      colorDistance(rgb, corner) >= 30
     ) {
       return true
     }
     return false
   }
+  const dist = colorDistance(rgb, corner)
+  // Near-card neutrals are studio even when 3×3 variance is inflated by an
+  // adjacent dark hem (blazer/jeans angular slabs). Keep this band modest so
+  // interior white leather at card+4–5 can still be protected by dark-connected
+  // pale marks; peelExteriorStudioKeep widens the band for exterior slabs.
+  if (
+    isNearNeutralBright(rgb) &&
+    dist <= Math.min(tolerance, 36) &&
+    luma >= 170 &&
+    luma <= studioLuma + 6
+  ) {
+    return true
+  }
+  // Flat JPEG card often sits 1–3 L above the corner estimate. Treat that as
+  // removable studio; only protect clearly lifted / textured pale (leather).
+  const flatCardLift =
+    isNearNeutralBright(rgb) &&
+    variance <= 12 &&
+    dist <= Math.min(tolerance, 28) &&
+    luma >= 170 &&
+    luma <= studioLuma + 3.5
+  if (flatCardLift) {
+    return true
+  }
+  // Lifted white leather / blowout above the card — never removable here.
+  // Edge AA on dark garments is handled by silhouette refine / choke instead.
+  if (isNearNeutralBright(rgb) && luma > studioLuma + 0.5) {
+    return false
+  }
+  if (isBrighterThanStudio(rgb, luma, studioLuma, 12, variance)) {
+    return false
+  }
+  // Near-card flat studio (at or slightly below card). Do not include the
+  // studioLuma+14 band — that erased sneaker panels at card+2–10.
+  if (
+    dist <= Math.min(tolerance, 28) &&
+    isNearNeutralBright(rgb) &&
+    luma >= 170 &&
+    luma <= studioLuma + 0.5
+  ) {
+    return true
+  }
   if (variance > maxVariance) {
     return false
   }
-  const dist = colorDistance(rgb, corner)
-  // Bright neutrals above the card: only peel flat blowout that still sits
-  // near the corner color. Textured white leather/jersey is never removable.
-  if (isBrighterThanStudio(rgb, luma, studioLuma, 12, variance)) {
-    return variance <= 4 && dist <= Math.min(tolerance, 22)
-  }
-  if (dist <= Math.max(tolerance, 36)) {
+  if (dist <= Math.max(tolerance, 36) && luma <= studioLuma + 0.5) {
     return true
   }
   // Flat mid/light gray card even when slightly off the estimated corner.
   return (
     isNearNeutral(rgb, 24) &&
     luma >= 170 &&
-    luma <= Math.max(232, studioLuma + 14)
+    luma <= studioLuma + 0.5
   )
+}
+
+/**
+ * Mark pale KEEP within a limited geodesic distance of dark KEEP.
+ * Protects white leather / light fabric attached to soles without shielding
+ * the entire border-connected studio card (which also looks pale).
+ *
+ * @param minLiftAboveStudio - optional floor on luma vs studio (enclosed-strip
+ *   uses a higher lift so flat handle-hole card can still clear).
+ */
+function markDarkConnectedPale(
+  mask: MaskPixelBuffer,
+  imageData: ImageData,
+  studioLuma: number,
+  minLiftAboveStudio = -4,
+  maxDistOverride?: number,
+): Uint8Array {
+  const width = mask.width
+  const height = mask.height
+  const protectedPale = new Uint8Array(width * height)
+  const distFromDark = new Int16Array(width * height)
+  distFromDark.fill(-1)
+  const queue: number[] = []
+  // Keep pale reclaim local to soles/panels — long geodesics shield brim/card.
+  const maxDist =
+    maxDistOverride ??
+    Math.max(14, Math.min(28, Math.floor(Math.min(width, height) * 0.1)))
+  const borderBand = Math.max(2, Math.floor(Math.min(width, height) * 0.02))
+
+  const isPaleKeep = (x: number, y: number): boolean => {
+    if (mask.data[y * width + x]! < 128) return false
+    const rgb = readRgb(imageData, x, y)
+    const L = luminanceAt(imageData, x, y)
+    if (isWarmGarmentFabric(rgb, L)) return false
+    if (!isNearNeutral(rgb, 28)) return false
+    if (L < 175) return false
+    if (L < studioLuma + minLiftAboveStudio) return false
+    // Prefer lifted leather. Near-card must NOT be shielded: dark-hem
+    // adjacency inflates 3×3 variance and previously protected angular
+    // studio slabs on blazer/jeans as if they were white leather.
+    const variance = localLumaVariance(imageData, x, y, 1)
+    const lift = L - studioLuma
+    // Near-zero lift is flat card (even with edge-inflated variance).
+    if (lift < 2.5) return false
+    // Flat white leather at card+3–6 attached to dark soles must stay.
+    if (lift < 3.5 && variance < 2) return false
+    return true
+  }
+
+  const nearOuterBorder = (x: number, y: number): boolean =>
+    x < borderBand ||
+    y < borderBand ||
+    x >= width - borderBand ||
+    y >= height - borderBand
+
+  for (let i = 0; i < mask.data.length; i += 1) {
+    if (mask.data[i]! < 128) continue
+    const x = i % width
+    const y = (i / width) | 0
+    if (luminanceAt(imageData, x, y) >= 100) continue
+    for (const n of [
+      x > 0 ? i - 1 : -1,
+      x + 1 < width ? i + 1 : -1,
+      y > 0 ? i - width : -1,
+      y + 1 < height ? i + width : -1,
+    ]) {
+      if (n < 0 || distFromDark[n]! >= 0) continue
+      const nx = n % width
+      const ny = (n / width) | 0
+      if (nearOuterBorder(nx, ny)) continue
+      if (!isPaleKeep(nx, ny)) continue
+      distFromDark[n] = 1
+      protectedPale[n] = 1
+      queue.push(n)
+    }
+  }
+
+  let head = 0
+  while (head < queue.length) {
+    const i = queue[head++]!
+    const d0 = distFromDark[i]!
+    if (d0 < 0 || d0 >= maxDist) continue
+    const x = i % width
+    const y = (i / width) | 0
+    for (const n of [
+      x > 0 ? i - 1 : -1,
+      x + 1 < width ? i + 1 : -1,
+      y > 0 ? i - width : -1,
+      y + 1 < height ? i + width : -1,
+    ]) {
+      if (n < 0 || distFromDark[n]! >= 0) continue
+      const nx = n % width
+      const ny = (n / width) | 0
+      if (nearOuterBorder(nx, ny)) continue
+      if (!isPaleKeep(nx, ny)) continue
+      distFromDark[n] = d0 + 1
+      protectedPale[n] = 1
+      queue.push(n)
+    }
+  }
+  return protectedPale
 }
 
 /**
  * Peel flat studio KEEP that still touches the image border (or is reachable
  * from it through other flat studio). Fixes leftover gray card slabs around
  * white tees after reclaim/morph. Never enters white garment or warm fabric.
+ * Also never enters pale leather/fabric that is connected to dark KEEP structure.
  */
 export function stripBorderConnectedStudio(
   mask: MaskPixelBuffer,
@@ -1264,26 +1964,48 @@ export function stripBorderConnectedStudio(
   const height = mask.height
   const corner = averageCornerColor(imageData)
   const studioLuma = 0.299 * corner.r + 0.587 * corner.g + 0.114 * corner.b
+  // Lifted / textured pale attached to dark soles must survive border flood.
+  // Short radius — longer walks re-shield cap/card after flat JPEG lift.
+  const protectedPale = markDarkConnectedPale(mask, imageData, studioLuma, 0.5, 18)
+  const competitionProtect = markCompetitionProtectedPale(mask, imageData)
+  for (let i = 0; i < protectedPale.length; i += 1) {
+    if (competitionProtect[i]) protectedPale[i] = 1
+  }
   const visited = new Uint8Array(width * height)
   const queue: number[] = []
   let painted = 0
 
-  const isStudioKeep = (x: number, y: number): boolean =>
-    isRemovableStudioPixel(imageData, x, y, corner, studioLuma, tolerance)
+  const isStudioKeep = (x: number, y: number): boolean => {
+    const index = y * width + x
+    if (protectedPale[index]) return false
+    return isRemovableStudioPixel(imageData, x, y, corner, studioLuma, tolerance)
+  }
 
+  /**
+   * Soft alpha (1–254) used to act as a hard wall: flood only walked through
+   * exact 0 / exact 255, so JPEG-softened studio slabs around dark garments
+   * (blazer / jeans / hoodie) never peeled. Traverse REMOVE + soft/solid
+   * studio; stop on protected / garment KEEP.
+   */
   const seed = (x: number, y: number) => {
     const index = y * width + x
     if (visited[index]) {
       return
     }
     visited[index] = 1
-    if (mask.data[index] === 255 && isStudioKeep(x, y)) {
+    const alpha = mask.data[index]!
+    if (alpha > 0 && isStudioKeep(x, y)) {
       mask.data[index] = 0
       painted += 1
       queue.push(index)
       return
     }
-    if (mask.data[index] === 0) {
+    if (alpha === 0 || alpha < 96) {
+      // Empty or weak uncertain fringe — traversable background channel.
+      if (alpha > 0 && alpha < 96) {
+        mask.data[index] = 0
+        painted += 1
+      }
       queue.push(index)
     }
   }
@@ -1315,18 +2037,24 @@ export function stripBorderConnectedStudio(
       visited[neighbor] = 1
       const nx = neighbor % width
       const ny = (neighbor / width) | 0
-      if (mask.data[neighbor] !== 255) {
-        if (mask.data[neighbor] === 0) {
-          queue.push(neighbor)
-        }
+      const alpha = mask.data[neighbor]!
+      if (alpha === 0) {
+        queue.push(neighbor)
         continue
       }
-      if (!isStudioKeep(nx, ny)) {
+      if (isStudioKeep(nx, ny)) {
+        mask.data[neighbor] = 0
+        painted += 1
+        queue.push(neighbor)
         continue
       }
-      mask.data[neighbor] = 0
-      painted += 1
-      queue.push(neighbor)
+      // Weak soft fringe that is not protected garment — still traversable so
+      // softened AA rings cannot shield interior studio KEEP blobs.
+      if (alpha < 96) {
+        mask.data[neighbor] = 0
+        painted += 1
+        queue.push(neighbor)
+      }
     }
   }
 
@@ -1334,10 +2062,96 @@ export function stripBorderConnectedStudio(
 }
 
 /**
- * Clear enclosed KEEP pockets that are mostly flat studio (collar openings,
- * between-limb card scraps). Leaves textured / warm / bright garment bodies.
+ * Peel studio-like KEEP from the exterior inward. Removes angular card
+ * protrusions that stay attached to a dark garment through soft AA bridges
+ * (blazer / jeans / hoodie) without wiping white-tee bodies: each pass only
+ * clears removable studio that already touches REMOVE or the image border.
  */
-export function stripEnclosedFlatStudio(
+export function peelExteriorStudioKeep(
+  mask: MaskPixelBuffer,
+  imageData: ImageData,
+  tolerance = 40,
+  maxPasses = 28,
+): number {
+  const width = mask.width
+  const height = mask.height
+  const corner = averageCornerColor(imageData)
+  const studioLuma = 0.299 * corner.r + 0.587 * corner.g + 0.114 * corner.b
+  const protectedPale = markDarkConnectedPale(mask, imageData, studioLuma, 1.5, 16)
+  const competitionProtect = markCompetitionProtectedPale(mask, imageData)
+  for (let i = 0; i < protectedPale.length; i += 1) {
+    if (competitionProtect[i]) protectedPale[i] = 1
+  }
+
+  let painted = 0
+  for (let pass = 0; pass < maxPasses; pass += 1) {
+    const kill: number[] = []
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const index = y * width + x
+        if (mask.data[index]! < 128) continue
+        const rgb = readRgb(imageData, x, y)
+        const luma = luminanceAt(imageData, x, y)
+        const dist = colorDistance(rgb, corner)
+        // Wider near-card band than isRemovableStudioPixel — catalog cards
+        // often sit +6–10 L above the corner sample (blazer JPEG vignette).
+        const nearCardStudio =
+          isNearNeutralBright(rgb) &&
+          dist <= Math.min(tolerance, 36) &&
+          luma >= 170 &&
+          luma <= studioLuma + 10
+        if (
+          !nearCardStudio &&
+          !isRemovableStudioPixel(imageData, x, y, corner, studioLuma, tolerance)
+        ) {
+          continue
+        }
+        // Near-card studio stays peelable even if pale-protect marked it
+        // (edge variance false positive). Clearly lifted leather stays.
+        if (protectedPale[index]) {
+          const lift = luma - studioLuma
+          // Catalog card vignette often lands at card+6–9; only keep protect
+          // for clearly lifted leather panels.
+          if (lift >= 9) continue
+          if (!nearCardStudio) continue
+        }
+        const onBorder =
+          x === 0 || y === 0 || x === width - 1 || y === height - 1
+        let touchesRemove = onBorder
+        if (!touchesRemove) {
+          for (const n of [
+            index - 1,
+            index + 1,
+            index - width,
+            index + width,
+          ]) {
+            if (n < 0 || n >= mask.data.length) continue
+            if (mask.data[n]! < 96) {
+              touchesRemove = true
+              break
+            }
+          }
+        }
+        if (!touchesRemove) continue
+        kill.push(index)
+      }
+    }
+    if (kill.length === 0) break
+    for (const index of kill) {
+      mask.data[index] = 0
+      painted += 1
+    }
+  }
+  return painted
+}
+
+/**
+ * Remove KEEP components that touch the image border and look like studio card
+ * (not garment). Complements stripBorderConnectedStudio when soft AA bridges
+ * previously isolated large angular card slabs (blazer / jeans / hoodie).
+ * Never clears components with meaningful dark / chromatic / warm garment mass.
+ */
+export function stripBorderTouchingStudioComponents(
   mask: MaskPixelBuffer,
   imageData: ImageData,
   tolerance = 40,
@@ -1350,14 +2164,14 @@ export function stripEnclosedFlatStudio(
   let painted = 0
 
   for (let start = 0; start < mask.data.length; start += 1) {
-    if (visited[start] || mask.data[start] !== 255) {
+    if (visited[start] || mask.data[start]! < 128) {
       continue
     }
     const component: number[] = []
     const queue: number[] = [start]
     visited[start] = 1
-    let studioCount = 0
-    let garmentCount = 0
+    let studioLike = 0
+    let garmentLike = 0
     let touchesBorder = false
 
     let head = 0
@@ -1369,10 +2183,603 @@ export function stripEnclosedFlatStudio(
       if (x === 0 || y === 0 || x === width - 1 || y === height - 1) {
         touchesBorder = true
       }
-      if (isRemovableStudioPixel(imageData, x, y, corner, studioLuma, tolerance, 28)) {
-        studioCount += 1
-      } else {
-        garmentCount += 1
+      const rgb = readRgb(imageData, x, y)
+      const luma = luminanceAt(imageData, x, y)
+      const chroma =
+        Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b)
+      if (
+        isWarmGarmentFabric(rgb, luma) ||
+        luma < 90 ||
+        (chroma >= 16 && luma <= studioLuma - 15)
+      ) {
+        garmentLike += 1
+      } else if (
+        isNearNeutralBright(rgb) &&
+        luma >= 165 &&
+        colorDistance(rgb, corner) <= Math.max(tolerance, 44)
+      ) {
+        studioLike += 1
+      }
+      for (const neighbor of [
+        x > 0 ? index - 1 : -1,
+        x + 1 < width ? index + 1 : -1,
+        y > 0 ? index - width : -1,
+        y + 1 < height ? index + width : -1,
+      ]) {
+        if (neighbor < 0 || visited[neighbor] || mask.data[neighbor]! < 128) {
+          continue
+        }
+        visited[neighbor] = 1
+        queue.push(neighbor)
+      }
+    }
+
+    if (!touchesBorder) {
+      continue
+    }
+    const total = component.length
+    if (total < 24) {
+      continue
+    }
+    // Require dominant studio evidence and almost no garment evidence.
+    if (garmentLike > total * 0.04 || studioLike < total * 0.7) {
+      continue
+    }
+    for (const index of component) {
+      mask.data[index] = 0
+      painted += 1
+    }
+  }
+
+  return painted
+}
+
+/**
+ * Clear enclosed KEEP pockets that are flat studio (collar openings, between
+ * handbag handles, limb gaps). Walks ONLY through removable studio KEEP so a
+ * dark bag body does not merge handle-hole card into one mixed component.
+ */
+export function stripEnclosedFlatStudio(
+  mask: MaskPixelBuffer,
+  imageData: ImageData,
+  tolerance = 40,
+): number {
+  const width = mask.width
+  const height = mask.height
+  const corner = averageCornerColor(imageData)
+  const studioLuma = 0.299 * corner.r + 0.587 * corner.g + 0.114 * corner.b
+  // Lifted pale near dark structure (sneakers). Flat handle-hole card clears.
+  // Longer radius than border strip — enclosed holes sit inside the shoe.
+  const enclosedDist = Math.max(22, Math.min(40, Math.floor(Math.min(width, height) * 0.14)))
+  const protectedPale = markDarkConnectedPale(
+    mask,
+    imageData,
+    studioLuma,
+    0.75,
+    enclosedDist,
+  )
+  const competitionProtect = markCompetitionProtectedPale(mask, imageData)
+  for (let i = 0; i < protectedPale.length; i += 1) {
+    if (competitionProtect[i]) protectedPale[i] = 1
+  }
+  const visited = new Uint8Array(width * height)
+  let painted = 0
+
+  const isStudioKeep = (x: number, y: number): boolean => {
+    if (mask.data[y * width + x] !== 255) {
+      return false
+    }
+    if (protectedPale[y * width + x]) {
+      return false
+    }
+    const rgb = readRgb(imageData, x, y)
+    const luma = luminanceAt(imageData, x, y)
+    // Dark / mid garment walls are never "enclosed studio".
+    if (luma < 170 || !isNearNeutralBright(rgb)) {
+      return false
+    }
+    // White leather / tee panels sit clearly above the card — never enclosed
+    // studio. Flat handle-hole card may sit at studio+0–4 from JPEG lift.
+    const variance1 = localLumaVariance(imageData, x, y, 1)
+    if (isBrighterThanStudio(rgb, luma, studioLuma, 12, variance1)) {
+      return false
+    }
+    if (luma > studioLuma + 4) {
+      return false
+    }
+    // Use a tight 3×3 variance so dark straps beside a handle hole do not
+    // inflate 5×5 variance and hide flat card pockets.
+    if (variance1 > 12) {
+      return false
+    }
+    const dist = colorDistance(rgb, corner)
+    return dist <= Math.max(tolerance, 36)
+  }
+
+  for (let start = 0; start < mask.data.length; start += 1) {
+    if (visited[start] || mask.data[start] !== 255) {
+      continue
+    }
+    const sx = start % width
+    const sy = (start / width) | 0
+    if (!isStudioKeep(sx, sy)) {
+      visited[start] = 1
+      continue
+    }
+
+    const component: number[] = []
+    const queue: number[] = [start]
+    visited[start] = 1
+    let touchesBorder = false
+
+    let head = 0
+    while (head < queue.length) {
+      const index = queue[head++]!
+      component.push(index)
+      const x = index % width
+      const y = (index / width) | 0
+      if (x === 0 || y === 0 || x === width - 1 || y === height - 1) {
+        touchesBorder = true
+      }
+      const neighbors = [
+        x > 0 ? index - 1 : -1,
+        x + 1 < width ? index + 1 : -1,
+        y > 0 ? index - width : -1,
+        y + 1 < height ? index + width : -1,
+      ]
+      for (const neighbor of neighbors) {
+        if (neighbor < 0 || visited[neighbor]) {
+          continue
+        }
+        const nx = neighbor % width
+        const ny = (neighbor / width) | 0
+        if (!isStudioKeep(nx, ny)) {
+          // Mark non-studio KEEP visited so we don't restart from AA bridges.
+          if (mask.data[neighbor] === 255) {
+            visited[neighbor] = 1
+          }
+          continue
+        }
+        visited[neighbor] = 1
+        queue.push(neighbor)
+      }
+    }
+
+    // Border-connected studio is handled by stripBorderConnectedStudio.
+    if (touchesBorder) {
+      continue
+    }
+    // Tiny AA speckles stay; clear real enclosed card pockets (handle holes).
+    if (component.length < 4) {
+      continue
+    }
+    for (const index of component) {
+      mask.data[index] = 0
+      painted += 1
+    }
+  }
+
+  return painted
+}
+
+/**
+ * Clear bright near-studio KEEP that sits in a gap between dark KEEP walls on
+ * the same row or column (handbag handle arches, strap gaps). Open tops mean
+ * these regions are often border-connected, so enclosed-component strip misses
+ * them. Does not clear white leather panels (only one dark contact side).
+ */
+export function stripOpenArchStudio(
+  mask: MaskPixelBuffer,
+  imageData: ImageData,
+  tolerance = 40,
+): number {
+  const width = mask.width
+  const height = mask.height
+  const corner = averageCornerColor(imageData)
+  const studioLuma = 0.299 * corner.r + 0.587 * corner.g + 0.114 * corner.b
+  const maxGap = Math.max(24, Math.floor(Math.min(width, height) * 0.35))
+  let painted = 0
+
+  const isStudioGapPixel = (x: number, y: number): boolean => {
+    // Include soft KEEP — AA bridges often sit at 80–180 and block hole clear.
+    if (mask.data[y * width + x]! < 60) return false
+    const rgb = readRgb(imageData, x, y)
+    const L = luminanceAt(imageData, x, y)
+    if (isWarmGarmentFabric(rgb, L)) return false
+    if (L < 130) return false
+    if (!isNearNeutral(rgb, 32)) return false
+    const d = colorDistance(rgb, corner)
+    // Allow JPEG lift above the card; reject far-off fabric.
+    if (d > Math.max(tolerance + 14, 56) && L > studioLuma + 30) return false
+    if (d > Math.max(tolerance + 24, 64)) return false
+    return true
+  }
+
+  const isDarkKeep = (x: number, y: number): boolean => {
+    if (x < 0 || y < 0 || x >= width || y >= height) return false
+    if (mask.data[y * width + x]! < 128) return false
+    return luminanceAt(imageData, x, y) < 95
+  }
+
+  // Horizontal gaps between dark walls
+  for (let y = 1; y < height - 1; y += 1) {
+    let x = 0
+    while (x < width) {
+      while (x < width && !isDarkKeep(x, y)) x += 1
+      if (x >= width) break
+      const left = x
+      while (x < width && isDarkKeep(x, y)) x += 1
+      const gapStart = x
+      while (x < width && !isDarkKeep(x, y)) x += 1
+      const gapEnd = x
+      if (x >= width || !isDarkKeep(x, y)) continue
+      const gapLen = gapEnd - gapStart
+      if (gapLen < 2 || gapLen > maxGap) continue
+      let studioLike = 0
+      for (let gx = gapStart; gx < gapEnd; gx += 1) {
+        if (isStudioGapPixel(gx, y)) studioLike += 1
+      }
+      if (studioLike < gapLen * 0.55) continue
+      // Two dark walls on this row = handle/strap arch. White leather panels
+      // only contact dark on one side, so they never form this gap pattern.
+      for (let gx = gapStart; gx < gapEnd; gx += 1) {
+        if (!isStudioGapPixel(gx, y)) continue
+        mask.data[y * width + gx] = 0
+        painted += 1
+      }
+      void left
+    }
+  }
+
+  // Vertical gaps between dark walls (side strap openings)
+  for (let x = 1; x < width - 1; x += 1) {
+    let y = 0
+    while (y < height) {
+      while (y < height && !isDarkKeep(x, y)) y += 1
+      if (y >= height) break
+      while (y < height && isDarkKeep(x, y)) y += 1
+      const gapStart = y
+      while (y < height && !isDarkKeep(x, y)) y += 1
+      const gapEnd = y
+      if (y >= height || !isDarkKeep(x, y)) continue
+      const gapLen = gapEnd - gapStart
+      if (gapLen < 2 || gapLen > maxGap) continue
+      let studioLike = 0
+      for (let gy = gapStart; gy < gapEnd; gy += 1) {
+        if (isStudioGapPixel(x, gy)) studioLike += 1
+      }
+      if (studioLike < gapLen * 0.55) continue
+      for (let gy = gapStart; gy < gapEnd; gy += 1) {
+        if (!isStudioGapPixel(x, gy)) continue
+        mask.data[gy * width + x] = 0
+        painted += 1
+      }
+    }
+  }
+
+  return painted
+}
+
+/**
+ * Peel bright near-studio KEEP that sits against dark KEEP walls, walking
+ * inward pass-by-pass. Breaks AA bridges that connect handle openings to the
+ * outer border so topology pocket strip can finish the job. Protects bright
+ * interiors that have flat bright neighbors away from dark walls (white leather).
+ */
+export function chokeBrightStudioBesideDark(
+  mask: MaskPixelBuffer,
+  imageData: ImageData,
+  tolerance = 40,
+  passes = 8,
+): number {
+  const width = mask.width
+  const height = mask.height
+  const corner = averageCornerColor(imageData)
+  const studioLuma = 0.299 * corner.r + 0.587 * corner.g + 0.114 * corner.b
+  const fringeTol = Math.max(28, Math.floor(tolerance * 0.85))
+  let painted = 0
+
+  for (let pass = 0; pass < passes; pass += 1) {
+    const clear: number[] = []
+    for (let y = 1; y < height - 1; y += 1) {
+      for (let x = 1; x < width - 1; x += 1) {
+        const i = y * width + x
+        if (mask.data[i]! < 200) continue
+        const rgb = readRgb(imageData, x, y)
+        const L = luminanceAt(imageData, x, y)
+        if (isWarmGarmentFabric(rgb, L)) continue
+        if (L < 160) continue
+        if (!isNearNeutral(rgb, 26)) continue
+        const d = colorDistance(rgb, corner)
+        // Allow JPEG lift; reject far-from-card fabric.
+        if (d > fringeTol + 24 && L > studioLuma + 30) continue
+        if (d > fringeTol + 36) continue
+
+        let darkKeep = 0
+        let brightFlatAway = 0
+        for (const [dx, dy] of [
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
+        ] as const) {
+          const nx = x + dx
+          const ny = y + dy
+          const ni = ny * width + nx
+          if (mask.data[ni]! < 128) continue
+          const nL = luminanceAt(imageData, nx, ny)
+          const nr = readRgb(imageData, nx, ny)
+          if (nL < 95) {
+            darkKeep += 1
+            continue
+          }
+          if (
+            nL >= 200 &&
+            isNearNeutral(nr, 24) &&
+            localLumaVariance(imageData, nx, ny, 1) <= 14
+          ) {
+            // Neighbor is deeper bright body if it does not itself touch dark.
+            let nTouchesDark = false
+            for (const [ex, ey] of [
+              [-1, 0],
+              [1, 0],
+              [0, -1],
+              [0, 1],
+            ] as const) {
+              const exx = nx + ex
+              const eyy = ny + ey
+              if (exx < 0 || eyy < 0 || exx >= width || eyy >= height) continue
+              const ei = eyy * width + exx
+              if (mask.data[ei]! >= 128 && luminanceAt(imageData, exx, eyy) < 95) {
+                nTouchesDark = true
+                break
+              }
+            }
+            if (!nTouchesDark) brightFlatAway += 1
+          }
+        }
+        if (darkKeep === 0) continue
+        // Only peel the AA / bridge ring directly against dark walls. Pixels
+        // with a bright flat interior neighbor are white leather / tee / deep
+        // pocket body — pocket body is finished by stripDarkWalledStudioPockets
+        // once AA bridges to the border are broken.
+        if (brightFlatAway >= 1) continue
+        // Lifted white leather (sneaker panels) — never choke, even when the
+        // outer studio was cleared and the panel now touches REMOVE.
+        if (L > studioLuma + 1) continue
+        // Interior pale leather next to a dark sole (no REMOVE neighbor) must
+        // not be choked — that was erasing sneaker panels from the sole up.
+        const touchesRemove =
+          mask.data[i - 1]! < 128 ||
+          mask.data[i + 1]! < 128 ||
+          mask.data[i - width]! < 128 ||
+          mask.data[i + width]! < 128
+        if (!touchesRemove && L >= studioLuma - 2) continue
+        clear.push(i)
+      }
+    }
+    if (clear.length === 0) break
+    for (const i of clear) {
+      mask.data[i] = 0
+      painted += 1
+    }
+  }
+  return painted
+}
+
+/**
+ * Clear studio pockets enclosed by dark / chromatic KEEP walls (handbag
+ * handle openings). Unlike stripEnclosedFlatStudio, this uses component
+ * topology + mean appearance so wall-adjacent JPEG variance / card lift does
+ * not hide the pocket. Does NOT clear:
+ *  - border-connected studio
+ *  - bright panels whose perimeter is mostly other bright KEEP (white leather)
+ *  - chromatic / warm enclosed details (hardware gaps with metal tint)
+ */
+export function stripDarkWalledStudioPockets(
+  mask: MaskPixelBuffer,
+  imageData: ImageData,
+  tolerance = 40,
+): number {
+  const width = mask.width
+  const height = mask.height
+  const corner = averageCornerColor(imageData)
+  const studioLuma = 0.299 * corner.r + 0.587 * corner.g + 0.114 * corner.b
+  // Handle openings can be large relative to small fixtures; white leather
+  // panels are protected by dark-wall ratio, not this size cap alone.
+  const maxPocket = Math.max(400, Math.floor(width * height * 0.14))
+  const visited = new Uint8Array(width * height)
+  let painted = 0
+
+  const isBrightNeutralKeep = (x: number, y: number): boolean => {
+    if (mask.data[y * width + x]! < 200) return false
+    const rgb = readRgb(imageData, x, y)
+    const L = luminanceAt(imageData, x, y)
+    if (isWarmGarmentFabric(rgb, L)) return false
+    if (L < 155) return false
+    if (!isNearNeutralBright(rgb) && !isNearNeutral(rgb, 28)) return false
+    if (L < studioLuma - 45) return false
+    return true
+  }
+
+  for (let start = 0; start < mask.data.length; start += 1) {
+    if (visited[start]) continue
+    const sx = start % width
+    const sy = (start / width) | 0
+    if (!isBrightNeutralKeep(sx, sy)) {
+      visited[start] = 1
+      continue
+    }
+
+    const component: number[] = []
+    const inComponent = new Uint8Array(width * height)
+    const queue: number[] = [start]
+    visited[start] = 1
+    inComponent[start] = 1
+    let touchesBorder = false
+    let sumL = 0
+    let sumDist = 0
+    let sumChroma = 0
+
+    let head = 0
+    while (head < queue.length) {
+      const index = queue[head++]!
+      component.push(index)
+      const x = index % width
+      const y = (index / width) | 0
+      if (x === 0 || y === 0 || x === width - 1 || y === height - 1) {
+        touchesBorder = true
+      }
+      const rgb = readRgb(imageData, x, y)
+      const L = luminanceAt(imageData, x, y)
+      const c =
+        Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b)
+      sumL += L
+      sumChroma += c
+      sumDist += colorDistance(rgb, corner)
+      const neighbors = [
+        x > 0 ? index - 1 : -1,
+        x + 1 < width ? index + 1 : -1,
+        y > 0 ? index - width : -1,
+        y + 1 < height ? index + width : -1,
+      ]
+      for (const neighbor of neighbors) {
+        if (neighbor < 0 || visited[neighbor]) continue
+        const nx = neighbor % width
+        const ny = (neighbor / width) | 0
+        if (!isBrightNeutralKeep(nx, ny)) continue
+        visited[neighbor] = 1
+        inComponent[neighbor] = 1
+        queue.push(neighbor)
+      }
+    }
+
+    if (touchesBorder) continue
+    const n = component.length
+    if (n < 4 || n > maxPocket) continue
+
+    const meanL = sumL / n
+    const meanDist = sumDist / n
+    const meanChroma = sumChroma / n
+    if (meanChroma >= 28) continue
+    if (meanDist > Math.max(tolerance + 8, 48)) continue
+    if (meanL < 160) continue
+
+    let darkWall = 0
+    let brightKeepWall = 0
+    let removeWall = 0
+    let warmOrChromaWall = 0
+    const seenEdge = new Uint8Array(width * height)
+    for (const index of component) {
+      const x = index % width
+      const y = (index / width) | 0
+      const neighbors = [
+        x > 0 ? index - 1 : -1,
+        x + 1 < width ? index + 1 : -1,
+        y > 0 ? index - width : -1,
+        y + 1 < height ? index + width : -1,
+      ]
+      for (const neighbor of neighbors) {
+        if (neighbor < 0 || inComponent[neighbor]) continue
+        if (seenEdge[neighbor]) continue
+        seenEdge[neighbor] = 1
+
+        const nx = neighbor % width
+        const ny = (neighbor / width) | 0
+        const mv = mask.data[neighbor]!
+        const rgb = readRgb(imageData, nx, ny)
+        const L = luminanceAt(imageData, nx, ny)
+        const c =
+          Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b)
+        if (mv < 128) {
+          removeWall += 1
+          continue
+        }
+        if (isWarmGarmentFabric(rgb, L) || (c >= 22 && L < 200)) {
+          warmOrChromaWall += 1
+          continue
+        }
+        if (L < 95) {
+          darkWall += 1
+          continue
+        }
+        if (L >= 155 && isNearNeutral(rgb, 28)) {
+          brightKeepWall += 1
+        }
+      }
+    }
+
+    const edgeTotal = darkWall + brightKeepWall + removeWall + warmOrChromaWall
+    if (edgeTotal < 4) continue
+    const darkRatio = darkWall / edgeTotal
+    // Handle openings: dark leather walls. White leather panels sit among
+    // other bright KEEP (low darkRatio) and must stay.
+    if (darkRatio < 0.42) continue
+    if (removeWall > darkWall * 2 && darkRatio < 0.55) continue
+
+    for (const index of component) {
+      mask.data[index] = 0
+      painted += 1
+    }
+  }
+
+  return painted
+}
+
+/**
+ * Clear small detached KEEP islands that look like leftover studio flecks
+ * (cap crown floaters, dress edge crumbs) — not attached to a substantial
+ * dark/chromatic/warm garment body. Conservative size cap protects thin straps.
+ */
+export function stripDetachedStudioIslands(
+  mask: MaskPixelBuffer,
+  imageData: ImageData,
+  tolerance = 40,
+): number {
+  const width = mask.width
+  const height = mask.height
+  const corner = averageCornerColor(imageData)
+  const studioLuma = 0.299 * corner.r + 0.587 * corner.g + 0.114 * corner.b
+  const maxIsland = Math.max(40, Math.floor(width * height * 0.004))
+  const visited = new Uint8Array(width * height)
+  let painted = 0
+
+  for (let start = 0; start < mask.data.length; start += 1) {
+    if (visited[start] || mask.data[start] !== 255) {
+      continue
+    }
+    const component: number[] = []
+    const queue: number[] = [start]
+    visited[start] = 1
+    let studioLike = 0
+    let garmentLike = 0
+    let touchesBorder = false
+
+    let head = 0
+    while (head < queue.length) {
+      const index = queue[head++]!
+      component.push(index)
+      const x = index % width
+      const y = (index / width) | 0
+      if (x === 0 || y === 0 || x === width - 1 || y === height - 1) {
+        touchesBorder = true
+      }
+      const rgb = readRgb(imageData, x, y)
+      const luma = luminanceAt(imageData, x, y)
+      const chroma =
+        Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b)
+      if (
+        isWarmGarmentFabric(rgb, luma) ||
+        luma < 80 ||
+        (chroma >= 18 && luma <= studioLuma - 20)
+      ) {
+        garmentLike += 1
+      } else if (
+        isNearNeutralBright(rgb) &&
+        luma >= 170 &&
+        colorDistance(rgb, corner) <= Math.max(tolerance, 40)
+      ) {
+        studioLike += 1
       }
       const neighbors = [
         x > 0 ? index - 1 : -1,
@@ -1389,13 +2796,16 @@ export function stripEnclosedFlatStudio(
       }
     }
 
-    // Border-connected garment bodies are handled by stripBorderConnectedStudio.
-    // Only clear enclosed pockets that are predominantly removable studio.
     if (touchesBorder) {
       continue
     }
     const total = component.length
-    if (total < 8 || studioCount < total * 0.72 || garmentCount > total * 0.2) {
+    if (total < 3 || total > maxIsland) {
+      continue
+    }
+    // Any garment evidence (dark sole, chromatic body, warm fabric) means this
+    // is not a leftover fleck — white leather attached to a dark sole must stay.
+    if (garmentLike > 0 || studioLike < total * 0.85) {
       continue
     }
     for (const index of component) {
@@ -1426,9 +2836,11 @@ export function removeSimilarToCorners(
   // flood seeds miss a column.
   painted += removeBrightEdgeChrome(mask, imageData)
   // Near-white studio cards: tight flood only — a wide tolerance tunnels into
-  // white sneakers/tees. Gray cards keep the full user tolerance.
+  // white sneakers/tees (leather often sits within RGB≈10 of a ~226 card).
+  // Gray cards keep the full user tolerance.
+  // Tol 8: leather at studio+3 stays outside flood while the card still clears.
   const floodTolerance =
-    studioLuma >= 218 ? Math.min(tolerance, 16) : tolerance
+    studioLuma >= 218 ? Math.min(tolerance, 8) : tolerance
   for (const [x, y] of seeds) {
     painted += floodRemoveBackdrop(
       mask,
@@ -1474,10 +2886,12 @@ export function removeSimilarToCorners(
   // Reclaim restores near-white edge chrome (dissimilar from gray studio), so
   // strip chrome again after fabric recovery.
   painted += removeBrightEdgeChrome(mask, imageData)
+  painted += stripForeignBorderBands(mask, imageData)
   // Final pass: any flat studio still attached to the border (common on white
   // tees where reclaim/morph reopened card regions).
   painted += stripBorderConnectedStudio(mask, imageData, tolerance)
   painted += stripEnclosedFlatStudio(mask, imageData, tolerance)
+  painted += stripDetachedStudioIslands(mask, imageData, tolerance)
 
   return Math.max(0, painted - restoredTexture - restoredDilate - restoredAfterChoke)
 }

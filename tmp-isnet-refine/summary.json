@@ -1,0 +1,643 @@
+[
+  {
+    "file": "01_hoodie.jpg",
+    "methodUsed": "isnet-onnx",
+    "genuineModelInference": true,
+    "needsReview": false,
+    "reviewReasons": [
+      "isnet-refine-accepted: healed-severance+stripped-studio"
+    ],
+    "refine": {
+      "initialFgRatio": 0.5215477613312495,
+      "finalFgRatio": 0.5785602647788912,
+      "deltaFgRatio": 0.05701250344764175,
+      "initialComponentCount": 4,
+      "finalComponentCount": 3,
+      "initialInternalHoleRatio": 0,
+      "finalInternalHoleRatio": 0.0006205755263399835,
+      "labAgreement": 0.789716833685759,
+      "labBgContaminationRate": 0.09401318925790561,
+      "contourReliableBgContamination": 0,
+      "contourInternalHoleRatio": 0,
+      "contourBorderTouchRatio": 0,
+      "pixelsReclaimed": 5384,
+      "pixelsStripped": 423,
+      "changedPixelCount": 5807,
+      "changedBBox": {
+        "minX": 34,
+        "minY": 15,
+        "maxX": 268,
+        "maxY": 280
+      },
+      "refinementAttempted": true,
+      "refinementAccepted": true,
+      "refinementCategory": "mixed",
+      "acceptReason": "healed-severance+stripped-studio",
+      "failureModes": [
+        "stacked-keep-components",
+        "lab-disagrees-studio-keep"
+      ],
+      "gateValues": {
+        "deltaFg": 0.05701250344764175,
+        "corridorReclaimed": 3566,
+        "underRecallReclaimed": 1818,
+        "darkBiteReclaimed": 0,
+        "stripped": 423,
+        "verticalStackSeverance": true,
+        "sideBySideMergeBlocked": false,
+        "cardShapedExpansionBlocked": false
+      },
+      "confidenceBefore": 0.72,
+      "confidenceAfter": 0.72,
+      "inferenceEngine": "isnet-onnx",
+      "refinementOps": [
+        "reclaimSeveranceCorridors",
+        "reclaimAdjacentUnderRecall",
+        "peelExteriorStudioKeep"
+      ]
+    },
+    "directRefineAccepted": true,
+    "fg": {
+      "raw": 0.5215,
+      "refined": 0.5786,
+      "lab": 0.4619,
+      "contour": 0.3508
+    },
+    "rgbUnchanged": true,
+    "contourMethod": "contour-first-fallback-seed",
+    "contourNeedsReview": true
+  },
+  {
+    "file": "02_blazer.jpg",
+    "methodUsed": "isnet-onnx",
+    "genuineModelInference": true,
+    "needsReview": false,
+    "reviewReasons": [
+      "isnet-refine-rejected: ambiguous-evidence (residual-lab-garment-gaps,residual-dark-exterior-bites)"
+    ],
+    "refine": {
+      "initialFgRatio": 0.5579745596868885,
+      "finalFgRatio": 0.5579745596868885,
+      "deltaFgRatio": 0,
+      "initialComponentCount": 1,
+      "finalComponentCount": 1,
+      "initialInternalHoleRatio": 0.00016307893020221786,
+      "finalInternalHoleRatio": 0.00016307893020221786,
+      "labAgreement": 0.9472439660795825,
+      "labBgContaminationRate": 0.000020876390889543015,
+      "contourReliableBgContamination": 0,
+      "contourInternalHoleRatio": 0.00023853336059428883,
+      "contourBorderTouchRatio": 0,
+      "pixelsReclaimed": 0,
+      "pixelsStripped": 0,
+      "changedPixelCount": 0,
+      "changedBBox": null,
+      "refinementAttempted": true,
+      "refinementAccepted": false,
+      "refinementCategory": "none",
+      "rejectReason": "ambiguous-evidence",
+      "failureModes": [
+        "residual-lab-garment-gaps",
+        "residual-dark-exterior-bites"
+      ],
+      "gateValues": {
+        "deltaFg": 0,
+        "corridorReclaimed": 0,
+        "underRecallReclaimed": 1593,
+        "darkBiteReclaimed": 0,
+        "stripped": 0,
+        "verticalStackSeverance": false,
+        "sideBySideMergeBlocked": false,
+        "cardShapedExpansionBlocked": false
+      },
+      "confidenceBefore": 0.84,
+      "confidenceAfter": 0.84,
+      "inferenceEngine": "isnet-onnx",
+      "refinementOps": [
+        "reclaimAdjacentUnderRecall"
+      ]
+    },
+    "directRefineAccepted": false,
+    "fg": {
+      "raw": 0.558,
+      "refined": 0.558,
+      "lab": 0.5788,
+      "contour": 0.5777
+    },
+    "rgbUnchanged": true,
+    "contourMethod": "contour-first",
+    "contourNeedsReview": false
+  },
+  {
+    "file": "03_tshirt.jpg",
+    "methodUsed": "isnet-onnx",
+    "genuineModelInference": true,
+    "needsReview": true,
+    "reviewReasons": [
+      "weak dark structure with pale mass",
+      "isnet-refine-accepted: stripped-studio"
+    ],
+    "refine": {
+      "initialFgRatio": 0.49142670766936913,
+      "finalFgRatio": 0.49393113409747463,
+      "deltaFgRatio": 0.0025044264281054995,
+      "initialComponentCount": 1,
+      "finalComponentCount": 2,
+      "initialInternalHoleRatio": 0,
+      "finalInternalHoleRatio": 0.00032615786040443573,
+      "labAgreement": 0.8285574503774112,
+      "labBgContaminationRate": 0.006839138740183478,
+      "contourReliableBgContamination": 0,
+      "contourInternalHoleRatio": 0,
+      "contourBorderTouchRatio": 0,
+      "pixelsReclaimed": 338,
+      "pixelsStripped": 123,
+      "changedPixelCount": 461,
+      "changedBBox": {
+        "minX": 65,
+        "minY": 24,
+        "maxX": 270,
+        "maxY": 270
+      },
+      "refinementAttempted": true,
+      "refinementAccepted": true,
+      "refinementCategory": "studio-strip",
+      "acceptReason": "stripped-studio",
+      "failureModes": [
+        "lab-disagrees-studio-keep"
+      ],
+      "gateValues": {
+        "deltaFg": 0.0025044264281054995,
+        "corridorReclaimed": 0,
+        "underRecallReclaimed": 338,
+        "darkBiteReclaimed": 0,
+        "stripped": 123,
+        "verticalStackSeverance": false,
+        "sideBySideMergeBlocked": false,
+        "cardShapedExpansionBlocked": false
+      },
+      "confidenceBefore": 0.6,
+      "confidenceAfter": 0.6,
+      "inferenceEngine": "isnet-onnx",
+      "refinementOps": [
+        "reclaimAdjacentUnderRecall",
+        "peelExteriorStudioKeep"
+      ]
+    },
+    "directRefineAccepted": true,
+    "fg": {
+      "raw": 0.4914,
+      "refined": 0.4939,
+      "lab": 0.6286,
+      "contour": 0.6139
+    },
+    "rgbUnchanged": true,
+    "contourMethod": "contour-first-fallback-seed",
+    "contourNeedsReview": true
+  },
+  {
+    "file": "04_jeans.jpg",
+    "methodUsed": "isnet-onnx",
+    "genuineModelInference": true,
+    "needsReview": false,
+    "reviewReasons": [
+      "isnet-refine-rejected: ambiguous-evidence (residual-lab-garment-gaps)"
+    ],
+    "refine": {
+      "initialFgRatio": 0.36794101202124685,
+      "finalFgRatio": 0.36794101202124685,
+      "deltaFgRatio": 0,
+      "initialComponentCount": 1,
+      "finalComponentCount": 1,
+      "initialInternalHoleRatio": 0,
+      "finalInternalHoleRatio": 0,
+      "labAgreement": 0.9621074457180132,
+      "labBgContaminationRate": 0.0005381960933295343,
+      "contourReliableBgContamination": 0,
+      "contourInternalHoleRatio": 0,
+      "contourBorderTouchRatio": 0,
+      "pixelsReclaimed": 0,
+      "pixelsStripped": 0,
+      "changedPixelCount": 0,
+      "changedBBox": null,
+      "refinementAttempted": true,
+      "refinementAccepted": false,
+      "refinementCategory": "none",
+      "rejectReason": "ambiguous-evidence",
+      "failureModes": [
+        "residual-lab-garment-gaps"
+      ],
+      "gateValues": {
+        "deltaFg": 0,
+        "corridorReclaimed": 0,
+        "underRecallReclaimed": 1680,
+        "darkBiteReclaimed": 0,
+        "stripped": 0,
+        "verticalStackSeverance": false,
+        "sideBySideMergeBlocked": false,
+        "cardShapedExpansionBlocked": false
+      },
+      "confidenceBefore": 0.72,
+      "confidenceAfter": 0.72,
+      "inferenceEngine": "isnet-onnx",
+      "refinementOps": [
+        "reclaimAdjacentUnderRecall"
+      ]
+    },
+    "directRefineAccepted": false,
+    "fg": {
+      "raw": 0.3679,
+      "refined": 0.3679,
+      "lab": 0.3807,
+      "contour": 0.3794
+    },
+    "rgbUnchanged": true,
+    "contourMethod": "contour-first",
+    "contourNeedsReview": false
+  },
+  {
+    "file": "05_coat.jpg",
+    "methodUsed": "isnet-onnx",
+    "genuineModelInference": true,
+    "needsReview": true,
+    "reviewReasons": [
+      "isnet-refine-accepted: reclaimed-under-recall",
+      "large-under-recall-accepted: boundary QC recommended"
+    ],
+    "refine": {
+      "initialFgRatio": 0.32036745649759346,
+      "finalFgRatio": 0.40505831173639395,
+      "deltaFgRatio": 0.08469085523880049,
+      "initialComponentCount": 11,
+      "finalComponentCount": 1,
+      "initialInternalHoleRatio": 0,
+      "finalInternalHoleRatio": 0.0007867456497593484,
+      "labAgreement": 0.8929678822658275,
+      "labBgContaminationRate": 0,
+      "contourReliableBgContamination": 0,
+      "contourInternalHoleRatio": 0,
+      "contourBorderTouchRatio": 0,
+      "pixelsReclaimed": 7320,
+      "pixelsStripped": 0,
+      "changedPixelCount": 7320,
+      "changedBBox": {
+        "minX": 61,
+        "minY": 14,
+        "maxX": 231,
+        "maxY": 285
+      },
+      "refinementAttempted": true,
+      "refinementAccepted": true,
+      "refinementCategory": "under-recall",
+      "acceptReason": "reclaimed-under-recall",
+      "failureModes": [],
+      "gateValues": {
+        "deltaFg": 0.08469085523880049,
+        "corridorReclaimed": 0,
+        "underRecallReclaimed": 7320,
+        "darkBiteReclaimed": 0,
+        "stripped": 0,
+        "verticalStackSeverance": false,
+        "sideBySideMergeBlocked": false,
+        "cardShapedExpansionBlocked": false
+      },
+      "confidenceBefore": 0.84,
+      "confidenceAfter": 0.84,
+      "inferenceEngine": "isnet-onnx",
+      "refinementOps": [
+        "reclaimAdjacentUnderRecall"
+      ]
+    },
+    "directRefineAccepted": true,
+    "fg": {
+      "raw": 0.3204,
+      "refined": 0.4051,
+      "lab": 0.4103,
+      "contour": 0.4008
+    },
+    "rgbUnchanged": true,
+    "contourMethod": "contour-first-fallback-seed",
+    "contourNeedsReview": true
+  },
+  {
+    "file": "06_sweater.jpg",
+    "methodUsed": "isnet-onnx",
+    "genuineModelInference": true,
+    "needsReview": false,
+    "reviewReasons": [
+      "isnet-refine-rejected: ambiguous-evidence (residual-lab-garment-gaps,residual-dark-exterior-bites)"
+    ],
+    "refine": {
+      "initialFgRatio": 0.4717820982956249,
+      "finalFgRatio": 0.4717820982956249,
+      "deltaFgRatio": 0,
+      "initialComponentCount": 1,
+      "finalComponentCount": 1,
+      "initialInternalHoleRatio": 0,
+      "finalInternalHoleRatio": 0,
+      "labAgreement": 0.6866048571230886,
+      "labBgContaminationRate": 0,
+      "contourReliableBgContamination": 0,
+      "contourInternalHoleRatio": 0,
+      "contourBorderTouchRatio": 0,
+      "pixelsReclaimed": 0,
+      "pixelsStripped": 0,
+      "changedPixelCount": 0,
+      "changedBBox": null,
+      "refinementAttempted": true,
+      "refinementAccepted": false,
+      "refinementCategory": "none",
+      "rejectReason": "ambiguous-evidence",
+      "failureModes": [
+        "residual-lab-garment-gaps",
+        "residual-dark-exterior-bites"
+      ],
+      "gateValues": {
+        "deltaFg": 0,
+        "corridorReclaimed": 0,
+        "underRecallReclaimed": 1579,
+        "darkBiteReclaimed": 0,
+        "stripped": 0,
+        "verticalStackSeverance": false,
+        "sideBySideMergeBlocked": false,
+        "cardShapedExpansionBlocked": false
+      },
+      "confidenceBefore": 0.84,
+      "confidenceAfter": 0.84,
+      "inferenceEngine": "isnet-onnx",
+      "refinementOps": [
+        "reclaimAdjacentUnderRecall"
+      ]
+    },
+    "directRefineAccepted": false,
+    "fg": {
+      "raw": 0.4718,
+      "refined": 0.4718,
+      "lab": 0.4826,
+      "contour": 0.4816
+    },
+    "rgbUnchanged": true,
+    "contourMethod": "contour-first-fallback-seed",
+    "contourNeedsReview": true
+  },
+  {
+    "file": "07_dress.jpg",
+    "methodUsed": "isnet-onnx",
+    "genuineModelInference": true,
+    "needsReview": false,
+    "reviewReasons": [
+      "isnet-refine-rejected: ambiguous-evidence (possible-under-recall,residual-lab-garment-gaps)"
+    ],
+    "refine": {
+      "initialFgRatio": 0.19134114126750357,
+      "finalFgRatio": 0.19134114126750357,
+      "deltaFgRatio": 0,
+      "initialComponentCount": 1,
+      "finalComponentCount": 1,
+      "initialInternalHoleRatio": 0,
+      "finalInternalHoleRatio": 0,
+      "labAgreement": 0.210463566870047,
+      "labBgContaminationRate": 0,
+      "contourReliableBgContamination": 0,
+      "contourInternalHoleRatio": 0,
+      "contourBorderTouchRatio": 0,
+      "pixelsReclaimed": 0,
+      "pixelsStripped": 0,
+      "changedPixelCount": 0,
+      "changedBBox": null,
+      "refinementAttempted": true,
+      "refinementAccepted": false,
+      "refinementCategory": "none",
+      "rejectReason": "ambiguous-evidence",
+      "failureModes": [
+        "possible-under-recall",
+        "residual-lab-garment-gaps"
+      ],
+      "gateValues": {
+        "deltaFg": 0,
+        "corridorReclaimed": 0,
+        "underRecallReclaimed": 810,
+        "darkBiteReclaimed": 0,
+        "stripped": 0,
+        "verticalStackSeverance": false,
+        "sideBySideMergeBlocked": false,
+        "cardShapedExpansionBlocked": false
+      },
+      "confidenceBefore": 0.84,
+      "confidenceAfter": 0.84,
+      "inferenceEngine": "isnet-onnx",
+      "refinementOps": [
+        "reclaimAdjacentUnderRecall"
+      ]
+    },
+    "directRefineAccepted": false,
+    "fg": {
+      "raw": 0.1913,
+      "refined": 0.1913,
+      "lab": 0.2016,
+      "contour": 0.1921
+    },
+    "rgbUnchanged": true,
+    "contourMethod": "contour-first-fallback-seed",
+    "contourNeedsReview": true
+  },
+  {
+    "file": "08_sneakers.jpg",
+    "methodUsed": "isnet-onnx",
+    "genuineModelInference": true,
+    "needsReview": true,
+    "reviewReasons": [
+      "isnet-refine-accepted: exterior-dark-bite",
+      "residual-after-refine: residual-lab-garment-gaps"
+    ],
+    "refine": {
+      "initialFgRatio": 0.3410243822614957,
+      "finalFgRatio": 0.35599738177057766,
+      "deltaFgRatio": 0.014972999509081986,
+      "initialComponentCount": 2,
+      "finalComponentCount": 1,
+      "initialInternalHoleRatio": 0.004184491666082241,
+      "finalInternalHoleRatio": 0.0028286228580779393,
+      "labAgreement": 0.5576361128643897,
+      "labBgContaminationRate": 0.002396821748694881,
+      "contourReliableBgContamination": 0,
+      "contourInternalHoleRatio": 0.008005366726296958,
+      "contourBorderTouchRatio": 0,
+      "pixelsReclaimed": 1281,
+      "pixelsStripped": 0,
+      "changedPixelCount": 1281,
+      "changedBBox": {
+        "minX": 17,
+        "minY": 81,
+        "maxX": 275,
+        "maxY": 226
+      },
+      "refinementAttempted": true,
+      "refinementAccepted": true,
+      "refinementCategory": "exterior-dark-bite",
+      "acceptReason": "exterior-dark-bite",
+      "failureModes": [
+        "possible-under-recall",
+        "residual-lab-garment-gaps"
+      ],
+      "gateValues": {
+        "deltaFg": 0.014972999509081986,
+        "corridorReclaimed": 0,
+        "underRecallReclaimed": 1144,
+        "darkBiteReclaimed": 137,
+        "stripped": 0,
+        "verticalStackSeverance": false,
+        "sideBySideMergeBlocked": false,
+        "cardShapedExpansionBlocked": false
+      },
+      "confidenceBefore": 0.6,
+      "confidenceAfter": 0.72,
+      "inferenceEngine": "isnet-onnx",
+      "refinementOps": [
+        "reclaimAdjacentUnderRecall",
+        "reclaimExteriorDarkUndercuts"
+      ]
+    },
+    "directRefineAccepted": true,
+    "fg": {
+      "raw": 0.341,
+      "refined": 0.356,
+      "lab": 0.1339,
+      "contour": 0.0928
+    },
+    "rgbUnchanged": true,
+    "contourMethod": "contour-first-fallback-seed",
+    "contourNeedsReview": true
+  },
+  {
+    "file": "09_handbag.jpg",
+    "methodUsed": "isnet-onnx",
+    "genuineModelInference": true,
+    "needsReview": true,
+    "reviewReasons": [
+      "isnet-refine-rejected: ambiguous-evidence (possible-under-recall,residual-lab-garment-gaps,residual-dark-exterior-bites)"
+    ],
+    "refine": {
+      "initialFgRatio": 0.3574701358206513,
+      "finalFgRatio": 0.3574701358206513,
+      "deltaFgRatio": 0,
+      "initialComponentCount": 1,
+      "finalComponentCount": 1,
+      "initialInternalHoleRatio": 0.06193748977254132,
+      "finalInternalHoleRatio": 0.06193748977254132,
+      "labAgreement": 0.5516515884704397,
+      "labBgContaminationRate": 0,
+      "contourReliableBgContamination": 0,
+      "contourInternalHoleRatio": 0.09984173041413875,
+      "contourBorderTouchRatio": 0,
+      "pixelsReclaimed": 0,
+      "pixelsStripped": 0,
+      "changedPixelCount": 0,
+      "changedBBox": null,
+      "refinementAttempted": true,
+      "refinementAccepted": false,
+      "refinementCategory": "none",
+      "rejectReason": "ambiguous-evidence",
+      "failureModes": [
+        "possible-under-recall",
+        "residual-lab-garment-gaps",
+        "residual-dark-exterior-bites"
+      ],
+      "gateValues": {
+        "deltaFg": 0,
+        "corridorReclaimed": 0,
+        "underRecallReclaimed": 920,
+        "darkBiteReclaimed": 0,
+        "stripped": 0,
+        "verticalStackSeverance": false,
+        "sideBySideMergeBlocked": false,
+        "cardShapedExpansionBlocked": false
+      },
+      "confidenceBefore": 0.84,
+      "confidenceAfter": 0.84,
+      "inferenceEngine": "isnet-onnx",
+      "refinementOps": [
+        "reclaimAdjacentUnderRecall"
+      ]
+    },
+    "directRefineAccepted": false,
+    "fg": {
+      "raw": 0.3575,
+      "refined": 0.3575,
+      "lab": 0.3621,
+      "contour": 0.5044
+    },
+    "rgbUnchanged": true,
+    "contourMethod": "contour-first",
+    "contourNeedsReview": true
+  },
+  {
+    "file": "10_cap.jpg",
+    "methodUsed": "isnet-onnx",
+    "genuineModelInference": true,
+    "needsReview": true,
+    "reviewReasons": [
+      "isnet-refine-accepted: reclaimed-under-recall",
+      "residual-after-refine: residual-lab-garment-gaps,residual-dark-exterior-bites"
+    ],
+    "refine": {
+      "initialFgRatio": 0.2525192718491688,
+      "finalFgRatio": 0.2859315501068078,
+      "deltaFgRatio": 0.03341227825763904,
+      "initialComponentCount": 1,
+      "finalComponentCount": 1,
+      "initialInternalHoleRatio": 0,
+      "finalInternalHoleRatio": 0.00010448592922819726,
+      "labAgreement": 0.4774078201913253,
+      "labBgContaminationRate": 0,
+      "contourReliableBgContamination": 0,
+      "contourInternalHoleRatio": 0,
+      "contourBorderTouchRatio": 0,
+      "pixelsReclaimed": 2878,
+      "pixelsStripped": 0,
+      "changedPixelCount": 2878,
+      "changedBBox": {
+        "minX": 26,
+        "minY": 67,
+        "maxX": 263,
+        "maxY": 217
+      },
+      "refinementAttempted": true,
+      "refinementAccepted": true,
+      "refinementCategory": "under-recall",
+      "acceptReason": "reclaimed-under-recall",
+      "failureModes": [
+        "possible-under-recall",
+        "residual-lab-garment-gaps",
+        "residual-dark-exterior-bites"
+      ],
+      "gateValues": {
+        "deltaFg": 0.03341227825763904,
+        "corridorReclaimed": 0,
+        "underRecallReclaimed": 2502,
+        "darkBiteReclaimed": 376,
+        "stripped": 0,
+        "verticalStackSeverance": false,
+        "sideBySideMergeBlocked": false,
+        "cardShapedExpansionBlocked": false
+      },
+      "confidenceBefore": 0.84,
+      "confidenceAfter": 0.84,
+      "inferenceEngine": "isnet-onnx",
+      "refinementOps": [
+        "reclaimAdjacentUnderRecall",
+        "reclaimExteriorDarkUndercuts"
+      ]
+    },
+    "directRefineAccepted": true,
+    "fg": {
+      "raw": 0.2525,
+      "refined": 0.2859,
+      "lab": 0.2769,
+      "contour": 0.3068
+    },
+    "rgbUnchanged": true,
+    "contourMethod": "contour-first-fallback-seed",
+    "contourNeedsReview": true
+  }
+]

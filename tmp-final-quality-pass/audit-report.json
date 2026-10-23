@@ -1,0 +1,569 @@
+{
+  "generatedAt": "2026-10-23T03:58:55.304Z",
+  "runtimePath": {
+    "environment": "node",
+    "openCvLoaded": true,
+    "grabCutApiPresent": false,
+    "note": "Under Vite/Node, GrabCut WASM often hangs or is skipped; methodUsed=opencv-seed-fallback is the documented Node path and is NOT evidence that GrabCut ran."
+  },
+  "productionReadyAutomaticSegmentation": false,
+  "verdict": "NOT production-ready for fully automatic segmentation: significant white-on-near-white damage and/or visible contamination remain on hard fixtures.",
+  "referencePolicy": {
+    "type": "independent-appearance-border",
+    "notGroundTruth": true,
+    "excludedFromBinaryScores": "REF_UNCERTAIN (128)",
+    "unreliableMetrics": [
+      "Full-image IoU/Dice treating algorithm mask as GT — never used",
+      "Sneaker/tee white leather FG recall — largely UNCERTAIN",
+      "Soft shadow true-positive rate without manual paint"
+    ]
+  },
+  "fixtures": [
+    {
+      "file": "01_hoodie.jpg",
+      "hardCase": false,
+      "width": 298,
+      "height": 292,
+      "methodUsed": "opencv-seed-fallback",
+      "elapsedMs": 897,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 36210,
+        "definiteBg": 37169,
+        "uncertain": 13637,
+        "uncertainRatio": 0.1567,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 73379,
+        "fgPrecision": 0.8497,
+        "fgRecall": 0.9969,
+        "bgPrecision": 0.9963,
+        "bgRecall": 0.8282,
+        "iou": 0.8474,
+        "dice": 0.9174,
+        "garmentMissRate": 0.0031,
+        "bgContaminationRate": 0.1718
+      },
+      "boundary": {
+        "edgeBandPixels": 1959,
+        "edgeAccuracy": 0.9821,
+        "softAlphaMae": 0.0339
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "haloProxy": {
+        "brightKeepEdge": 0,
+        "ratio": 0
+      },
+      "rootCause": "Acceptable definite-label agreement on dark/chromatic mass.",
+      "remainingLimitations": [
+        "Definite BG contamination 17.2%."
+      ],
+      "exportPaths": {
+        "result": "D:\\project\\tmp-quality-audit\\exports\\01_hoodie-result.png",
+        "mask": "D:\\project\\tmp-quality-audit\\exports\\01_hoodie-mask.png",
+        "reference": "D:\\project\\tmp-quality-audit\\reference\\01_hoodie-ref.png"
+      }
+    },
+    {
+      "file": "02_blazer.jpg",
+      "hardCase": false,
+      "width": 294,
+      "height": 292,
+      "methodUsed": "opencv-seed-fallback",
+      "elapsedMs": 600,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 49568,
+        "definiteBg": 34379,
+        "uncertain": 1901,
+        "uncertainRatio": 0.0221,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 83947,
+        "fgPrecision": 0.8245,
+        "fgRecall": 0.9885,
+        "bgPrecision": 0.9768,
+        "bgRecall": 0.6967,
+        "iou": 0.8167,
+        "dice": 0.8991,
+        "garmentMissRate": 0.0115,
+        "bgContaminationRate": 0.3033
+      },
+      "boundary": {
+        "edgeBandPixels": 1535,
+        "edgeAccuracy": 0.8691,
+        "softAlphaMae": 0.188
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "haloProxy": {
+        "brightKeepEdge": 0,
+        "ratio": 0
+      },
+      "rootCause": "Acceptable definite-label agreement on dark/chromatic mass.",
+      "remainingLimitations": [
+        "Definite BG contamination 30.3%."
+      ],
+      "exportPaths": {
+        "result": "D:\\project\\tmp-quality-audit\\exports\\02_blazer-result.png",
+        "mask": "D:\\project\\tmp-quality-audit\\exports\\02_blazer-mask.png",
+        "reference": "D:\\project\\tmp-quality-audit\\reference\\02_blazer-ref.png"
+      }
+    },
+    {
+      "file": "03_tshirt.jpg",
+      "hardCase": true,
+      "width": 294,
+      "height": 292,
+      "methodUsed": "opencv-seed-fallback",
+      "elapsedMs": 584,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 380,
+        "definiteBg": 43298,
+        "uncertain": 42170,
+        "uncertainRatio": 0.4912,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 43678,
+        "fgPrecision": 0.0285,
+        "fgRecall": 0.9921,
+        "bgPrecision": 0.9999,
+        "bgRecall": 0.7036,
+        "iou": 0.0285,
+        "dice": 0.0555,
+        "garmentMissRate": 0.0079,
+        "bgContaminationRate": 0.2964
+      },
+      "boundary": {
+        "edgeBandPixels": 243,
+        "edgeAccuracy": 1,
+        "softAlphaMae": 0.0049
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "haloProxy": {
+        "brightKeepEdge": 0,
+        "ratio": 0
+      },
+      "rootCause": "White tee vs near-white card: large uncertain band; border-connected studio may remain as bright KEEP fringe.",
+      "remainingLimitations": [
+        "White-on-near-white contamination not fully measurable as FG miss; visual halo/contamination remains.",
+        "Definite BG contamination 29.6%."
+      ],
+      "exportPaths": {
+        "result": "D:\\project\\tmp-quality-audit\\exports\\03_tshirt-result.png",
+        "mask": "D:\\project\\tmp-quality-audit\\exports\\03_tshirt-mask.png",
+        "reference": "D:\\project\\tmp-quality-audit\\reference\\03_tshirt-ref.png"
+      }
+    },
+    {
+      "file": "04_jeans.jpg",
+      "hardCase": false,
+      "width": 294,
+      "height": 292,
+      "methodUsed": "opencv-seed-fallback",
+      "elapsedMs": 362,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 31732,
+        "definiteBg": 53510,
+        "uncertain": 606,
+        "uncertainRatio": 0.0071,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 85242,
+        "fgPrecision": 0.7757,
+        "fgRecall": 0.9919,
+        "bgPrecision": 0.9942,
+        "bgRecall": 0.83,
+        "iou": 0.7708,
+        "dice": 0.8706,
+        "garmentMissRate": 0.0081,
+        "bgContaminationRate": 0.17
+      },
+      "boundary": {
+        "edgeBandPixels": 2197,
+        "edgeAccuracy": 0.9731,
+        "softAlphaMae": 0.0534
+      },
+      "holes": {
+        "internalHoleErrorPixels": 12,
+        "internalHoleComponents": 1
+      },
+      "haloProxy": {
+        "brightKeepEdge": 0,
+        "ratio": 0
+      },
+      "rootCause": "Acceptable definite-label agreement on dark/chromatic mass.",
+      "remainingLimitations": [
+        "Definite BG contamination 17.0%."
+      ],
+      "exportPaths": {
+        "result": "D:\\project\\tmp-quality-audit\\exports\\04_jeans-result.png",
+        "mask": "D:\\project\\tmp-quality-audit\\exports\\04_jeans-mask.png",
+        "reference": "D:\\project\\tmp-quality-audit\\reference\\04_jeans-ref.png"
+      }
+    },
+    {
+      "file": "05_coat.jpg",
+      "hardCase": true,
+      "width": 296,
+      "height": 292,
+      "methodUsed": "opencv-seed-fallback",
+      "elapsedMs": 257,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 33764,
+        "definiteBg": 51235,
+        "uncertain": 1433,
+        "uncertainRatio": 0.0166,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 84999,
+        "fgPrecision": 0.9535,
+        "fgRecall": 0.9927,
+        "bgPrecision": 0.9951,
+        "bgRecall": 0.9681,
+        "iou": 0.9469,
+        "dice": 0.9727,
+        "garmentMissRate": 0.0073,
+        "bgContaminationRate": 0.0319
+      },
+      "boundary": {
+        "edgeBandPixels": 1267,
+        "edgeAccuracy": 0.9487,
+        "softAlphaMae": 0.071
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "haloProxy": {
+        "brightKeepEdge": 0,
+        "ratio": 0
+      },
+      "rootCause": "Dark garment definite FG is strong; residual halos are soft-studio / AA on silhouette (scored partly via haloProxy + boundary).",
+      "remainingLimitations": [],
+      "exportPaths": {
+        "result": "D:\\project\\tmp-quality-audit\\exports\\05_coat-result.png",
+        "mask": "D:\\project\\tmp-quality-audit\\exports\\05_coat-mask.png",
+        "reference": "D:\\project\\tmp-quality-audit\\reference\\05_coat-ref.png"
+      }
+    },
+    {
+      "file": "06_sweater.jpg",
+      "hardCase": true,
+      "width": 298,
+      "height": 291,
+      "methodUsed": "opencv-seed-fallback",
+      "elapsedMs": 385,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 46421,
+        "definiteBg": 35648,
+        "uncertain": 4649,
+        "uncertainRatio": 0.0536,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 82069,
+        "fgPrecision": 0.9919,
+        "fgRecall": 0.9005,
+        "bgPrecision": 0.8843,
+        "bgRecall": 0.9904,
+        "iou": 0.8939,
+        "dice": 0.944,
+        "garmentMissRate": 0.0995,
+        "bgContaminationRate": 0.0096
+      },
+      "boundary": {
+        "edgeBandPixels": 2043,
+        "edgeAccuracy": 0.6667,
+        "softAlphaMae": 0.3834
+      },
+      "holes": {
+        "internalHoleErrorPixels": 9,
+        "internalHoleComponents": 1
+      },
+      "haloProxy": {
+        "brightKeepEdge": 0,
+        "ratio": 0
+      },
+      "rootCause": "Dark garment definite FG is strong; residual halos are soft-studio / AA on silhouette (scored partly via haloProxy + boundary).",
+      "remainingLimitations": [
+        "Definite garment miss rate 10.0%."
+      ],
+      "exportPaths": {
+        "result": "D:\\project\\tmp-quality-audit\\exports\\06_sweater-result.png",
+        "mask": "D:\\project\\tmp-quality-audit\\exports\\06_sweater-mask.png",
+        "reference": "D:\\project\\tmp-quality-audit\\reference\\06_sweater-ref.png"
+      }
+    },
+    {
+      "file": "07_dress.jpg",
+      "hardCase": true,
+      "width": 294,
+      "height": 291,
+      "methodUsed": "opencv-seed-fallback",
+      "elapsedMs": 387,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 18667,
+        "definiteBg": 63519,
+        "uncertain": 3368,
+        "uncertainRatio": 0.0394,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 82186,
+        "fgPrecision": 0.97,
+        "fgRecall": 0.9132,
+        "bgPrecision": 0.9749,
+        "bgRecall": 0.9917,
+        "iou": 0.888,
+        "dice": 0.9407,
+        "garmentMissRate": 0.0868,
+        "bgContaminationRate": 0.0083
+      },
+      "boundary": {
+        "edgeBandPixels": 2378,
+        "edgeAccuracy": 0.4605,
+        "softAlphaMae": 0.5554
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "haloProxy": {
+        "brightKeepEdge": 0,
+        "ratio": 0
+      },
+      "rootCause": "Thin straps are definite dark FG when L is low; soft AA around straps and neckline may remain uncertain.",
+      "remainingLimitations": [
+        "Strap width at ~1–2px is fragile under aggressive peel.",
+        "Definite garment miss rate 8.7%."
+      ],
+      "exportPaths": {
+        "result": "D:\\project\\tmp-quality-audit\\exports\\07_dress-result.png",
+        "mask": "D:\\project\\tmp-quality-audit\\exports\\07_dress-mask.png",
+        "reference": "D:\\project\\tmp-quality-audit\\reference\\07_dress-ref.png"
+      }
+    },
+    {
+      "file": "08_sneakers.jpg",
+      "hardCase": true,
+      "width": 294,
+      "height": 291,
+      "methodUsed": "opencv-seed-fallback",
+      "elapsedMs": 644,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 6385,
+        "definiteBg": 65915,
+        "uncertain": 13254,
+        "uncertainRatio": 0.1549,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 72300,
+        "fgPrecision": 0.3649,
+        "fgRecall": 0.8255,
+        "bgPrecision": 0.9807,
+        "bgRecall": 0.8608,
+        "iou": 0.3388,
+        "dice": 0.5061,
+        "garmentMissRate": 0.1745,
+        "bgContaminationRate": 0.1392
+      },
+      "boundary": {
+        "edgeBandPixels": 2938,
+        "edgeAccuracy": 0.8322,
+        "softAlphaMae": 0.2179
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "haloProxy": {
+        "brightKeepEdge": 0,
+        "ratio": 0
+      },
+      "rootCause": "White/near-white leather vs studio card is Lab-ambiguous; definite FG covers dark soles/mesh only. Global Lab loosen would eat card.",
+      "remainingLimitations": [
+        "Significant white leather KEEP damage vs human intent — not production-ready for white-on-near-white without manual correction.",
+        "Uncertain-region metrics cannot fully quantify leather loss.",
+        "Definite garment miss rate 17.4%.",
+        "Definite BG contamination 13.9%."
+      ],
+      "exportPaths": {
+        "result": "D:\\project\\tmp-quality-audit\\exports\\08_sneakers-result.png",
+        "mask": "D:\\project\\tmp-quality-audit\\exports\\08_sneakers-mask.png",
+        "reference": "D:\\project\\tmp-quality-audit\\reference\\08_sneakers-ref.png"
+      }
+    },
+    {
+      "file": "09_handbag.jpg",
+      "hardCase": true,
+      "width": 294,
+      "height": 291,
+      "methodUsed": "opencv-seed-fallback",
+      "elapsedMs": 354,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 32021,
+        "definiteBg": 45174,
+        "uncertain": 8359,
+        "uncertainRatio": 0.0977,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 77195,
+        "fgPrecision": 0.9853,
+        "fgRecall": 0.9528,
+        "bgPrecision": 0.9673,
+        "bgRecall": 0.9899,
+        "iou": 0.9394,
+        "dice": 0.9688,
+        "garmentMissRate": 0.0472,
+        "bgContaminationRate": 0.0101
+      },
+      "boundary": {
+        "edgeBandPixels": 2284,
+        "edgeAccuracy": 0.5797,
+        "softAlphaMae": 0.4736
+      },
+      "holes": {
+        "internalHoleErrorPixels": 101,
+        "internalHoleComponents": 11
+      },
+      "haloProxy": {
+        "brightKeepEdge": 0,
+        "ratio": 0
+      },
+      "rootCause": "Handle openings are usually border-connected through the open top of the arches (not enclosed components), so stripEnclosed / stripDarkWalled skip them. Wall-adjacent JPEG variance also blocks flat-studio strip. Magenta exports still show retained studio under handles.",
+      "remainingLimitations": [
+        "Visible handle-interior studio remains — requires targeted open-arch background fill or manual edit, not blind enclosed-hole removal.",
+        "Enclosed-hole proxy=101px (under-counts open arches that touch exterior KEEP).",
+        "Thin strap AA and hardware fringes may need manual touch-up.",
+        "Not safe to auto-remove all bright regions beside dark leather (hardware / leather details)."
+      ],
+      "exportPaths": {
+        "result": "D:\\project\\tmp-quality-audit\\exports\\09_handbag-result.png",
+        "mask": "D:\\project\\tmp-quality-audit\\exports\\09_handbag-mask.png",
+        "reference": "D:\\project\\tmp-quality-audit\\reference\\09_handbag-ref.png"
+      }
+    },
+    {
+      "file": "10_cap.jpg",
+      "hardCase": true,
+      "width": 296,
+      "height": 291,
+      "methodUsed": "opencv-seed-fallback",
+      "elapsedMs": 418,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 25999,
+        "definiteBg": 56858,
+        "uncertain": 3279,
+        "uncertainRatio": 0.0381,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 82857,
+        "fgPrecision": 0.9804,
+        "fgRecall": 0.9136,
+        "bgPrecision": 0.9617,
+        "bgRecall": 0.9916,
+        "iou": 0.8971,
+        "dice": 0.9458,
+        "garmentMissRate": 0.0864,
+        "bgContaminationRate": 0.0084
+      },
+      "boundary": {
+        "edgeBandPixels": 2088,
+        "edgeAccuracy": 0.4057,
+        "softAlphaMae": 0.6165
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "haloProxy": {
+        "brightKeepEdge": 0,
+        "ratio": 0
+      },
+      "rootCause": "Warm crown is definite FG; brim contact shadow is uncertain / mid-gray — may leave soft fringe.",
+      "remainingLimitations": [
+        "Definite garment miss rate 8.6%."
+      ],
+      "exportPaths": {
+        "result": "D:\\project\\tmp-quality-audit\\exports\\10_cap-result.png",
+        "mask": "D:\\project\\tmp-quality-audit\\exports\\10_cap-mask.png",
+        "reference": "D:\\project\\tmp-quality-audit\\reference\\10_cap-ref.png"
+      }
+    }
+  ]
+}

@@ -1,0 +1,994 @@
+{
+  "generatedAt": "2026-10-23T11:33:15.611Z",
+  "labSeedDefault": true,
+  "isnetOptIn": true,
+  "isnetError": null,
+  "licenseNote": "@imgly/background-removal* is AGPL-3.0; commercial use may require IMG.LY paid license. Weights downloaded from IMG.LY CDN on first run.",
+  "referencePolicy": "Appearance+border derived references — not manual GT. Uncertain excluded from binary IoU.",
+  "comparison": [
+    {
+      "file": "01_hoodie.jpg",
+      "labSeed": {
+        "methodUsed": "opencv-seed-fallback",
+        "iou": 0.8431,
+        "fgRecall": 0.9969,
+        "fgPrecision": 0.8453,
+        "holes": 0,
+        "elapsedMs": 1096
+      },
+      "isnet": {
+        "methodUsed": "isnet-onnx",
+        "iou": 0.8314,
+        "fgRecall": 0.8619,
+        "fgPrecision": 0.9592,
+        "holes": 0,
+        "elapsedMs": 2988
+      },
+      "deltaIou": -0.0117
+    },
+    {
+      "file": "02_blazer.jpg",
+      "labSeed": {
+        "methodUsed": "opencv-seed-fallback",
+        "iou": 0.8149,
+        "fgRecall": 0.9892,
+        "fgPrecision": 0.8222,
+        "holes": 0,
+        "elapsedMs": 708
+      },
+      "isnet": {
+        "methodUsed": "isnet-onnx",
+        "iou": 0.9645,
+        "fgRecall": 0.9653,
+        "fgPrecision": 0.9991,
+        "holes": 0,
+        "elapsedMs": 2467
+      },
+      "deltaIou": 0.1496
+    },
+    {
+      "file": "03_tshirt.jpg",
+      "labSeed": {
+        "methodUsed": "opencv-seed-fallback",
+        "iou": 0.0285,
+        "fgRecall": 0.9921,
+        "fgPrecision": 0.0285,
+        "holes": 0,
+        "elapsedMs": 806
+      },
+      "isnet": {
+        "methodUsed": "isnet-onnx",
+        "iou": 0.0346,
+        "fgRecall": 0.1,
+        "fgPrecision": 0.0503,
+        "holes": 0,
+        "elapsedMs": 2564
+      },
+      "deltaIou": 0.0061
+    },
+    {
+      "file": "04_jeans.jpg",
+      "labSeed": {
+        "methodUsed": "opencv-seed-fallback",
+        "iou": 0.7566,
+        "fgRecall": 0.9919,
+        "fgPrecision": 0.7614,
+        "holes": 12,
+        "elapsedMs": 477
+      },
+      "isnet": {
+        "methodUsed": "isnet-onnx",
+        "iou": 0.9144,
+        "fgRecall": 0.9522,
+        "fgPrecision": 0.9584,
+        "holes": 0,
+        "elapsedMs": 2356
+      },
+      "deltaIou": 0.1578
+    },
+    {
+      "file": "05_coat.jpg",
+      "labSeed": {
+        "methodUsed": "opencv-seed-fallback",
+        "iou": 0.9471,
+        "fgRecall": 0.993,
+        "fgPrecision": 0.9534,
+        "holes": 0,
+        "elapsedMs": 380
+      },
+      "isnet": {
+        "methodUsed": "isnet-onnx",
+        "iou": 0.8051,
+        "fgRecall": 0.8118,
+        "fgPrecision": 0.9899,
+        "holes": 0,
+        "elapsedMs": 2462
+      },
+      "deltaIou": -0.142
+    },
+    {
+      "file": "06_sweater.jpg",
+      "labSeed": {
+        "methodUsed": "opencv-seed-fallback",
+        "iou": 0.8946,
+        "fgRecall": 0.901,
+        "fgPrecision": 0.9922,
+        "holes": 9,
+        "elapsedMs": 687
+      },
+      "isnet": {
+        "methodUsed": "isnet-onnx",
+        "iou": 0.8804,
+        "fgRecall": 0.8808,
+        "fgPrecision": 0.9995,
+        "holes": 0,
+        "elapsedMs": 2343
+      },
+      "deltaIou": -0.0142
+    },
+    {
+      "file": "07_dress.jpg",
+      "labSeed": {
+        "methodUsed": "opencv-seed-fallback",
+        "iou": 0.8823,
+        "fgRecall": 0.9132,
+        "fgPrecision": 0.9631,
+        "holes": 0,
+        "elapsedMs": 563
+      },
+      "isnet": {
+        "methodUsed": "isnet-onnx",
+        "iou": 0.8701,
+        "fgRecall": 0.8721,
+        "fgPrecision": 0.9973,
+        "holes": 0,
+        "elapsedMs": 2648
+      },
+      "deltaIou": -0.0122
+    },
+    {
+      "file": "08_sneakers.jpg",
+      "labSeed": {
+        "methodUsed": "opencv-seed-fallback",
+        "iou": 0.3379,
+        "fgRecall": 0.8013,
+        "fgPrecision": 0.3688,
+        "holes": 0,
+        "elapsedMs": 884
+      },
+      "isnet": {
+        "methodUsed": "isnet-onnx",
+        "iou": 0.2039,
+        "fgRecall": 0.6869,
+        "fgPrecision": 0.2248,
+        "holes": 0,
+        "elapsedMs": 2339
+      },
+      "deltaIou": -0.134
+    },
+    {
+      "file": "09_handbag.jpg",
+      "labSeed": {
+        "methodUsed": "opencv-seed-fallback",
+        "iou": 0.9378,
+        "fgRecall": 0.9519,
+        "fgPrecision": 0.9845,
+        "holes": 34,
+        "elapsedMs": 617
+      },
+      "isnet": {
+        "methodUsed": "isnet-onnx",
+        "iou": 0.9529,
+        "fgRecall": 0.9531,
+        "fgPrecision": 0.9998,
+        "holes": 0,
+        "elapsedMs": 2304
+      },
+      "deltaIou": 0.0151
+    },
+    {
+      "file": "10_cap.jpg",
+      "labSeed": {
+        "methodUsed": "opencv-seed-fallback",
+        "iou": 0.8903,
+        "fgRecall": 0.9151,
+        "fgPrecision": 0.9704,
+        "holes": 0,
+        "elapsedMs": 670
+      },
+      "isnet": {
+        "methodUsed": "isnet-onnx",
+        "iou": 0.8363,
+        "fgRecall": 0.8363,
+        "fgPrecision": 0.9999,
+        "holes": 0,
+        "elapsedMs": 2347
+      },
+      "deltaIou": -0.054
+    }
+  ],
+  "labFixtures": [
+    {
+      "file": "01_hoodie.jpg",
+      "methodUsed": "opencv-seed-fallback",
+      "genuineModelInference": false,
+      "elapsedMs": 1096,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 36210,
+        "definiteBg": 37169,
+        "uncertain": 13637,
+        "uncertainRatio": 0.1567,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 73379,
+        "fgPrecision": 0.8453,
+        "fgRecall": 0.9969,
+        "bgPrecision": 0.9963,
+        "bgRecall": 0.8223,
+        "iou": 0.8431,
+        "dice": 0.9149,
+        "garmentMissRate": 0.0031,
+        "bgContaminationRate": 0.1777
+      },
+      "boundary": {
+        "edgeBandPixels": 1959,
+        "edgeAccuracy": 0.9821,
+        "softAlphaMae": 0.0339
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "02_blazer.jpg",
+      "methodUsed": "opencv-seed-fallback",
+      "genuineModelInference": false,
+      "elapsedMs": 708,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 49568,
+        "definiteBg": 34379,
+        "uncertain": 1901,
+        "uncertainRatio": 0.0221,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 83947,
+        "fgPrecision": 0.8222,
+        "fgRecall": 0.9892,
+        "bgPrecision": 0.978,
+        "bgRecall": 0.6916,
+        "iou": 0.8149,
+        "dice": 0.898,
+        "garmentMissRate": 0.0108,
+        "bgContaminationRate": 0.3084
+      },
+      "boundary": {
+        "edgeBandPixels": 1535,
+        "edgeAccuracy": 0.8691,
+        "softAlphaMae": 0.1871
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "03_tshirt.jpg",
+      "methodUsed": "opencv-seed-fallback",
+      "genuineModelInference": false,
+      "elapsedMs": 806,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 380,
+        "definiteBg": 43298,
+        "uncertain": 42170,
+        "uncertainRatio": 0.4912,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 43678,
+        "fgPrecision": 0.0285,
+        "fgRecall": 0.9921,
+        "bgPrecision": 0.9999,
+        "bgRecall": 0.7036,
+        "iou": 0.0285,
+        "dice": 0.0555,
+        "garmentMissRate": 0.0079,
+        "bgContaminationRate": 0.2964
+      },
+      "boundary": {
+        "edgeBandPixels": 243,
+        "edgeAccuracy": 1,
+        "softAlphaMae": 0.0049
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "04_jeans.jpg",
+      "methodUsed": "opencv-seed-fallback",
+      "genuineModelInference": false,
+      "elapsedMs": 477,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 31732,
+        "definiteBg": 53510,
+        "uncertain": 606,
+        "uncertainRatio": 0.0071,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 85242,
+        "fgPrecision": 0.7614,
+        "fgRecall": 0.9919,
+        "bgPrecision": 0.9941,
+        "bgRecall": 0.8156,
+        "iou": 0.7566,
+        "dice": 0.8615,
+        "garmentMissRate": 0.0081,
+        "bgContaminationRate": 0.1844
+      },
+      "boundary": {
+        "edgeBandPixels": 2197,
+        "edgeAccuracy": 0.9731,
+        "softAlphaMae": 0.0534
+      },
+      "holes": {
+        "internalHoleErrorPixels": 12,
+        "internalHoleComponents": 1
+      }
+    },
+    {
+      "file": "05_coat.jpg",
+      "methodUsed": "opencv-seed-fallback",
+      "genuineModelInference": false,
+      "elapsedMs": 380,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 33764,
+        "definiteBg": 51235,
+        "uncertain": 1433,
+        "uncertainRatio": 0.0166,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 84999,
+        "fgPrecision": 0.9534,
+        "fgRecall": 0.993,
+        "bgPrecision": 0.9953,
+        "bgRecall": 0.968,
+        "iou": 0.9471,
+        "dice": 0.9728,
+        "garmentMissRate": 0.007,
+        "bgContaminationRate": 0.032
+      },
+      "boundary": {
+        "edgeBandPixels": 1267,
+        "edgeAccuracy": 0.9495,
+        "softAlphaMae": 0.0698
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "06_sweater.jpg",
+      "methodUsed": "opencv-seed-fallback",
+      "genuineModelInference": false,
+      "elapsedMs": 687,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 46421,
+        "definiteBg": 35648,
+        "uncertain": 4649,
+        "uncertainRatio": 0.0536,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 82069,
+        "fgPrecision": 0.9922,
+        "fgRecall": 0.901,
+        "bgPrecision": 0.8848,
+        "bgRecall": 0.9907,
+        "iou": 0.8946,
+        "dice": 0.9444,
+        "garmentMissRate": 0.099,
+        "bgContaminationRate": 0.0093
+      },
+      "boundary": {
+        "edgeBandPixels": 2043,
+        "edgeAccuracy": 0.675,
+        "softAlphaMae": 0.378
+      },
+      "holes": {
+        "internalHoleErrorPixels": 9,
+        "internalHoleComponents": 1
+      }
+    },
+    {
+      "file": "07_dress.jpg",
+      "methodUsed": "opencv-seed-fallback",
+      "genuineModelInference": false,
+      "elapsedMs": 563,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 18667,
+        "definiteBg": 63519,
+        "uncertain": 3368,
+        "uncertainRatio": 0.0394,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 82186,
+        "fgPrecision": 0.9631,
+        "fgRecall": 0.9132,
+        "bgPrecision": 0.9749,
+        "bgRecall": 0.9897,
+        "iou": 0.8823,
+        "dice": 0.9375,
+        "garmentMissRate": 0.0868,
+        "bgContaminationRate": 0.0103
+      },
+      "boundary": {
+        "edgeBandPixels": 2378,
+        "edgeAccuracy": 0.4605,
+        "softAlphaMae": 0.5537
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "08_sneakers.jpg",
+      "methodUsed": "opencv-seed-fallback",
+      "genuineModelInference": false,
+      "elapsedMs": 884,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 6385,
+        "definiteBg": 65915,
+        "uncertain": 13254,
+        "uncertainRatio": 0.1549,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 72300,
+        "fgPrecision": 0.3688,
+        "fgRecall": 0.8013,
+        "bgPrecision": 0.9783,
+        "bgRecall": 0.8672,
+        "iou": 0.3379,
+        "dice": 0.5051,
+        "garmentMissRate": 0.1987,
+        "bgContaminationRate": 0.1328
+      },
+      "boundary": {
+        "edgeBandPixels": 2938,
+        "edgeAccuracy": 0.8349,
+        "softAlphaMae": 0.2212
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "09_handbag.jpg",
+      "methodUsed": "opencv-seed-fallback",
+      "genuineModelInference": false,
+      "elapsedMs": 617,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 32021,
+        "definiteBg": 45174,
+        "uncertain": 8359,
+        "uncertainRatio": 0.0977,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 77195,
+        "fgPrecision": 0.9845,
+        "fgRecall": 0.9519,
+        "bgPrecision": 0.9667,
+        "bgRecall": 0.9894,
+        "iou": 0.9378,
+        "dice": 0.9679,
+        "garmentMissRate": 0.0481,
+        "bgContaminationRate": 0.0106
+      },
+      "boundary": {
+        "edgeBandPixels": 2284,
+        "edgeAccuracy": 0.5972,
+        "softAlphaMae": 0.4549
+      },
+      "holes": {
+        "internalHoleErrorPixels": 34,
+        "internalHoleComponents": 5
+      }
+    },
+    {
+      "file": "10_cap.jpg",
+      "methodUsed": "opencv-seed-fallback",
+      "genuineModelInference": false,
+      "elapsedMs": 670,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 25999,
+        "definiteBg": 56858,
+        "uncertain": 3279,
+        "uncertainRatio": 0.0381,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 82857,
+        "fgPrecision": 0.9704,
+        "fgRecall": 0.9151,
+        "bgPrecision": 0.9622,
+        "bgRecall": 0.9872,
+        "iou": 0.8903,
+        "dice": 0.942,
+        "garmentMissRate": 0.0849,
+        "bgContaminationRate": 0.0128
+      },
+      "boundary": {
+        "edgeBandPixels": 2088,
+        "edgeAccuracy": 0.4234,
+        "softAlphaMae": 0.5957
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    }
+  ],
+  "isnetFixtures": [
+    {
+      "file": "01_hoodie.jpg",
+      "methodUsed": "isnet-onnx",
+      "genuineModelInference": true,
+      "elapsedMs": 2988,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 36210,
+        "definiteBg": 37169,
+        "uncertain": 13637,
+        "uncertainRatio": 0.1567,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 73379,
+        "fgPrecision": 0.9592,
+        "fgRecall": 0.8619,
+        "bgPrecision": 0.8775,
+        "bgRecall": 0.9643,
+        "iou": 0.8314,
+        "dice": 0.9079,
+        "garmentMissRate": 0.1381,
+        "bgContaminationRate": 0.0357
+      },
+      "boundary": {
+        "edgeBandPixels": 1959,
+        "edgeAccuracy": 0.5717,
+        "softAlphaMae": 0.4491
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "02_blazer.jpg",
+      "methodUsed": "isnet-onnx",
+      "genuineModelInference": true,
+      "elapsedMs": 2467,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 49568,
+        "definiteBg": 34379,
+        "uncertain": 1901,
+        "uncertainRatio": 0.0221,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 83947,
+        "fgPrecision": 0.9991,
+        "fgRecall": 0.9653,
+        "bgPrecision": 0.9523,
+        "bgRecall": 0.9988,
+        "iou": 0.9645,
+        "dice": 0.9819,
+        "garmentMissRate": 0.0347,
+        "bgContaminationRate": 0.0012
+      },
+      "boundary": {
+        "edgeBandPixels": 1535,
+        "edgeAccuracy": 0.7479,
+        "softAlphaMae": 0.3278
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "03_tshirt.jpg",
+      "methodUsed": "isnet-onnx",
+      "genuineModelInference": true,
+      "elapsedMs": 2564,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 380,
+        "definiteBg": 43298,
+        "uncertain": 42170,
+        "uncertainRatio": 0.4912,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 43678,
+        "fgPrecision": 0.0503,
+        "fgRecall": 0.1,
+        "bgPrecision": 0.992,
+        "bgRecall": 0.9834,
+        "iou": 0.0346,
+        "dice": 0.0669,
+        "garmentMissRate": 0.9,
+        "bgContaminationRate": 0.0166
+      },
+      "boundary": {
+        "edgeBandPixels": 243,
+        "edgeAccuracy": 0.0329,
+        "softAlphaMae": 0.9737
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "04_jeans.jpg",
+      "methodUsed": "isnet-onnx",
+      "genuineModelInference": true,
+      "elapsedMs": 2356,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 31732,
+        "definiteBg": 53510,
+        "uncertain": 606,
+        "uncertainRatio": 0.0071,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 85242,
+        "fgPrecision": 0.9584,
+        "fgRecall": 0.9522,
+        "bgPrecision": 0.9718,
+        "bgRecall": 0.9755,
+        "iou": 0.9144,
+        "dice": 0.9553,
+        "garmentMissRate": 0.0478,
+        "bgContaminationRate": 0.0245
+      },
+      "boundary": {
+        "edgeBandPixels": 2197,
+        "edgeAccuracy": 0.6127,
+        "softAlphaMae": 0.4265
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "05_coat.jpg",
+      "methodUsed": "isnet-onnx",
+      "genuineModelInference": true,
+      "elapsedMs": 2462,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 33764,
+        "definiteBg": 51235,
+        "uncertain": 1433,
+        "uncertainRatio": 0.0166,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 84999,
+        "fgPrecision": 0.9899,
+        "fgRecall": 0.8118,
+        "bgPrecision": 0.8891,
+        "bgRecall": 0.9946,
+        "iou": 0.8051,
+        "dice": 0.892,
+        "garmentMissRate": 0.1882,
+        "bgContaminationRate": 0.0054
+      },
+      "boundary": {
+        "edgeBandPixels": 1267,
+        "edgeAccuracy": 0.6125,
+        "softAlphaMae": 0.4543
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "06_sweater.jpg",
+      "methodUsed": "isnet-onnx",
+      "genuineModelInference": true,
+      "elapsedMs": 2343,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 46421,
+        "definiteBg": 35648,
+        "uncertain": 4649,
+        "uncertainRatio": 0.0536,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 82069,
+        "fgPrecision": 0.9995,
+        "fgRecall": 0.8808,
+        "bgPrecision": 0.8656,
+        "bgRecall": 0.9994,
+        "iou": 0.8804,
+        "dice": 0.9364,
+        "garmentMissRate": 0.1192,
+        "bgContaminationRate": 0.0006
+      },
+      "boundary": {
+        "edgeBandPixels": 2043,
+        "edgeAccuracy": 0.4508,
+        "softAlphaMae": 0.5986
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "07_dress.jpg",
+      "methodUsed": "isnet-onnx",
+      "genuineModelInference": true,
+      "elapsedMs": 2648,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 18667,
+        "definiteBg": 63519,
+        "uncertain": 3368,
+        "uncertainRatio": 0.0394,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 82186,
+        "fgPrecision": 0.9973,
+        "fgRecall": 0.8721,
+        "bgPrecision": 0.9638,
+        "bgRecall": 0.9993,
+        "iou": 0.8701,
+        "dice": 0.9305,
+        "garmentMissRate": 0.1279,
+        "bgContaminationRate": 0.0007
+      },
+      "boundary": {
+        "edgeBandPixels": 2378,
+        "edgeAccuracy": 0.3272,
+        "softAlphaMae": 0.7075
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "08_sneakers.jpg",
+      "methodUsed": "isnet-onnx",
+      "genuineModelInference": true,
+      "elapsedMs": 2339,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 6385,
+        "definiteBg": 65915,
+        "uncertain": 13254,
+        "uncertainRatio": 0.1549,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 72300,
+        "fgPrecision": 0.2248,
+        "fgRecall": 0.6869,
+        "bgPrecision": 0.9621,
+        "bgRecall": 0.7705,
+        "iou": 0.2039,
+        "dice": 0.3387,
+        "garmentMissRate": 0.3131,
+        "bgContaminationRate": 0.2295
+      },
+      "boundary": {
+        "edgeBandPixels": 2938,
+        "edgeAccuracy": 0.7543,
+        "softAlphaMae": 0.2572
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "09_handbag.jpg",
+      "methodUsed": "isnet-onnx",
+      "genuineModelInference": true,
+      "elapsedMs": 2304,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 32021,
+        "definiteBg": 45174,
+        "uncertain": 8359,
+        "uncertainRatio": 0.0977,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 77195,
+        "fgPrecision": 0.9998,
+        "fgRecall": 0.9531,
+        "bgPrecision": 0.9678,
+        "bgRecall": 0.9999,
+        "iou": 0.9529,
+        "dice": 0.9759,
+        "garmentMissRate": 0.0469,
+        "bgContaminationRate": 0.0001
+      },
+      "boundary": {
+        "edgeBandPixels": 2284,
+        "edgeAccuracy": 0.5158,
+        "softAlphaMae": 0.5462
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    },
+    {
+      "file": "10_cap.jpg",
+      "methodUsed": "isnet-onnx",
+      "genuineModelInference": true,
+      "elapsedMs": 2347,
+      "sourceRgbUnchanged": true,
+      "reference": {
+        "definiteFg": 25999,
+        "definiteBg": 56858,
+        "uncertain": 3279,
+        "uncertainRatio": 0.0381,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "binary": {
+        "scoredPixels": 82857,
+        "fgPrecision": 0.9999,
+        "fgRecall": 0.8363,
+        "bgPrecision": 0.9304,
+        "bgRecall": 1,
+        "iou": 0.8363,
+        "dice": 0.9108,
+        "garmentMissRate": 0.1637,
+        "bgContaminationRate": 0
+      },
+      "boundary": {
+        "edgeBandPixels": 2088,
+        "edgeAccuracy": 0.3903,
+        "softAlphaMae": 0.6552
+      },
+      "holes": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+[
+  {
+    "file": "01_hoodie.jpg",
+    "width": 298,
+    "height": 292,
+    "keepRatio": 0.5458,
+    "removeRatio": 0.4439,
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 540
+  },
+  {
+    "file": "02_blazer.jpg",
+    "width": 294,
+    "height": 292,
+    "keepRatio": 0.6406,
+    "removeRatio": 0.3533,
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 239
+  },
+  {
+    "file": "03_tshirt.jpg",
+    "width": 294,
+    "height": 292,
+    "keepRatio": 0.6007,
+    "removeRatio": 0.3954,
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 326
+  },
+  {
+    "file": "04_jeans.jpg",
+    "width": 294,
+    "height": 292,
+    "keepRatio": 0.3914,
+    "removeRatio": 0.6059,
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 200
+  },
+  {
+    "file": "05_coat.jpg",
+    "width": 296,
+    "height": 292,
+    "keepRatio": 0.4094,
+    "removeRatio": 0.5887,
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 184
+  },
+  {
+    "file": "06_sweater.jpg",
+    "width": 298,
+    "height": 291,
+    "keepRatio": 0.4937,
+    "removeRatio": 0.5021,
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 189
+  },
+  {
+    "file": "07_dress.jpg",
+    "width": 294,
+    "height": 291,
+    "keepRatio": 0.2079,
+    "removeRatio": 0.7893,
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 248
+  },
+  {
+    "file": "08_sneakers.jpg",
+    "width": 294,
+    "height": 291,
+    "keepRatio": 0.2396,
+    "removeRatio": 0.7409,
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 314
+  },
+  {
+    "file": "09_handbag.jpg",
+    "width": 294,
+    "height": 291,
+    "keepRatio": 0.3787,
+    "removeRatio": 0.615,
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 187
+  },
+  {
+    "file": "10_cap.jpg",
+    "width": 296,
+    "height": 291,
+    "keepRatio": 0.2851,
+    "removeRatio": 0.7117,
+    "methodUsed": "opencv-seed-fallback",
+    "elapsedMs": 227
+  }
+]

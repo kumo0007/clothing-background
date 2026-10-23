@@ -1,0 +1,34 @@
+{
+  "methodUsed": "contour-first-fallback-seed",
+  "needsReview": true,
+  "contourAccepted": false,
+  "rejectReason": "excessive-gap-weak-agreement",
+  "fallbackReason": "seed-prior after excessive-gap-weak-agreement",
+  "validation": {
+    "decision": "reject",
+    "reason": "excessive-gap-weak-agreement",
+    "areaRatio": 0.1682796830072235,
+    "exteriorRatio": 0.48664001683147484,
+    "gapAddedRatio": 0.03294994973934591,
+    "substantialGapCompletion": true,
+    "seedAgreement": 0.26831056571737283,
+    "reliableFgAgreement": 0,
+    "reliableFgRatio": 0.09575239030320032,
+    "reliableBgContamination": 0,
+    "borderTouchRatio": 0,
+    "boundarySupport": 0.5285087719298246,
+    "componentCount": 22,
+    "largestComponentRatio": 0.8992151142599153,
+    "internalHoleRatio": 0.34581589958159,
+    "bounds": {
+      "minX": 34,
+      "minY": 32,
+      "maxX": 272,
+      "maxY": 151,
+      "spanX": 0.8129251700680272,
+      "spanY": 0.41237113402061853,
+      "bboxAreaRatio": 0.3352268742548566,
+      "fillRatio": 0.5019874476987448
+    }
+  }
+}

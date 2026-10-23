@@ -23,4 +23,17 @@ describe('coords', () => {
     }
     expect(clampScale(transform.scale)).toBe(4)
   })
+
+  it('maps through pan + scale without cumulative drift at a fixed screen point', () => {
+    let transform = { scale: 0.5, offsetX: 12.5, offsetY: -3 }
+    const screenX = 88
+    const screenY = 44
+    const baseline = screenToImage(screenX, screenY, transform)
+    for (const scale of [0.75, 1.25, 2, 3.5, 1]) {
+      transform = zoomAtPoint(transform, screenX, screenY, scale)
+      const again = screenToImage(screenX, screenY, transform)
+      expect(again.x).toBeCloseTo(baseline.x, 10)
+      expect(again.y).toBeCloseTo(baseline.y, 10)
+    }
+  })
 })

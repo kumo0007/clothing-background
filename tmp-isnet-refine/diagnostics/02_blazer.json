@@ -1,0 +1,61 @@
+{
+  "file": "02_blazer.jpg",
+  "methodUsed": "isnet-onnx",
+  "genuineModelInference": true,
+  "needsReview": false,
+  "reviewReasons": [
+    "isnet-refine-rejected: ambiguous-evidence (residual-lab-garment-gaps,residual-dark-exterior-bites)"
+  ],
+  "refine": {
+    "initialFgRatio": 0.5579745596868885,
+    "finalFgRatio": 0.5579745596868885,
+    "deltaFgRatio": 0,
+    "initialComponentCount": 1,
+    "finalComponentCount": 1,
+    "initialInternalHoleRatio": 0.00016307893020221786,
+    "finalInternalHoleRatio": 0.00016307893020221786,
+    "labAgreement": 0.9472439660795825,
+    "labBgContaminationRate": 0.000020876390889543015,
+    "contourReliableBgContamination": 0,
+    "contourInternalHoleRatio": 0.00023853336059428883,
+    "contourBorderTouchRatio": 0,
+    "pixelsReclaimed": 0,
+    "pixelsStripped": 0,
+    "changedPixelCount": 0,
+    "changedBBox": null,
+    "refinementAttempted": true,
+    "refinementAccepted": false,
+    "refinementCategory": "none",
+    "rejectReason": "ambiguous-evidence",
+    "failureModes": [
+      "residual-lab-garment-gaps",
+      "residual-dark-exterior-bites"
+    ],
+    "gateValues": {
+      "deltaFg": 0,
+      "corridorReclaimed": 0,
+      "underRecallReclaimed": 1593,
+      "darkBiteReclaimed": 0,
+      "stripped": 0,
+      "verticalStackSeverance": false,
+      "sideBySideMergeBlocked": false,
+      "cardShapedExpansionBlocked": false
+    },
+    "confidenceBefore": 0.84,
+    "confidenceAfter": 0.84,
+    "inferenceEngine": "isnet-onnx",
+    "refinementOps": [
+      "reclaimAdjacentUnderRecall"
+    ]
+  },
+  "directRefineAccepted": false,
+  "fg": {
+    "raw": 0.558,
+    "refined": 0.558,
+    "lab": 0.5788,
+    "contour": 0.5777
+  },
+  "rgbUnchanged": true,
+  "contourMethod": "contour-first",
+  "contourNeedsReview": false
+}

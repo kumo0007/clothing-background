@@ -1,0 +1,184 @@
+[
+  {
+    "fixture": "03_tshirt",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "needsReview": true,
+      "fg": 52529,
+      "bg": 31843,
+      "soft": 1476,
+      "softPct": 1.72,
+      "checksum": "091460c5b33da35a"
+    },
+    "contour": {
+      "requested": "contour",
+      "methodUsed": "contour-first-fallback-seed",
+      "needsReview": true,
+      "reviewReasons": [
+        "contour-rejected-fallback-seed"
+      ],
+      "accepted": false,
+      "rejectReason": "follows-studio-card",
+      "fallbackReason": "seed-prior after follows-studio-card",
+      "neverLabeledSuccessfulWhenRejected": true,
+      "fg": 50728,
+      "bg": 33016,
+      "soft": 2104,
+      "softPct": 2.45,
+      "checksum": "7d89acef95bb94e1",
+      "softAlphaPresent": true
+    },
+    "rgbPreserved": true,
+    "previewExportParity": true,
+    "storeChecksum": "7d89acef95bb94e1",
+    "editUndoRedo": {
+      "afterEdit": "3dcda11d3c1126c6",
+      "afterUndo": "7d89acef95bb94e1",
+      "afterRedo": "3dcda11d3c1126c6",
+      "undoRestoredPreEdit": true,
+      "redoRestoredEdit": true
+    },
+    "directMethodUsed": "contour-first-fallback-seed",
+    "polarity": {
+      "keepIsHigh": true,
+      "removeIsLow": true
+    }
+  },
+  {
+    "fixture": "08_sneakers",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "needsReview": true,
+      "fg": 7848,
+      "bg": 73418,
+      "soft": 4288,
+      "softPct": 5.01,
+      "checksum": "5ce7827e05a62f41"
+    },
+    "contour": {
+      "requested": "contour",
+      "methodUsed": "contour-first-fallback-seed",
+      "needsReview": true,
+      "reviewReasons": [
+        "contour-rejected-fallback-seed"
+      ],
+      "accepted": false,
+      "rejectReason": "excessive-gap-weak-agreement",
+      "fallbackReason": "seed-prior after excessive-gap-weak-agreement",
+      "neverLabeledSuccessfulWhenRejected": true,
+      "fg": 4830,
+      "bg": 77014,
+      "soft": 3710,
+      "softPct": 4.34,
+      "checksum": "a2a4888348b8f43b",
+      "softAlphaPresent": true
+    },
+    "rgbPreserved": true,
+    "previewExportParity": true,
+    "storeChecksum": "a2a4888348b8f43b",
+    "editUndoRedo": {
+      "afterEdit": "092f2643191623c0",
+      "afterUndo": "a2a4888348b8f43b",
+      "afterRedo": "092f2643191623c0",
+      "undoRestoredPreEdit": true,
+      "redoRestoredEdit": true
+    },
+    "directMethodUsed": "contour-first-fallback-seed",
+    "polarity": {
+      "keepIsHigh": true,
+      "removeIsLow": true
+    }
+  },
+  {
+    "fixture": "02_blazer",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "needsReview": false,
+      "fg": 47919,
+      "bg": 36056,
+      "soft": 1873,
+      "softPct": 2.18,
+      "checksum": "fd9f116cc39ea807"
+    },
+    "contour": {
+      "requested": "contour",
+      "methodUsed": "contour-first",
+      "needsReview": false,
+      "reviewReasons": [],
+      "accepted": true,
+      "neverLabeledSuccessfulWhenRejected": true,
+      "fg": 48686,
+      "bg": 36192,
+      "soft": 970,
+      "softPct": 1.13,
+      "checksum": "314632af5f1f7003",
+      "softAlphaPresent": true
+    },
+    "rgbPreserved": true,
+    "previewExportParity": true,
+    "storeChecksum": "314632af5f1f7003",
+    "editUndoRedo": {
+      "afterEdit": "fb425ef66075817e",
+      "afterUndo": "314632af5f1f7003",
+      "afterRedo": "fb425ef66075817e",
+      "undoRestoredPreEdit": true,
+      "redoRestoredEdit": true
+    },
+    "directMethodUsed": "contour-first",
+    "polarity": {
+      "keepIsHigh": true,
+      "removeIsLow": true
+    }
+  },
+  {
+    "fixture": "04_jeans",
+    "lab": {
+      "methodUsed": "opencv-seed-fallback",
+      "needsReview": false,
+      "fg": 30694,
+      "bg": 53091,
+      "soft": 2063,
+      "softPct": 2.4,
+      "checksum": "60bb62d92b3f52cd"
+    },
+    "contour": {
+      "requested": "contour",
+      "methodUsed": "contour-first",
+      "needsReview": false,
+      "reviewReasons": [],
+      "accepted": true,
+      "neverLabeledSuccessfulWhenRejected": true,
+      "fg": 31536,
+      "bg": 53263,
+      "soft": 1049,
+      "softPct": 1.22,
+      "checksum": "0e9d24b2b4dab4b5",
+      "softAlphaPresent": true
+    },
+    "rgbPreserved": true,
+    "previewExportParity": true,
+    "storeChecksum": "0e9d24b2b4dab4b5",
+    "editUndoRedo": {
+      "afterEdit": "1694029e354cbabe",
+      "afterUndo": "0e9d24b2b4dab4b5",
+      "afterRedo": "1694029e354cbabe",
+      "undoRestoredPreEdit": true,
+      "redoRestoredEdit": true
+    },
+    "directMethodUsed": "contour-first",
+    "polarity": {
+      "keepIsHigh": true,
+      "removeIsLow": true
+    }
+  },
+  {
+    "isnetDiagnosis": {
+      "attempted": true,
+      "packageInstalled": true,
+      "packageVersion": "1.4.5",
+      "ok": true,
+      "methodUsed": "isnet-onnx",
+      "runtime": "node"
+    }
+  }
+]
