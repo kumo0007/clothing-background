@@ -23,7 +23,6 @@ import {
   reclaimGarmentFromKeep,
   removeBrightEdgeChrome,
   removeSimilarToCorners,
-  chokeBrightStudioBesideDark,
   stripBorderConnectedStudio,
   stripBorderTouchingStudioComponents,
   peelExteriorStudioKeep,
@@ -37,6 +36,7 @@ import { segmentGarmentWithOpenCv } from './opencv/segmentGarment'
 import { tryLoadOpenCv } from './opencv/loadOpenCv'
 import { applyPaleCompetition } from './paleCompetition'
 import { estimateMaskConfidence } from './maskConfidence'
+import { runLabSeedAutoMask } from './labSeedAutoMask'
 import {
   segmentGarmentWithIsnet,
   type IsnetProgressEvent,
@@ -180,102 +180,56 @@ export async function runOpenCvAutoMask(
   tolerance = 40,
   options: RunOpenCvAutoMaskOptions = {},
 ): Promise<AutoMaskPipelineResult> {
+  // UI-safe default: pure JS Lab-seed (no OpenCV WASM / GrabCut hang).
+  if (options.allowGrabCut !== true) {
+    const seed = runLabSeedAutoMask(imageData, tolerance)
+    return {
+      mask: seed.mask,
+      methodUsed: seed.methodUsed,
+      elapsedMs: seed.elapsedMs,
+      confidence: seed.confidence,
+      needsReview: seed.needsReview,
+      reviewReasons: seed.reviewReasons,
+      genuineModelInference: false,
+    }
+  }
+
   const t0 =
     typeof performance !== 'undefined' ? performance.now() : Date.now()
   const seg = await segmentGarmentWithOpenCv(imageData, {
-    allowGrabCut: options.allowGrabCut === true,
-    forceSeedFallback: options.allowGrabCut !== true,
+    allowGrabCut: true,
+    forceSeedFallback: false,
   })
+  // If GrabCut could not run, fall back to the shared Lab-seed pipeline.
+  if (seg.methodUsed === 'opencv-seed-fallback') {
+    const seed = runLabSeedAutoMask(imageData, tolerance)
+    return {
+      mask: seed.mask,
+      methodUsed: seed.methodUsed,
+      elapsedMs: seed.elapsedMs,
+      confidence: seed.confidence,
+      needsReview: seed.needsReview,
+      reviewReasons: seed.reviewReasons,
+      genuineModelInference: false,
+    }
+  }
+
+  // GrabCut succeeded — light catalog cleanup (keep soft edges).
   const mask = seg.mask
-
-  // Recover enclosed pale leather / fabric panels (sneakers) via hole fill,
-  // then strip genuine flat studio pockets (handbag handles) immediately after.
   const corner = averageCornerColor(imageData)
-  const w = imageData.width
-  const h = imageData.height
-
   fillMaskHoles(mask)
-  // Re-run pale competition after hole-fill so enclosed leather panels compete
-  // before destructive enclosed/border studio strips.
   applyPaleCompetition(mask, imageData)
   stripEnclosedFlatStudio(mask, imageData, tolerance)
-  stripOpenArchStudio(mask, imageData, tolerance)
-  chokeBrightStudioBesideDark(mask, imageData, tolerance)
-  stripDarkWalledStudioPockets(mask, imageData, tolerance)
-  reclaimGarmentFromKeep(
-    mask,
-    imageData,
-    corner,
-    Math.max(16, Math.floor(Math.min(w, h) / 8)),
-    Math.max(16, Math.floor(tolerance * 0.5)),
-  )
-  applyPaleCompetition(mask, imageData)
   stripBorderConnectedStudio(mask, imageData, tolerance)
-  peelExteriorStudioKeep(mask, imageData, tolerance, 24)
-  stripBorderTouchingStudioComponents(mask, imageData, tolerance)
-  stripEnclosedFlatStudio(mask, imageData, tolerance)
-  stripOpenArchStudio(mask, imageData, tolerance)
-  chokeBrightStudioBesideDark(mask, imageData, tolerance)
-  stripDarkWalledStudioPockets(mask, imageData, tolerance)
-  stripDetachedStudioIslands(mask, imageData, tolerance)
-  chokeMaskEdgeFringe(mask, imageData, tolerance, { restoreTexture: true })
-  removeBrightEdgeChrome(mask, imageData)
-  // Chrome/foreign peels can nibble white soles — re-compete pale before strips.
-  applyPaleCompetition(mask, imageData)
   stripForeignBorderBands(mask, imageData)
-  stripBorderConnectedStudio(mask, imageData, tolerance)
-  peelExteriorStudioKeep(mask, imageData, tolerance, 24)
-  stripBorderTouchingStudioComponents(mask, imageData, tolerance)
-  stripEnclosedFlatStudio(mask, imageData, tolerance)
-  stripOpenArchStudio(mask, imageData, tolerance)
-  chokeBrightStudioBesideDark(mask, imageData, tolerance)
-  stripDarkWalledStudioPockets(mask, imageData, tolerance)
-  stripDetachedStudioIslands(mask, imageData, tolerance)
   reclaimGarmentFromKeep(
     mask,
     imageData,
     corner,
-    Math.max(8, Math.floor(Math.min(w, h) / 14)),
+    Math.max(12, Math.floor(Math.min(imageData.width, imageData.height) / 10)),
     Math.max(12, Math.floor(tolerance * 0.4)),
   )
-  stripForeignBorderBands(mask, imageData)
-  stripBorderConnectedStudio(mask, imageData, tolerance)
-  stripBorderTouchingStudioComponents(mask, imageData, tolerance)
-  stripEnclosedFlatStudio(mask, imageData, tolerance)
-  stripOpenArchStudio(mask, imageData, tolerance)
-  chokeBrightStudioBesideDark(mask, imageData, tolerance)
-  stripDarkWalledStudioPockets(mask, imageData, tolerance)
-  stripDetachedStudioIslands(mask, imageData, tolerance)
-  // Uncertain silhouette ring only — does not touch confident interiors.
-  refineSilhouetteBoundary(mask, imageData, tolerance)
-  // Boundary refine must never restore scrape footers as KEEP.
-  stripForeignBorderBands(mask, imageData)
-  stripBorderConnectedStudio(mask, imageData, tolerance)
-  stripBorderTouchingStudioComponents(mask, imageData, tolerance)
-  stripOpenArchStudio(mask, imageData, tolerance)
-  chokeBrightStudioBesideDark(mask, imageData, tolerance, 4)
-  stripDarkWalledStudioPockets(mask, imageData, tolerance)
-  stripDetachedStudioIslands(mask, imageData, tolerance)
-  // Final pale reclaim from dark structure after peels (sneakers / white panels).
-  reclaimGarmentFromKeep(
-    mask,
-    imageData,
-    corner,
-    Math.max(12, Math.floor(Math.min(w, h) / 10)),
-    Math.max(12, Math.floor(tolerance * 0.4)),
-  )
-  applyPaleCompetition(mask, imageData)
-  stripForeignBorderBands(mask, imageData)
-  // Final pale competition for sneakers — then peel only exterior studio so
-  // angular card slabs cannot survive attached to dark silhouettes.
-  applyPaleCompetition(mask, imageData)
-  stripBorderConnectedStudio(mask, imageData, tolerance)
-  peelExteriorStudioKeep(mask, imageData, tolerance, 32)
-  stripBorderTouchingStudioComponents(mask, imageData, tolerance)
-  stripOpenArchStudio(mask, imageData, tolerance)
-  stripDetachedStudioIslands(mask, imageData, tolerance)
   featherMaskEdges(mask, 1)
-
   const confidence = estimateMaskConfidence(mask, imageData)
   const t1 =
     typeof performance !== 'undefined' ? performance.now() : Date.now()
@@ -286,6 +240,7 @@ export async function runOpenCvAutoMask(
     confidence: confidence.score,
     needsReview: confidence.needsReview,
     reviewReasons: confidence.reasons,
+    genuineModelInference: true,
   }
 }
 

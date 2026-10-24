@@ -4,24 +4,20 @@ import { defineConfig } from 'vitest/config'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // SharedArrayBuffer for onnxruntime-web threads (ISNet). Without these,
-  // ORT falls back / can stall while loading large WASM models.
-  server: {
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-    },
-  },
-  preview: {
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-    },
-  },
+  // Do not set Cross-Origin-Embedder-Policy: require-corp here — it blocks
+  // Hugging Face CDN model fetches used by bg-remove-sdk / transformers.js
+  // unless every asset sends Cross-Origin-Resource-Policy.
   optimizeDeps: {
-    // Pre-bundle ISNet browser path so Batch → ISNet does not fail with a bare
-    // module resolution error when the strategy is selected in the UI.
-    include: ['@imgly/background-removal', 'onnxruntime-web'],
+    include: [
+      'bg-remove-sdk',
+      '@huggingface/transformers',
+      // Legacy audit scripts may still import these:
+      '@imgly/background-removal',
+      'onnxruntime-web',
+    ],
+  },
+  worker: {
+    format: 'es',
   },
   test: {
     environment: 'jsdom',

@@ -1,43 +1,44 @@
 import type { ExportFormat } from '../lib/export/exportImage'
-import type { AutoMaskMethod } from '../lib/mask/autoMaskPipeline'
 import './BatchPanel.css'
-
-export type BatchAutoMaskStrategy = Extract<
-  AutoMaskMethod,
-  'auto' | 'contour' | 'isnet'
->
 
 type BatchPanelProps = {
   imageCount: number
   maskedCount: number
+  /** Images still flagged for operator QC after auto-mask. */
+  reviewCount?: number
+  /** Images whose last API auto-mask attempt failed. */
+  failedCount?: number
   busy: boolean
   progress: string | null
   exportFormat: ExportFormat
   onExportFormatChange: (format: ExportFormat) => void
-  /** Default Lab-seed (`auto`). Contour / ISNet are explicit opt-in. */
-  autoMaskStrategy: BatchAutoMaskStrategy
-  onAutoMaskStrategyChange: (strategy: BatchAutoMaskStrategy) => void
   onApplyBackgroundToAll: () => void
   onApplyAdjustmentsToAll: () => void
   onAutoMaskAll: () => void
+  onRetryFailed: () => void
+  onRetrySelected: () => void
   onExportZip: (scope: 'all' | 'masked') => void
   canApplyFromSelection: boolean
+  canRetrySelected: boolean
 }
 
 export function BatchPanel({
   imageCount,
   maskedCount,
+  reviewCount = 0,
+  failedCount = 0,
   busy,
   progress,
   exportFormat,
   onExportFormatChange,
-  autoMaskStrategy,
-  onAutoMaskStrategyChange,
   onApplyBackgroundToAll,
   onApplyAdjustmentsToAll,
   onAutoMaskAll,
+  onRetryFailed,
+  onRetrySelected,
   onExportZip,
   canApplyFromSelection,
+  canRetrySelected,
 }: BatchPanelProps) {
   if (imageCount === 0) {
     return null
@@ -49,8 +50,8 @@ export function BatchPanel({
         <div className="batch-panel__title">
           <h2 id="batch-heading">Batch</h2>
           <p className="batch-panel__hint">
-            Auto-mask flat studio shots, apply the same background and adjust
-            settings to every image, then download a ZIP — all local, no tokens.
+            On-device RMBG (first run ~88&nbsp;MB). Check Review badges, then
+            export.
           </p>
         </div>
         <div className="batch-panel__stats" aria-label="Batch status">
@@ -60,33 +61,28 @@ export function BatchPanel({
           <span className="batch-panel__stat">
             <strong>{maskedCount}</strong> masked
           </span>
+          {reviewCount > 0 ? (
+            <span
+              className="batch-panel__stat batch-panel__stat--review"
+              data-testid="batch-review-count"
+            >
+              <strong>{reviewCount}</strong> need review
+            </span>
+          ) : null}
+          {failedCount > 0 ? (
+            <span
+              className="batch-panel__stat batch-panel__stat--review"
+              data-testid="batch-failed-count"
+            >
+              <strong>{failedCount}</strong> failed
+            </span>
+          ) : null}
         </div>
       </div>
 
       <div className="batch-panel__groups">
         <div className="batch-panel__group">
           <h3 className="batch-panel__group-title">Actions</h3>
-          <div className="batch-panel__strategy">
-            <label className="batch-panel__format">
-              Auto-mask strategy
-              <select
-                value={autoMaskStrategy}
-                disabled={busy}
-                onChange={(event) =>
-                  onAutoMaskStrategyChange(
-                    event.target.value as BatchAutoMaskStrategy,
-                  )
-                }
-                data-testid="batch-auto-mask-strategy"
-              >
-                <option value="auto">Lab-seed (default)</option>
-                <option value="contour">Contour-first (opt-in)</option>
-                <option value="isnet">
-                  ISNet ONNX (opt-in · needs local model assets)
-                </option>
-              </select>
-            </label>
-          </div>
           <div className="batch-panel__row">
             <button
               type="button"
@@ -114,6 +110,24 @@ export function BatchPanel({
               data-testid="batch-auto-mask"
             >
               Auto-mask all
+            </button>
+            <button
+              type="button"
+              className="button"
+              disabled={busy || failedCount === 0}
+              onClick={onRetryFailed}
+              data-testid="batch-retry-failed"
+            >
+              Retry failed
+            </button>
+            <button
+              type="button"
+              className="button"
+              disabled={busy || !canRetrySelected}
+              onClick={onRetrySelected}
+              data-testid="batch-retry-selected"
+            >
+              Retry selected
             </button>
           </div>
         </div>
@@ -157,15 +171,24 @@ export function BatchPanel({
         </div>
       </div>
 
-      {progress ? (
-        <p className="batch-panel__status" data-testid="batch-progress">
-          {progress}
-        </p>
-      ) : null}
-      {busy ? (
-        <p className="batch-panel__status" data-testid="batch-busy">
-          Working…
-        </p>
+      {progress || busy ? (
+        <div
+          className="batch-panel__live"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-busy={busy}
+        >
+          {progress ? (
+            <p className="batch-panel__status" data-testid="batch-progress">
+              {progress}
+            </p>
+          ) : null}
+          {busy ? (
+            <p className="batch-panel__status" data-testid="batch-busy">
+              Working…
+            </p>
+          ) : null}
+        </div>
       ) : null}
     </section>
   )

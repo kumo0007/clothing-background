@@ -65,41 +65,44 @@ function disagree(a: MaskPixelBuffer, b: MaskPixelBuffer): number {
   return n
 }
 
-/** Mirrors App.handleAutoMaskAll → autoMaskCornersForImage default args. */
-async function uiBatchAutoMask(
+/**
+ * Library/scripts still use runAutoMaskPipeline('auto') = Lab-seed.
+ * UI Batch → Auto-mask uses bg-remove-sdk (see autoMaskCorners.ts).
+ * Contour / ISNet remain opt-in for audits only.
+ */
+async function scriptAutoMask(
   imageId: string,
   imageData: ImageData,
-  method?: AutoMaskMethod,
+  method: AutoMaskMethod = 'auto',
 ) {
-  // App.tsx does NOT pass method → defaults to 'auto'
-  const requested = method ?? 'auto'
   getOrCreateMask(imageId, imageData.width, imageData.height)
-  const result = await runAutoMaskPipeline(imageData, requested, 40)
+  const result = await runAutoMaskPipeline(imageData, method, 40)
   setMask(imageId, result.mask)
   return {
-    requestedMethod: requested,
+    requestedMethod: method,
     methodUsed: result.methodUsed,
     mask: getMask(imageId)!,
   }
 }
 
-describe('strategy wiring — UI default vs opt-in', () => {
+describe('strategy wiring — internal library vs UI API default', () => {
   beforeEach(() => {
     clearAllMasks()
   })
 
-  it('UI batch default requests auto and runs Lab-seed (opencv-seed-fallback)', async () => {
+  it('library auto default still runs Lab-seed (opencv-seed-fallback) for scripts', async () => {
     const img = darkSquareOnCard()
-    const r = await uiBatchAutoMask('batch-1', img)
+    const r = await scriptAutoMask('batch-1', img)
     expect(r.requestedMethod).toBe('auto')
     expect(r.methodUsed).toBe('opencv-seed-fallback')
     expect(r.methodUsed).not.toBe('contour-first')
     expect(r.methodUsed).not.toMatch(/isnet/)
+    expect(r.methodUsed).not.toBe('api-poof')
   })
 
   it('explicit contour request reports contour-first (not silent Lab label)', async () => {
     const img = darkSquareOnCard()
-    const r = await uiBatchAutoMask('batch-cf', img, 'contour')
+    const r = await scriptAutoMask('batch-cf', img, 'contour')
     expect(r.requestedMethod).toBe('contour')
     expect(r.methodUsed).toMatch(/^contour-first/)
     expect(r.methodUsed).not.toBe('opencv-seed-fallback')
@@ -111,17 +114,14 @@ describe('strategy wiring — UI default vs opt-in', () => {
     const cf = await runAutoMaskPipeline(img, 'contour', 40)
     expect(lab.methodUsed).toBe('opencv-seed-fallback')
     expect(cf.methodUsed).toMatch(/^contour-first/)
-    // On a high-contrast dark square both may be similar; still must not claim
-    // identity of methodUsed. Checksum may match OR differ — assert methods.
     expect(lab.methodUsed).not.toEqual(cf.methodUsed)
-    // Pixel disagreement is allowed to be zero on this toy; fixtures prove diffs.
     expect(disagree(lab.mask, cf.mask)).toBeGreaterThanOrEqual(0)
   })
 
   it('committed maskStore buffer is what preview/export composite use', async () => {
     const img = darkSquareOnCard()
     const imageId = 'export-parity'
-    const r = await uiBatchAutoMask(imageId, img, 'contour')
+    const r = await scriptAutoMask(imageId, img, 'contour')
     const stored = getMask(imageId)!
     expect(checksum(stored)).toBe(checksum(r.mask))
 
@@ -132,9 +132,7 @@ describe('strategy wiring — UI default vs opt-in', () => {
       bg[i * 4 + 2] = 174
       bg[i * 4 + 3] = 255
     }
-    // Preview path: getMask(id)
     const preview = compositePixelBuffers(img.data, getMask(imageId)!.data, bg)
-    // Export path: same getMask(id)
     const exported = compositePixelBuffers(img.data, getMask(imageId)!.data, bg)
     expect(Array.from(preview)).toEqual(Array.from(exported))
   })
@@ -142,20 +140,19 @@ describe('strategy wiring — UI default vs opt-in', () => {
   it('background-only state change does not overwrite maskStore', async () => {
     const img = darkSquareOnCard()
     const imageId = 'bg-stable'
-    await uiBatchAutoMask(imageId, img)
+    await scriptAutoMask(imageId, img)
     const before = checksum(getMask(imageId)!)
-    // Simulate applying background to project fields (App does not touch masks).
     const still = getMask(imageId)!
     expect(checksum(still)).toBe(before)
   })
 
   it('per-image isolation: strategy on A does not alter B', async () => {
     const img = darkSquareOnCard()
-    await uiBatchAutoMask('iso-a', img, 'auto')
+    await scriptAutoMask('iso-a', img, 'auto')
     const b = getOrCreateMask('iso-b', 40, 40)
     b.data.fill(0)
     setMask('iso-b', b)
-    await uiBatchAutoMask('iso-a', img, 'contour')
+    await scriptAutoMask('iso-a', img, 'contour')
     expect(getMask('iso-b')!.data.every((v) => v === 0)).toBe(true)
   })
 

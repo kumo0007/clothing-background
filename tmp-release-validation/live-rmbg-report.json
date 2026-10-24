@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-10-24T02:57:30.799Z",
+  "connectivityFix": "vertical neighbors use ±width (was ±height bug)",
+  "originalSlipDress": {
+    "file": "07_slip_dress.jpg",
+    "width": 374,
+    "height": 527,
+    "needsReview": false,
+    "keepPct": 24.41,
+    "softPct": 2.4,
+    "totalComponents": 1,
+    "significantComponents": 1,
+    "largestAreaShare": 1,
+    "detachedSignificantAreaShare": 0,
+    "heuristicScore": 0.84,
+    "findings": []
+  },
+  "note": "Downloads 07_slip_dress-result.png was fully opaque and was not used as a mask."
+}

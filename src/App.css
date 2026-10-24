@@ -138,6 +138,39 @@
   line-height: 1.4;
 }
 
+.app__status--review {
+  color: var(--review-text);
+  font-weight: 600;
+}
+
+.app__status--clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 100;
+  padding: 0.4rem 0.75rem;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.88rem;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .button {
   appearance: none;
   border: 1px solid var(--border-strong);
@@ -280,6 +313,12 @@
   cursor: pointer;
 }
 
+.gallery__thumb-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
 .gallery__thumb img {
   width: 100%;
   aspect-ratio: 1;
@@ -292,6 +331,38 @@
 .gallery__thumb--selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent);
+}
+
+.gallery__thumb--review {
+  border-color: var(--review);
+}
+
+.gallery__thumb--selected.gallery__thumb--review {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 0 3px color-mix(in srgb, var(--review) 55%, transparent);
+}
+
+.gallery__review-badge {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  background: var(--review);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gallery__review-badge {
+    color: #1a1208;
+  }
 }
 
 .gallery__name {

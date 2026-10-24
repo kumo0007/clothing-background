@@ -5,9 +5,10 @@ import { CanvasPreview } from './components/CanvasPreview'
 import { ImageUploader } from './components/ImageUploader'
 import { MaskEditor } from './components/MaskEditor'
 import { ThumbnailGallery } from './components/ThumbnailGallery'
+import { ReviewDiagnosticsPanel } from './components/ReviewDiagnosticsPanel'
 import { autoMaskCornersForImage } from './lib/batch/autoMaskCorners'
+import type { MaskDiagnosticSummary } from './types/mask'
 import { buildResultsZip, downloadBlob } from './lib/batch/exportZip'
-import type { BatchAutoMaskStrategy } from './components/BatchPanel'
 import type { ExportFormat } from './lib/export/exportImage'
 import { clearAllMasks, deleteMask } from './lib/mask/maskStore'
 import {
@@ -58,13 +59,14 @@ function App() {
   const [batchBusy, setBatchBusy] = useState(false)
   const [batchProgress, setBatchProgress] = useState<string | null>(null)
   const [zipFormat, setZipFormat] = useState<ExportFormat>('png')
-  /** Lab-seed default; contour / ISNet only when the user opts in. */
-  const [autoMaskStrategy, setAutoMaskStrategy] =
-    useState<BatchAutoMaskStrategy>('auto')
   const imagesRef = useRef(images)
   imagesRef.current = images
   const sharedBackgroundsRef = useRef(sharedBackgrounds)
   sharedBackgroundsRef.current = sharedBackgrounds
+  const projectsRef = useRef(projects)
+  projectsRef.current = projects
+  /** Prevents duplicate Auto-mask runs from double-clicks / re-renders. */
+  const autoMaskInFlightRef = useRef(false)
 
   const selectedImage = useMemo(
     () => images.find((image) => image.id === selectedId) ?? null,
@@ -78,6 +80,30 @@ function App() {
       images.reduce((count, image) => {
         const project = projects[image.id]
         return project?.maskMeta.hasEdits ? count + 1 : count
+      }, 0),
+    [images, projects],
+  )
+
+  const needsReviewById = useMemo(() => {
+    const map: Record<string, boolean> = {}
+    for (const image of images) {
+      const meta = projects[image.id]?.maskMeta
+      if (meta?.needsReview || meta?.autoFailed) {
+        map[image.id] = true
+      }
+    }
+    return map
+  }, [images, projects])
+
+  const reviewCount = useMemo(
+    () => Object.keys(needsReviewById).length,
+    [needsReviewById],
+  )
+
+  const failedCount = useMemo(
+    () =>
+      images.reduce((count, image) => {
+        return projects[image.id]?.maskMeta.autoFailed ? count + 1 : count
       }, 0),
     [images, projects],
   )
@@ -235,6 +261,28 @@ function App() {
     }))
   }, [updateSelectedProject])
 
+  const handleDiagnosticRepair = useCallback(
+    (
+      nextSummary: MaskDiagnosticSummary,
+      needsReview: boolean,
+      reviewReason?: string,
+    ) => {
+      updateSelectedProject((current) => ({
+        ...current,
+        maskMeta: {
+          ...current.maskMeta,
+          revision: current.maskMeta.revision + 1,
+          hasEdits: true,
+          needsReview,
+          reviewReason: needsReview ? reviewReason : undefined,
+          diagnosticSummary: nextSummary,
+          autoFailed: false,
+        },
+      }))
+    },
+    [updateSelectedProject],
+  )
+
   const handleSharedBackgroundAdded = useCallback(
     (asset: SharedBackgroundImage) => {
       setSharedBackgrounds((previous) => {
@@ -287,89 +335,192 @@ function App() {
     setBatchProgress(`Applied adjustments to ${images.length} images.`)
   }, [images, projects, selectedId])
 
-  const handleAutoMaskAll = useCallback(async () => {
-    setBatchBusy(true)
-    setError(null)
-    const requested = autoMaskStrategy
-    try {
-      let reviewCount = 0
-      const methodsSeen = new Set<string>()
-      for (let index = 0; index < images.length; index += 1) {
-        const image = images[index]
+  const runLocalAutoMask = useCallback(
+    async (scope: 'all' | 'failed' | 'selected') => {
+      if (autoMaskInFlightRef.current) {
+        return
+      }
+      const queue =
+        scope === 'all'
+          ? images
+          : scope === 'selected'
+            ? images.filter((image) => image.id === selectedId)
+            : images.filter(
+                (image) => projectsRef.current[image.id]?.maskMeta.autoFailed,
+              )
+
+      if (queue.length === 0) {
         setBatchProgress(
-          `Auto-masking ${index + 1}/${images.length}: ${image.name} [${requested}]`,
+          scope === 'failed'
+            ? 'No failed images to retry.'
+            : scope === 'selected'
+              ? 'Select an image to retry.'
+              : 'No images to auto-mask.',
         )
-        // Yield so React can paint progress (rAF alone is not enough under ONNX).
-        await new Promise<void>((resolve) => {
-          requestAnimationFrame(() => {
-            setTimeout(resolve, 0)
-          })
-        })
-        const auto = await autoMaskCornersForImage(
-          image.id,
-          image.objectUrl,
-          image.width,
-          image.height,
-          40,
-          requested,
-          (progress) => {
-            if (progress.kind !== 'isnet-download' || progress.total <= 0) {
-              return
+        return
+      }
+
+      autoMaskInFlightRef.current = true
+      setBatchBusy(true)
+      setError(null)
+      try {
+        // Warm the shared on-device model once (Web Worker; ~88 MB first download).
+        const { preloadBgRemoveModel } = await import('./lib/mask/bgRemoveSdk')
+        setBatchProgress('Loading local background-removal model…')
+        try {
+          const { device } = await preloadBgRemoveModel((progress) => {
+            if (progress.kind !== 'sdk-init') return
+            if (progress.status === 'loading') {
+              const pct =
+                typeof progress.ratio === 'number'
+                  ? Math.round(progress.ratio * 100)
+                  : undefined
+              setBatchProgress(
+                `Loading model${progress.message ? `: ${progress.message}` : ''}${
+                  pct !== undefined ? ` (${pct}%)` : ''
+                }`,
+              )
             }
-            const pct = Math.min(
-              100,
-              Math.round((100 * progress.current) / progress.total),
+          })
+          setBatchProgress(`Model ready (${device}). Starting batch…`)
+        } catch (initErr) {
+          const message =
+            initErr instanceof Error
+              ? initErr.message
+              : 'Failed to load local model.'
+          setError(message)
+          setBatchProgress(`Auto-mask stopped: ${message}`)
+          return
+        }
+
+        let reviewFlagged = 0
+        let successCount = 0
+        let failCount = 0
+        const methodsSeen = new Set<string>()
+        const failures: string[] = []
+        // SDK queues internally; keep app concurrency at 1 for memory safety.
+        const concurrency = 1
+        let nextIndex = 0
+
+        const runOne = async (image: UploadedImage, ordinal: number) => {
+          setBatchProgress(
+            `Auto-masking ${ordinal}/${queue.length}: ${image.name} (on-device)`,
+          )
+          try {
+            const auto = await autoMaskCornersForImage(
+              image.id,
+              image.objectUrl,
+              image.width,
+              image.height,
+              40,
+              (progress) => {
+                if (progress.kind === 'sdk-init' && progress.status === 'loading') {
+                  const pct =
+                    typeof progress.ratio === 'number'
+                      ? Math.round(progress.ratio * 100)
+                      : undefined
+                  setBatchProgress(
+                    `Loading model${pct !== undefined ? ` (${pct}%)` : ''}…`,
+                  )
+                }
+                if (progress.kind === 'sdk-process') {
+                  setBatchProgress(
+                    `Auto-masking ${ordinal}/${queue.length}: ${image.name} (${progress.stage})`,
+                  )
+                }
+              },
             )
-            const label = progress.key.startsWith('stage:')
-              ? progress.key.slice('stage:'.length)
-              : progress.key.startsWith('fetch:')
-                ? `download ${progress.key.slice('fetch:'.length)}`
-                : progress.key
-            setBatchProgress(
-              `Auto-masking ${index + 1}/${images.length}: ${image.name} [isnet] · ${label} ${pct}%`,
-            )
+            methodsSeen.add(auto.methodUsed)
+            successCount += 1
+            if (auto.needsReview) reviewFlagged += 1
+            setProjects((previous) => {
+              const current = previous[image.id] ?? createProjectFields()
+              return {
+                ...previous,
+                [image.id]: {
+                  ...current,
+                  maskMeta: {
+                    revision: current.maskMeta.revision + 1,
+                    hasEdits: true,
+                    autoConfidence: auto.confidence,
+                    needsReview: auto.needsReview,
+                    autoMethodUsed: auto.methodUsed,
+                    autoFailed: false,
+                    reviewReason: auto.needsReview
+                      ? auto.reviewReason
+                      : undefined,
+                    diagnosticSummary: auto.diagnosticSummary,
+                  },
+                },
+              }
+            })
+          } catch (caught) {
+            failCount += 1
+            const message =
+              caught instanceof Error
+                ? caught.message
+                : 'Local SDK auto-mask failed.'
+            failures.push(`${image.name}: ${message}`)
+            setProjects((previous) => {
+              const current = previous[image.id] ?? createProjectFields()
+              return {
+                ...previous,
+                [image.id]: {
+                  ...current,
+                  maskMeta: {
+                    ...current.maskMeta,
+                    needsReview: true,
+                    autoFailed: true,
+                    reviewReason: message,
+                  },
+                },
+              }
+            })
+          }
+        }
+
+        const workers = Array.from(
+          { length: Math.min(concurrency, queue.length) },
+          async () => {
+            while (nextIndex < queue.length) {
+              const index = nextIndex
+              nextIndex += 1
+              await runOne(queue[index]!, index + 1)
+            }
           },
         )
-        methodsSeen.add(auto.methodUsed)
-        if (auto.needsReview) reviewCount += 1
-        setProjects((previous) => {
-          const current = previous[image.id] ?? createProjectFields()
-          return {
-            ...previous,
-            [image.id]: {
-              ...current,
-              maskMeta: {
-                revision: current.maskMeta.revision + 1,
-                hasEdits: true,
-                autoConfidence: auto.confidence,
-                needsReview: auto.needsReview,
-                autoMethodUsed: auto.methodUsed,
-                // Clear stale reasons when the latest run does not need review.
-                reviewReason: auto.needsReview
-                  ? auto.reviewReason
-                  : undefined,
-              },
-            },
-          }
-        })
+        await Promise.all(workers)
+
+        const used = [...methodsSeen].join(', ') || 'bg-remove-sdk-rmbg1.4'
+        if (failCount > 0) {
+          setError(failures.slice(0, 3).join(' · '))
+          setBatchProgress(
+            `Auto-mask finished: ${successCount} ok, ${failCount} failed via ${used}` +
+              (reviewFlagged > 0
+                ? ` (${reviewFlagged} flagged for review).`
+                : '.'),
+          )
+        } else {
+          setBatchProgress(
+            reviewFlagged > 0
+              ? `Auto-masked ${queue.length} images via ${used} (${reviewFlagged} flagged for review).`
+              : `Auto-masked ${queue.length} images via ${used}.`,
+          )
+        }
+      } catch (caught) {
+        const message =
+          caught instanceof Error
+            ? caught.message
+            : 'Batch auto-mask failed.'
+        setError(message)
+        setBatchProgress(`Auto-mask stopped: ${message}`)
+      } finally {
+        autoMaskInFlightRef.current = false
+        setBatchBusy(false)
       }
-      const used = [...methodsSeen].join(', ')
-      setBatchProgress(
-        reviewCount > 0
-          ? `Auto-masked ${images.length} images via ${used} (${reviewCount} flagged for review).`
-          : `Auto-masked ${images.length} images via ${used}.`,
-      )
-    } catch (caught) {
-      const message =
-        caught instanceof Error
-          ? caught.message
-          : 'Batch auto-mask failed.'
-      setError(message)
-      setBatchProgress(`Auto-mask stopped: ${message}`)
-    } finally {
-      setBatchBusy(false)
-    }
-  }, [images, autoMaskStrategy])
+    },
+    [images, selectedId],
+  )
 
   const handleExportZip = useCallback(
     async (scope: 'all' | 'masked') => {
@@ -435,12 +586,16 @@ function App() {
 
   return (
     <div className={`app${studioOpen ? ' app--editing' : ''}`}>
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <header className="app__header">
         <h1>Garment Background Studio</h1>
         <p>
-          Upload clothing photos, swap in one shared background, and export a
-          ZIP — entirely in your browser. No AI, no server, no subscriptions.
-          Garment pixels (shape, color, pattern, logos) stay untouched.
+          Upload clothing photos, auto-mask on-device with a local AI model (no
+          API key; images stay in the browser), swap in a shared background, and
+          export a ZIP. Original garment RGB stays untouched — only the alpha
+          mask is derived.
         </p>
         <ol className="app__steps" aria-label="Recommended workflow">
           <li>Upload one or more product photos</li>
@@ -459,7 +614,7 @@ function App() {
       </header>
 
       {mode === 'mask' && selectedImage ? (
-        <main className="app__main">
+        <main id="main-content" className="app__main">
           <MaskEditor
             image={selectedImage}
             background={
@@ -475,7 +630,7 @@ function App() {
       ) : null}
 
       {mode === 'adjust' && selectedImage ? (
-        <main className="app__main">
+        <main id="main-content" className="app__main">
           <AdjustStudio
             image={selectedImage}
             background={
@@ -493,7 +648,7 @@ function App() {
       ) : null}
 
       {mode === 'gallery' ? (
-        <main className="app__main app__main--gallery">
+        <main id="main-content" className="app__main app__main--gallery">
           <section className="panel" aria-labelledby="upload-heading">
             <div className="panel__heading">
               <h2 id="upload-heading">Images</h2>
@@ -530,6 +685,7 @@ function App() {
             <ThumbnailGallery
               images={images}
               selectedId={selectedId}
+              needsReviewById={needsReviewById}
               onSelect={(id) => {
                 setSelectedId(id)
                 ensureProject(id)
@@ -573,8 +729,65 @@ function App() {
                 selectedProject.maskMeta.hasEdits
               }
             />
-            {selectedProject?.maskMeta.hasEdits ? (
-              <p className="app__status" data-testid="mask-status">
+            {selectedImage &&
+            selectedProject &&
+            (selectedProject.maskMeta.needsReview ||
+              (selectedProject.maskMeta.diagnosticSummary?.findings.some(
+                (f) => f.severity !== 'info',
+              ) ??
+                false)) ? (
+              <ReviewDiagnosticsPanel
+                imageId={selectedImage.id}
+                imageName={selectedImage.name}
+                objectUrl={selectedImage.objectUrl}
+                width={selectedImage.width}
+                height={selectedImage.height}
+                methodUsed={selectedProject.maskMeta.autoMethodUsed}
+                needsReview={!!selectedProject.maskMeta.needsReview}
+                reviewReason={selectedProject.maskMeta.reviewReason}
+                hasManualEdits={selectedProject.maskMeta.hasEdits}
+                maskRevision={selectedProject.maskMeta.revision}
+                summary={selectedProject.maskMeta.diagnosticSummary}
+                onMaskRepaired={handleDiagnosticRepair}
+              />
+            ) : null}
+            {selectedProject?.maskMeta.autoFailed ? (
+              <p
+                className="app__status app__status--review app__status--clamp"
+                data-testid="mask-status"
+                title={
+                  selectedProject.maskMeta.reviewReason
+                    ? `Auto-mask failed: ${selectedProject.maskMeta.reviewReason}`
+                    : 'Auto-mask failed'
+                }
+              >
+                Auto-mask failed
+                {selectedProject.maskMeta.reviewReason
+                  ? `: ${selectedProject.maskMeta.reviewReason}`
+                  : '.'}{' '}
+                Use Batch → Retry selected / Retry failed.
+              </p>
+            ) : selectedProject?.maskMeta.hasEdits ? (
+              <p
+                className={`app__status app__status--clamp${
+                  selectedProject.maskMeta.needsReview
+                    ? ' app__status--review'
+                    : ''
+                }`}
+                data-testid="mask-status"
+                title={[
+                  'Mask saved',
+                  selectedProject.maskMeta.autoMethodUsed
+                    ? `method ${selectedProject.maskMeta.autoMethodUsed}`
+                    : null,
+                  selectedProject.maskMeta.needsReview
+                    ? selectedProject.maskMeta.reviewReason ??
+                      'review recommended'
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              >
                 Mask saved for this image
                 {selectedProject.maskMeta.autoMethodUsed
                   ? ` · method ${selectedProject.maskMeta.autoMethodUsed}`
@@ -594,8 +807,8 @@ function App() {
               </p>
             ) : (
               <p className="app__status">
-                Mask individually, or use Batch → Auto-mask all for flat product
-                shots.
+                Mask individually, or use Batch → Auto-mask all (on-device
+                RMBG via bg-remove-sdk).
               </p>
             )}
           </section>
@@ -603,17 +816,24 @@ function App() {
           <BatchPanel
             imageCount={images.length}
             maskedCount={maskedCount}
+            reviewCount={reviewCount}
+            failedCount={failedCount}
             busy={batchBusy}
             progress={batchProgress}
             exportFormat={zipFormat}
             onExportFormatChange={setZipFormat}
-            autoMaskStrategy={autoMaskStrategy}
-            onAutoMaskStrategyChange={setAutoMaskStrategy}
             onApplyBackgroundToAll={handleApplyBackgroundToAll}
             onApplyAdjustmentsToAll={handleApplyAdjustmentsToAll}
-            onAutoMaskAll={() => void handleAutoMaskAll()}
+            onAutoMaskAll={() => void runLocalAutoMask('all')}
+            onRetryFailed={() => void runLocalAutoMask('failed')}
+            onRetrySelected={() => void runLocalAutoMask('selected')}
             onExportZip={(scope) => void handleExportZip(scope)}
             canApplyFromSelection={!!selectedImage}
+            canRetrySelected={
+              !!selectedImage &&
+              (projects[selectedImage.id]?.maskMeta.autoFailed === true ||
+                !projects[selectedImage.id]?.maskMeta.hasEdits)
+            }
           />
         </main>
       ) : null}

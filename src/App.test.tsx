@@ -20,6 +20,25 @@ vi.mock('./utils/imageFiles', async () => {
   }
 })
 
+const autoMaskMock = vi.fn()
+vi.mock('./lib/batch/autoMaskCorners', () => ({
+  autoMaskCornersForImage: (
+    imageId: string,
+    objectUrl: string,
+    width: number,
+    height: number,
+    tolerance?: number,
+    onProgress?: unknown,
+  ) => autoMaskMock(imageId, objectUrl, width, height, tolerance, onProgress),
+}))
+
+const preloadMock = vi.fn(
+  async (_onProgress?: unknown) => ({ device: 'wasm' as const }),
+)
+vi.mock('./lib/mask/bgRemoveSdk', () => ({
+  preloadBgRemoveModel: (onProgress?: unknown) => preloadMock(onProgress),
+}))
+
 function mockCanvasContext() {
   HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
     drawImage: vi.fn(),
@@ -77,6 +96,17 @@ describe('App Phase 1', () => {
 
   beforeEach(() => {
     cleanup()
+    autoMaskMock.mockReset()
+    preloadMock.mockReset()
+    preloadMock.mockResolvedValue({ device: 'wasm' })
+    autoMaskMock.mockResolvedValue({
+      confidence: 0.9,
+      needsReview: false,
+      requestedMethod: 'sdk',
+      methodUsed: 'bg-remove-sdk-rmbg1.4',
+      genuineModelInference: true,
+      device: 'wasm',
+    })
     createObjectURL.mockReset()
     revokeObjectURL.mockReset()
     let urlCounter = 0
@@ -203,5 +233,75 @@ describe('App Phase 1', () => {
     await user.click(screen.getByTestId('mask-back'))
     expect(screen.queryByTestId('mask-editor')).not.toBeInTheDocument()
     expect(screen.getByTestId('thumbnail-gallery')).toBeInTheDocument()
+  })
+
+  it('exposes Auto-mask all without a masking-method selector', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    const input = screen.getByTestId('image-file-input')
+    await user.upload(
+      input,
+      new File([new Uint8Array([1])], 'shirt.png', { type: 'image/png' }),
+    )
+
+    await screen.findByTestId('batch-panel')
+    expect(screen.getByTestId('batch-auto-mask')).toBeInTheDocument()
+    expect(
+      screen.queryByTestId('batch-auto-mask-strategy'),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/ISNet/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Poof/i)).not.toBeInTheDocument()
+  })
+
+  it('Auto-mask all uses on-device SDK (no Poof / hosted API)', async () => {
+    const user = userEvent.setup()
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+
+    render(<App />)
+    const input = screen.getByTestId('image-file-input')
+    await user.upload(
+      input,
+      new File([new Uint8Array([1])], 'shirt.png', { type: 'image/png' }),
+    )
+    await screen.findByTestId('batch-auto-mask')
+    await user.click(screen.getByTestId('batch-auto-mask'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('batch-progress')).toHaveTextContent(
+        /bg-remove-sdk-rmbg1\.4/i,
+      )
+    })
+    expect(autoMaskMock).toHaveBeenCalled()
+    expect(
+      fetchSpy.mock.calls.some((call) =>
+        String(call[0]).includes('/api/remove-background'),
+      ),
+    ).toBe(false)
+    expect(
+      fetchSpy.mock.calls.some((call) =>
+        String(call[0]).includes('api.poof.bg'),
+      ),
+    ).toBe(false)
+    fetchSpy.mockRestore()
+  })
+
+  it('surfaces local auto-mask failures without claiming success', async () => {
+    const user = userEvent.setup()
+    autoMaskMock.mockRejectedValueOnce(new Error('decode failed for fixture'))
+
+    render(<App />)
+    await user.upload(
+      screen.getByTestId('image-file-input'),
+      new File([new Uint8Array([1])], 'shirt.png', { type: 'image/png' }),
+    )
+    await user.click(await screen.findByTestId('batch-auto-mask'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('batch-progress')).toHaveTextContent(/failed/i)
+    })
+    expect(screen.getByTestId('upload-error')).toHaveTextContent(
+      /decode failed/i,
+    )
   })
 })

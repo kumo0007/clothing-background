@@ -10,6 +10,8 @@
   --accent: #0a6b4a;
   --accent-soft: #d8f3e8;
   --danger: #b42318;
+  --review: #b45309;
+  --review-text: #92400e;
   --button: #eef1f4;
   --button-hover: #e2e7ed;
   --uploader: #f7f9fb;
@@ -42,6 +44,8 @@
     --accent: #3ecf8e;
     --accent-soft: #163528;
     --danger: #ff7b72;
+    --review: #f0a060;
+    --review-text: #f6c38a;
     --button: #262c34;
     --button-hover: #303841;
     --uploader: #151a20;

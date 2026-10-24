@@ -1,39 +1,48 @@
 import { loadHtmlImage } from '../image/loadHtmlImage'
+import { imageDataFromObjectUrl } from '../image/imageDataFromUrl'
 import { getOrCreateMask, setMask } from '../mask/maskStore'
-import {
-  runAutoMaskPipeline,
-  type AutoMaskMethod,
-} from '../mask/autoMaskPipeline'
-import type { IsnetProgressEvent } from '../mask/model/isnetSegment'
+import type { BgRemoveSdkProgress } from '../mask/bgRemoveSdk'
+import type { MaskDiagnosticSummary } from '../../types/mask'
 
-export type { AutoMaskMethod }
-
-export type AutoMaskProgress = {
-  kind: 'isnet-download'
-  key: string
-  current: number
-  total: number
-}
+export type AutoMaskProgress = BgRemoveSdkProgress
 
 /**
- * Auto-mask one image and commit the mask to `maskStore` under `imageId`.
+ * Auto-mask one image with browser-local `bg-remove-sdk` (RMBG-1.4) and commit
+ * the KEEP alpha mask to `maskStore`. Original upload RGB is left untouched.
  *
- * Default `method` is `'auto'` (Lab-seed / opencv-seed-fallback). Contour-first
- * and ISNet are opt-in only — callers must pass `method: 'contour' | 'isnet'`
- * explicitly. There is no silent substitution of Lab-seed when those fail
- * (ISNet throws; contour reports diagnostics / may fall back to seed with
- * needsReview). Never rewrites garment RGB.
+ * No Poof / remove.bg / hosted inference API. Model weights download once
+ * (~88 MB fp16) and are cached; inference runs in a Web Worker.
  */
 export type AutoMaskCornersResult = {
   confidence: number
   needsReview: boolean
-  /** Strategy requested by the caller. */
-  requestedMethod: AutoMaskMethod
-  /** Strategy that actually produced the mask (`result.methodUsed`). */
+  requestedMethod: 'sdk'
   methodUsed: string
-  genuineModelInference: boolean
-  /** Contour reject / fallback note for UI (when applicable). */
+  genuineModelInference: true
   reviewReason?: string
+  diagnosticSummary?: MaskDiagnosticSummary
+  device?: 'webgpu' | 'wasm' | 'unknown'
+}
+
+function toSummary(
+  diagnostics: import('../mask/diagnostics/types').MaskDiagnostics,
+): MaskDiagnosticSummary {
+  return {
+    reviewProfile: diagnostics.reviewProfile,
+    heuristicScore: diagnostics.heuristicScore,
+    score: diagnostics.heuristicScore,
+    ruleIds: diagnostics.findings.map((f) => f.ruleId),
+    findings: diagnostics.findings.map((f) => ({
+      ruleId: f.ruleId,
+      severity: f.severity,
+      message: f.message,
+      measuredValue: f.measuredValue,
+      threshold: f.threshold,
+      unit: f.unit,
+      affectedRegion: f.affectedRegion,
+      suggestedAction: f.suggestedAction,
+    })),
+  }
 }
 
 export async function autoMaskCornersForImage(
@@ -41,69 +50,61 @@ export async function autoMaskCornersForImage(
   objectUrl: string,
   width: number,
   height: number,
-  tolerance = 40,
-  method: AutoMaskMethod = 'auto',
+  _tolerance = 40,
   onProgress?: (event: AutoMaskProgress) => void,
 ): Promise<AutoMaskCornersResult> {
-  const image = await loadHtmlImage(objectUrl)
-  const probe = document.createElement('canvas')
-  probe.width = width
-  probe.height = height
-  const ctx = probe.getContext('2d')
-  if (!ctx) {
-    throw new Error('Could not read image pixels')
-  }
-  ctx.drawImage(image, 0, 0, width, height)
-  const imageData = ctx.getImageData(0, 0, width, height)
-
-  // Ensure store entry exists at the correct dimensions before replace.
   getOrCreateMask(imageId, width, height)
-  const result = await runAutoMaskPipeline(imageData, method, tolerance, {
-    onIsnetProgress: (event: IsnetProgressEvent) => {
-      onProgress?.({
-        kind: 'isnet-download',
-        key: event.key,
-        current: event.current,
-        total: event.total,
-      })
-    },
+
+  // Validate the object URL is still readable.
+  await loadHtmlImage(objectUrl)
+
+  const blobResponse = await fetch(objectUrl)
+  if (!blobResponse.ok) {
+    throw new Error('Could not read the uploaded image for local SDK auto-mask.')
+  }
+  const imageBlob = await blobResponse.blob()
+
+  // Original RGB for confidence heuristics only — never overwritten.
+  let sourceImageData: ImageData | undefined
+  try {
+    sourceImageData = await imageDataFromObjectUrl(objectUrl, width, height)
+  } catch {
+    sourceImageData = undefined
+  }
+
+  // Lazy-load the SDK adapter so transformers.js stays out of the initial bundle.
+  const { segmentWithBgRemoveSdk, BG_REMOVE_SDK_METHOD } = await import(
+    '../mask/bgRemoveSdk'
+  )
+
+  const result = await segmentWithBgRemoveSdk(imageBlob, width, height, {
+    onProgress,
+    sourceImageData,
   })
+
   setMask(imageId, result.mask)
-  const diag = result.contourDiagnostics
-  const isnetDiag = result.isnetRefineDiagnostics
-  let reviewReason: string | undefined
-  if (diag && !diag.contourAccepted) {
-    reviewReason =
-      diag.fallbackReason ??
-      (diag.rejectReason
-        ? `contour rejected: ${diag.rejectReason}`
-        : undefined)
-  } else if (result.needsReview) {
-    const reasons =
-      result.reviewReasons ??
-      diag?.reviewReasons ??
-      []
-    reviewReason =
-      reasons.length > 0
-        ? reasons.join('; ')
-        : 'uncertain auto-mask — review recommended'
-  }
-  // When ISNet refine rejects with failure modes, ensure reason is present.
-  if (
-    !reviewReason &&
-    result.needsReview &&
-    isnetDiag &&
-    !isnetDiag.refinementAccepted &&
-    isnetDiag.rejectReason
-  ) {
-    reviewReason = `isnet-refine-rejected: ${isnetDiag.rejectReason}`
-  }
+
+  // Persist defect/uncertain findings for the diagnostics panel; drop pure info.
+  const diagnosticSummary = toSummary({
+    ...result.diagnostics,
+    findings: result.diagnostics.findings.filter(
+      (f) => f.severity !== 'info' || f.forcesReview,
+    ),
+  })
+
   return {
-    confidence: result.confidence ?? 0.5,
-    needsReview: result.needsReview === true,
-    requestedMethod: method,
-    methodUsed: result.methodUsed,
-    genuineModelInference: result.genuineModelInference === true,
-    reviewReason,
+    confidence: result.confidence,
+    needsReview: result.needsReview,
+    requestedMethod: 'sdk',
+    methodUsed: result.methodUsed || BG_REMOVE_SDK_METHOD,
+    genuineModelInference: true,
+    device: result.device,
+    diagnosticSummary,
+    reviewReason:
+      result.needsReview
+        ? result.reviewReasons.length > 0
+          ? result.reviewReasons.join(' · ')
+          : 'uncertain auto-mask — inspect edges and openings'
+        : undefined,
   }
 }

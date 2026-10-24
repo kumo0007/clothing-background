@@ -17,6 +17,7 @@
     "@imgly/background-removal": "^1.7.0",
     "@imgly/background-removal-node": "^1.4.5",
     "@techstark/opencv-js": "^4.10.0-release.1",
+    "bg-remove-sdk": "^0.1.0",
     "fflate": "^0.8.3",
     "onnxruntime-web": "^1.21.0",
     "react": "^19.3.1",

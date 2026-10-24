@@ -1,0 +1,48 @@
+{
+  "originalUpload": {
+    "available": true,
+    "path": "D:\\project\\tmp-release-validation\\07_slip_dress.jpg",
+    "width": 374,
+    "height": 527,
+    "bytes": 84389
+  },
+  "downloadsResultPng": {
+    "available": true,
+    "isTransparentMask": false,
+    "note": "Fully opaque composite — not a saved MaskPixelBuffer"
+  },
+  "labSeedProxy": {
+    "method": "opencv-seed-fallback",
+    "keepPct": 40.55038610234503,
+    "softPct": 0.2785416391845681,
+    "classical": {
+      "needsReview": false,
+      "reasons": [],
+      "heuristicScore": 0.84
+    },
+    "neuralOnProxy": {
+      "needsReview": false,
+      "reasons": [],
+      "heuristicScore": 0.84
+    },
+    "fragmentation": {
+      "totalComponents": 10,
+      "noiseComponents": 7,
+      "detailComponents": 2,
+      "majorComponents": 1,
+      "significantComponents": 3,
+      "detachedSignificantCount": 2,
+      "detachedSignificantAreaShare": 0.0029528051649066614,
+      "largestAreaPx": 79667,
+      "largestAreaShare": 0.9967844452229618,
+      "keepPixels": 79924,
+      "noiseAreaPx": 8,
+      "majorShareThr": 0.02
+    }
+  },
+  "liveRmbg": {
+    "status": "deferred-to-browser",
+    "note": "Node cannot run bg-remove-sdk Web Worker/WebGPU. Live results written by browser probe into live-rmbg-slip-dress.json when available."
+  },
+  "peelPreviewMutates": false
+}

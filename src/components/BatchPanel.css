@@ -58,6 +58,22 @@
   font-variant-numeric: tabular-nums;
 }
 
+.batch-panel__stat--review {
+  border-color: var(--review);
+  color: var(--review-text);
+  background: color-mix(in srgb, var(--review) 12%, var(--panel));
+}
+
+.batch-panel__stat--review strong {
+  color: var(--review-text);
+}
+
+@media (prefers-color-scheme: dark) {
+  .batch-panel__stat--review {
+    background: color-mix(in srgb, var(--review) 18%, var(--panel));
+  }
+}
+
 .batch-panel__groups {
   display: grid;
   gap: 0.75rem;
@@ -88,17 +104,6 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
-}
-
-.batch-panel__strategy {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  align-items: flex-end;
-}
-
-.batch-panel__strategy .batch-panel__format select {
-  min-width: 12rem;
 }
 
 .batch-panel__row,

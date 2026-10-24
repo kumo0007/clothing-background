@@ -1,108 +1,35 @@
 # Garment Background Studio
 
-Client-side garment photo tool built with React, TypeScript, and the HTML Canvas API. No backend, no AI, and no external image-processing APIs.
+Garment photo tool built with React, TypeScript, and the HTML Canvas API. Mask editing, compositing, and export run in the browser.
 
-## Phase 1 (complete)
+**Auto-mask** uses [`bg-remove-sdk`](https://www.npmjs.com/package/bg-remove-sdk) (`createBgRemover`) with **RMBG-1.4** via transformers.js in a **Web Worker** (WebGPU when available, WASM fallback). Images are **not** uploaded to Poof, remove.bg, or any hosted inference API. No API key is required for inference.
 
-- Vite + React + TypeScript project foundation
-- Multi-image upload (file picker and drag-and-drop)
-- Thumbnail gallery with select / remove / clear-all
-- Canvas preview of the selected image
+## Commercial licensing (important)
 
-## Phase 2 (complete)
+| Component | License |
+|-----------|---------|
+| `bg-remove-sdk` package | MIT |
+| Default model `briaai/RMBG-1.4` | **Creative Commons for non-commercial use**; commercial use requires a [BRIA commercial agreement](https://huggingface.co/briaai/RMBG-1.4) |
 
-- Per-image mask editor (KEEP / REMOVE brush, polygon, pan)
-- Brush size, zoom, pan, undo/redo, clear, invert
-- Original / Mask / Result view modes
-- Solid color, custom image, or transparent backgrounds
-- Local Canvas compositing: `original × mask + background × (1 − mask)`
+Do **not** treat this integration as production-ready for commercial catalogs until a BRIA commercial license is obtained (or the model is replaced with a commercially licensed alternative / self-hosted weights you are licensed to use).
 
-## Phase 3 (complete)
+## Auto-mask flow
 
-- **Adjust & Export** studio per image
-- Brightness / contrast / saturation (explicit Canvas filters)
-- Rotate 90°, flip horizontal / vertical
-- Normalized crop controls
-- Border width + color
-- PNG / JPEG download (local only)
-- Gallery preview applies the same final pipeline
+1. Upload images.
+2. Batch → **Auto-mask all** (first run downloads ~88 MB fp16 weights into the browser Cache API).
+3. SDK returns a transparent PNG; the app extracts **alpha only** into `MaskPixelBuffer` (255 KEEP / 0 BG / soft gray).
+4. Compositing continues to use **original upload RGB** × mask + replacement background.
+5. Edit Mask (brush/polygon/undo) if Review is flagged, then Adjust / ZIP export.
 
-## Phase 4 (complete)
+| Item | Value |
+|------|--------|
+| Adapter | `src/lib/mask/bgRemoveSdk.ts` |
+| Shared instance | one `createBgRemover()` per page |
+| Concurrency | 1 (SDK also serializes internally) |
+| Network for images | none |
+| Network for model | Hugging Face (or your mirror via `modelId`) on first load |
 
-- **Batch** panel in the gallery
-- Apply selected image's background to all
-- Apply selected image's adjustments to all
-- Auto-mask all via corner-color removal (same as Similar → Remove corner background), then hole-fill / gap-close / chrome strip
-- Download ZIP of all results, or masked-only, as PNG or JPEG (`fflate`, local)
-
-## Phase 5 (complete)
-
-- **Skew X / Skew Y** (−45°…45°) in Adjust & Export
-- Applied after crop and before rotate/flip; output canvas expands to fit
-- Included when applying adjustments to all / ZIP export
-- Reset skew control; reset adjustments clears skew
-
-## Phase 6 (complete)
-
-- **Mask refine** tools in the Mask Editor (mask pixels only)
-- Morphological **opening** (smooth spikes / speckles) and **closing** (fill small gaps)
-- **Fill holes** — enclosed REMOVE regions that do not touch the border
-- **Feather edges** — soft gray alpha along the KEEP/REMOVE boundary (radius 1–12)
-- All refine steps are undoable; original garment pixels are never rewritten
-
-## Phase 7 (complete)
-
-- **Output size** in Adjust & Export (after border)
-- Presets: Original, 1000×1000, 1200×1200, 800×1000, 2000×2000
-- Custom width/height (64–4096)
-- Fit modes: contain (pad), cover (crop), stretch
-- Pad color for contain/cover letterboxing
-- Included when applying adjustments to all / ZIP export
-
-## Phase 8 (complete)
-
-- **Product shadow** in Adjust & Export (from the KEEP mask silhouette)
-- Presets: Off, Soft contact, Drop, Long
-- Blur / offset X/Y / opacity / color (Canvas only — no AI)
-- Drawn under the garment on backdrop pixels; garment RGB unchanged
-- Requires a mask; included when applying adjustments to all / ZIP export
-
-### Pipeline
-
-```
-original (+ mask × background)
-        ↓
- color adjustments
-        ↓
-  product shadow
-        ↓
-       crop
-        ↓
-       skew
-        ↓
-   rotate / flip
-        ↓
-      border
-        ↓
-   output size
-        ↓
-  preview / export / ZIP
-```
-
-### Mask convention
-
-New masks start **all black**. Paint **Keep** (white) over the garment. Original image pixels are never rewritten or regenerated.
-
-For flat product shots (shirt on a gray card), use **Similar → Remove corner background**, batch **Auto-mask all (corners)**, or **Similar + Keep** and click the garment. A rough brush over the whole card would incorrectly keep the card in the result.
-
-After auto-mask, use **Refine** to fill holes, close small gaps, or feather edges for a softer composite.
-
-### Final phase
-
-**Phase 8 is the last product phase** for this studio. Remaining ideas are intentionally out of scope:
-
-- OpenCV.js packaging — not needed; morph / select-similar already use local Canvas CV
-- AI tools — excluded by design (no backend, no external image APIs)
+Classical Lab-seed code remains in-repo for audits/scripts (`labSeedAutoMask.ts`) but is **not** the Batch UI default.
 
 ## Scripts
 
@@ -114,23 +41,8 @@ npm test
 npm run build
 ```
 
-## Manual Phase 7 checklist
-
-1. Upload catalog → auto-mask → set background → **Adjust & Export**.
-2. Pick **1000×1000** (contain) → confirm canvas is square with pad color.
-3. Switch fit to **cover** / **stretch**; download PNG.
-4. **Apply adjustments to all** → ZIP; open a few files and confirm dimensions.
-
-## Manual Phase 8 checklist
-
-1. Upload catalog → **Auto-mask all** → solid white background → **Adjust & Export**.
-2. Pick **Soft contact** shadow → confirm a soft shade under the garment, not on it.
-3. Try **Drop** / **Long**; tweak blur and opacity; download PNG.
-4. **Apply adjustments to all** → ZIP; spot-check shadows are consistent.
-
 ## Test packs
 
-- `testdata/phase2_pack/` — eight 1000×1200 PNGs. Served at `/testdata/phase2_pack/`.
-- `testdata/fashion_catalog/` — 12 garments + 6 backgrounds. Served at `/testdata/fashion_catalog/`.
-- `testdata/phase2_retest/` — prior `*-result.png` exports used for regression checks.
-- `testdata/phase2_zip_fixed/` — Phase 5 chrome/skew-padding regression outputs.
+- `public/testdata/clothing/` — clothing JPEG fixtures.
+- `scripts/auditLocalAutoMask.mts` — classical Lab-seed smoke (no GPU).
+- Live RMBG quality requires a real browser (WebGPU/WASM + model download).

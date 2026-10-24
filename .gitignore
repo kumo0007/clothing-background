@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Server-side secrets (POOF_API_KEY lives here — never commit)
+.env
+.env.*
+!.env.example
+
 # IMG.LY ISNet browser WASM/ONNX chunks (fetch via scripts/fetchImglyBrowserData.mts)
 public/imgly-bg-data/**
 !public/imgly-bg-data/.gitkeep

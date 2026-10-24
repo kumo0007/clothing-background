@@ -88,11 +88,16 @@ export function CanvasPreview({
           adjustments: adj,
           useComposite: !!canComposite,
         })
-        setOutputSize({ width: canvas.width, height: canvas.height })
-        setStatus(canComposite ? 'result' : 'original')
+        const nextStatus = canComposite ? 'result' : 'original'
+        setOutputSize((prev) =>
+          prev.width === canvas.width && prev.height === canvas.height
+            ? prev
+            : { width: canvas.width, height: canvas.height },
+        )
+        setStatus((prev) => (prev === nextStatus ? prev : nextStatus))
       } catch {
         if (!cancelled) {
-          setStatus('original')
+          setStatus((prev) => (prev === 'original' ? prev : 'original'))
         }
       }
     }
