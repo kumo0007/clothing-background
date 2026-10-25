@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-26",
+  "environment": "Desktop Chromium via Cursor browser MCP",
+  "emulation": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 2,
+    "mobile": true
+  },
+  "physicalDevice": "NOT TESTED",
+  "previewUrl": "http://127.0.0.1:4173/",
+  "upload": {
+    "files": [
+      "01_hoodie.jpg",
+      "02_blazer.jpg",
+      "03_tshirt.jpg",
+      "08_sneakers.jpg"
+    ],
+    "afterUpload": {
+      "pendingLabels": true,
+      "cta": "Start Auto-mask all",
+      "autoMaskStartedAutomatically": false,
+      "statusText": "Images are uploaded but processing has not started yet ( 4 pending · 0 masked)."
+    }
+  },
+  "autoMaskAll": {
+    "engine": "bg-remove-sdk-rmbg1.4",
+    "cache": "warm (weights already present)",
+    "wallClockApproxMs": 10018,
+    "final": {
+      "masked": "4 masked",
+      "failed": 0,
+      "progress": "Auto-masked 4 images via bg-remove-sdk-rmbg1.4."
+    }
+  },
+  "bugObserved": {
+    "id": "false-manual-edits-status",
+    "detail": "After auto-mask only, canvas status said 'includes manual edits' because it keyed off hasEdits.",
+    "fix": "App.tsx now keys off hasManualEdits; App.test regression added."
+  }
+}

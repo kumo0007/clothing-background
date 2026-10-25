@@ -37,6 +37,20 @@ const preloadMock = vi.fn(
 )
 vi.mock('./lib/mask/bgRemoveSdk', () => ({
   preloadBgRemoveModel: (onProgress?: unknown) => preloadMock(onProgress),
+  formatInitProgressLine: (message?: string, ratio?: number) => {
+    const pct =
+      typeof ratio === 'number' ? ` (${Math.round(ratio * 100)}%)` : ''
+    return `Loading model${message ? `: ${message}` : ''}${pct}`
+  },
+  getBgRemoveTimingSnapshot: () => ({
+    initStartedAt: null,
+    readyAt: null,
+    lastProcessMs: null,
+    totalProcessMs: 0,
+    processCount: 0,
+    lastInitMessage: null,
+    lastInitRatio: null,
+  }),
 }))
 
 function mockCanvasContext() {
@@ -303,5 +317,212 @@ describe('App Phase 1', () => {
     expect(screen.getByTestId('upload-error')).toHaveTextContent(
       /decode failed/i,
     )
+  })
+
+  it('uploads multiple files without auto-starting inference', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const files = Array.from({ length: 8 }, (_, i) =>
+      new File([new Uint8Array([i + 1])], `garment-${i + 1}.jpg`, {
+        type: 'image/jpeg',
+      }),
+    )
+    await user.upload(screen.getByTestId('image-file-input'), files)
+
+    await screen.findByTestId('batch-panel')
+    expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
+      /0.*masked/,
+    )
+    expect(screen.getByTestId('batch-pending-count')).toHaveTextContent(
+      /8.*pending/,
+    )
+    expect(screen.getByTestId('batch-start-cta')).toBeInTheDocument()
+    expect(autoMaskMock).not.toHaveBeenCalled()
+    expect(screen.getByTestId('batch-progress')).toHaveTextContent(
+      /Tap Auto-mask all/i,
+    )
+  })
+
+  it('Auto-mask all processes eight pending images exactly once', async () => {
+    const user = userEvent.setup()
+    const seen = new Set<string>()
+    autoMaskMock.mockImplementation(async (imageId: string) => {
+      seen.add(imageId)
+      return {
+        confidence: 0.9,
+        needsReview: false,
+        requestedMethod: 'sdk',
+        methodUsed: 'bg-remove-sdk-rmbg1.4',
+        genuineModelInference: true,
+        device: 'wasm',
+      }
+    })
+
+    render(<App />)
+    const files = Array.from({ length: 8 }, (_, i) =>
+      new File([new Uint8Array([i + 1])], `item-${i + 1}.png`, {
+        type: 'image/png',
+      }),
+    )
+    await user.upload(screen.getByTestId('image-file-input'), files)
+    await user.click(await screen.findByTestId('batch-auto-mask'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('batch-progress')).toHaveTextContent(
+        /Auto-masked 8 images/i,
+      )
+    })
+    expect(autoMaskMock).toHaveBeenCalledTimes(8)
+    expect(seen.size).toBe(8)
+    expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
+      /8.*masked/,
+    )
+    expect(screen.queryByTestId('batch-pending-count')).not.toBeInTheDocument()
+  })
+
+  it('does not claim manual edits after auto-mask alone', async () => {
+    const user = userEvent.setup()
+    autoMaskMock.mockResolvedValue({
+      confidence: 0.9,
+      needsReview: false,
+      requestedMethod: 'sdk',
+      methodUsed: 'bg-remove-sdk-rmbg1.4',
+      genuineModelInference: true,
+      device: 'wasm',
+    })
+
+    render(<App />)
+    await user.upload(
+      screen.getByTestId('image-file-input'),
+      new File([new Uint8Array([1])], 'auto-only.png', { type: 'image/png' }),
+    )
+    await user.click(await screen.findByTestId('batch-auto-mask'))
+    await waitFor(() => {
+      expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
+        /1.*masked/,
+      )
+    })
+
+    const status = await screen.findByTestId('mask-status')
+    expect(status).toHaveTextContent(/bg-remove-sdk-rmbg1\.4/i)
+    expect(status).not.toHaveTextContent(/includes manual edits/i)
+  })
+
+  it('continues the batch when one image fails', async () => {
+    const user = userEvent.setup()
+    let call = 0
+    autoMaskMock.mockImplementation(async () => {
+      call += 1
+      if (call === 2) {
+        throw new Error('worker OOM on photo-2.jpg')
+      }
+      return {
+        confidence: 0.85,
+        needsReview: false,
+        requestedMethod: 'sdk',
+        methodUsed: 'bg-remove-sdk-rmbg1.4',
+        genuineModelInference: true,
+        device: 'wasm',
+      }
+    })
+
+    render(<App />)
+    const files = Array.from({ length: 3 }, (_, i) =>
+      new File([new Uint8Array([i + 1])], `photo-${i + 1}.jpg`, {
+        type: 'image/jpeg',
+      }),
+    )
+    await user.upload(screen.getByTestId('image-file-input'), files)
+    await user.click(await screen.findByTestId('batch-auto-mask'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('batch-progress')).toHaveTextContent(
+        /2 ok, 1 failed/i,
+      )
+    })
+    expect(autoMaskMock).toHaveBeenCalledTimes(3)
+    expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
+      /2.*masked/,
+    )
+    expect(screen.getByTestId('batch-failed-count')).toHaveTextContent(
+      /1.*failed/,
+    )
+    expect(screen.getByTestId('upload-error')).toHaveTextContent(/photo-2/i)
+  })
+
+  it('marks the queue failed when the model cannot initialize', async () => {
+    const user = userEvent.setup()
+    // Upload also kicks a background preload — keep rejections sticky for this test.
+    preloadMock.mockRejectedValue(
+      new Error('Model init failed (network down).'),
+    )
+
+    render(<App />)
+    await user.upload(
+      screen.getByTestId('image-file-input'),
+      [
+        new File([new Uint8Array([1])], 'a.jpg', { type: 'image/jpeg' }),
+        new File([new Uint8Array([2])], 'b.jpg', { type: 'image/jpeg' }),
+      ],
+    )
+    await user.click(await screen.findByTestId('batch-auto-mask'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('batch-progress')).toHaveTextContent(
+        /Auto-mask stopped/i,
+      )
+    })
+    expect(autoMaskMock).not.toHaveBeenCalled()
+    expect(screen.getByTestId('batch-failed-count')).toHaveTextContent(
+      /2.*failed/,
+    )
+    expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
+      /0.*masked/,
+    )
+    expect(screen.getByTestId('upload-error')).toHaveTextContent(/Model init/i)
+  })
+
+  it('does not overwrite an already-masked image on Auto-mask all', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.upload(
+      screen.getByTestId('image-file-input'),
+      new File([new Uint8Array([1])], 'one.png', { type: 'image/png' }),
+    )
+    await user.click(await screen.findByTestId('batch-auto-mask'))
+    await waitFor(() => {
+      expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
+        /1.*masked/,
+      )
+    })
+    autoMaskMock.mockClear()
+
+    await user.upload(
+      screen.getByTestId('image-file-input'),
+      new File([new Uint8Array([2])], 'two.png', { type: 'image/png' }),
+    )
+    await user.click(screen.getByTestId('batch-auto-mask'))
+    await waitFor(() => {
+      expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
+        /2.*masked/,
+      )
+    })
+    expect(autoMaskMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects HEIC with an actionable message when decode fails', async () => {
+    const imageFiles = await import('./utils/imageFiles')
+    vi.mocked(imageFiles.loadImageDimensions).mockRejectedValueOnce(
+      new Error('Failed to load image'),
+    )
+    render(<App />)
+    const input = screen.getByTestId('image-file-input') as HTMLInputElement
+    const heic = new File([new Uint8Array([1])], 'iphone.heic', {
+      type: 'image/heic',
+    })
+    // Bypass the accept filter the way a mobile picker can still hand us HEIC.
+    fireEvent.change(input, { target: { files: [heic] } })
+    expect(await screen.findByTestId('upload-error')).toHaveTextContent(/HEIC/i)
+    expect(autoMaskMock).not.toHaveBeenCalled()
   })
 })

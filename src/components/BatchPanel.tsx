@@ -4,9 +4,11 @@ import './BatchPanel.css'
 type BatchPanelProps = {
   imageCount: number
   maskedCount: number
+  /** Images still waiting for a first successful auto-mask. */
+  pendingCount?: number
   /** Images still flagged for operator QC after auto-mask. */
   reviewCount?: number
-  /** Images whose last API auto-mask attempt failed. */
+  /** Images whose last auto-mask attempt failed. */
   failedCount?: number
   busy: boolean
   progress: string | null
@@ -25,6 +27,7 @@ type BatchPanelProps = {
 export function BatchPanel({
   imageCount,
   maskedCount,
+  pendingCount = 0,
   reviewCount = 0,
   failedCount = 0,
   busy,
@@ -44,23 +47,35 @@ export function BatchPanel({
     return null
   }
 
+  const needsStart =
+    !busy && pendingCount > 0 && maskedCount === 0 && failedCount === 0
+
   return (
     <section className="panel batch-panel" data-testid="batch-panel">
       <div className="batch-panel__header">
         <div className="batch-panel__title">
           <h2 id="batch-heading">Batch</h2>
           <p className="batch-panel__hint">
-            On-device RMBG (first run ~88&nbsp;MB). Check Review badges, then
-            export.
+            On-device RMBG (first run ~88&nbsp;MB). JPEG/PNG/WebP only — iPhone
+            HEIC must be exported as JPEG (Most Compatible) before upload.
+            Check Review badges, then export.
           </p>
         </div>
         <div className="batch-panel__stats" aria-label="Batch status">
           <span className="batch-panel__stat">
             <strong>{imageCount}</strong> images
           </span>
-          <span className="batch-panel__stat">
+          <span className="batch-panel__stat" data-testid="batch-masked-count">
             <strong>{maskedCount}</strong> masked
           </span>
+          {pendingCount > 0 ? (
+            <span
+              className="batch-panel__stat batch-panel__stat--pending"
+              data-testid="batch-pending-count"
+            >
+              <strong>{pendingCount}</strong> pending
+            </span>
+          ) : null}
           {reviewCount > 0 ? (
             <span
               className="batch-panel__stat batch-panel__stat--review"
@@ -79,6 +94,28 @@ export function BatchPanel({
           ) : null}
         </div>
       </div>
+
+      {needsStart ? (
+        <div
+          className="batch-panel__cta"
+          data-testid="batch-start-cta"
+          role="status"
+        >
+          <p>
+            Images are uploaded but processing has <strong>not</strong> started
+            yet ({pendingCount} pending · {maskedCount} masked).
+          </p>
+          <button
+            type="button"
+            className="button button--primary"
+            disabled={busy}
+            onClick={onAutoMaskAll}
+            data-testid="batch-start-auto-mask"
+          >
+            Start Auto-mask all
+          </button>
+        </div>
+      ) : null}
 
       <div className="batch-panel__groups">
         <div className="batch-panel__group">
@@ -105,7 +142,7 @@ export function BatchPanel({
             <button
               type="button"
               className="button button--primary"
-              disabled={busy}
+              disabled={busy || (pendingCount === 0 && failedCount === 0)}
               onClick={onAutoMaskAll}
               data-testid="batch-auto-mask"
             >

@@ -6,6 +6,11 @@ const ACCEPTED_MIME_TYPES = new Set([
   'image/bmp',
 ])
 
+export function isHeicLikeFile(file: File): boolean {
+  if (/image\/hei[cf]/i.test(file.type)) return true
+  return /\.hei[cf]$/i.test(file.name)
+}
+
 export function isAcceptedImageFile(file: File): boolean {
   if (ACCEPTED_MIME_TYPES.has(file.type)) {
     return true
@@ -17,6 +22,35 @@ export function isAcceptedImageFile(file: File): boolean {
 
 export function filterImageFiles(files: FileList | File[]): File[] {
   return Array.from(files).filter(isAcceptedImageFile)
+}
+
+/**
+ * Files to attempt decode: standard formats plus HEIC/HEIF candidates.
+ * Chrome typically cannot decode HEIC; Safari often can via HTMLImageElement.
+ * No WASM converter is bundled — failed HEIC still gets conversion guidance.
+ */
+export function filesToAttemptDecode(files: FileList | File[]): File[] {
+  const list = Array.from(files)
+  const primary = filterImageFiles(list)
+  const heicExtras = list.filter(
+    (file) => isHeicLikeFile(file) && !isAcceptedImageFile(file),
+  )
+  return [...primary, ...heicExtras]
+}
+
+/** Explain why selected files were rejected (esp. iPhone HEIC). */
+export function describeRejectedImageFiles(files: FileList | File[]): string | null {
+  const list = Array.from(files)
+  if (list.length === 0) return null
+  const accepted = filterImageFiles(list)
+  if (accepted.length > 0) return null
+  const heicCount = list.filter(isHeicLikeFile).length
+  if (heicCount > 0) {
+    return `iPhone HEIC/HEIF could not be decoded in this browser (${heicCount} file${
+      heicCount === 1 ? '' : 's'
+    }). Export as JPEG (Photos → File → Export → Most Compatible, or Camera → Formats → Most Compatible), then re-upload. A WASM HEIC converter is not bundled (memory / compatibility cost).`
+  }
+  return 'No supported image files were selected. Use JPEG, PNG, WebP, GIF, or BMP.'
 }
 
 export function loadImageDimensions(

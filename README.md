@@ -6,12 +6,12 @@ Garment photo tool built with React, TypeScript, and the HTML Canvas API. Mask e
 
 ## Commercial licensing (important)
 
-| Component | License |
-|-----------|---------|
-| `bg-remove-sdk` package | MIT |
-| Default model `briaai/RMBG-1.4` | **Creative Commons for non-commercial use**; commercial use requires a [BRIA commercial agreement](https://huggingface.co/briaai/RMBG-1.4) |
+| Component | License | Notes |
+|-----------|---------|-------|
+| `bg-remove-sdk` package | **MIT** | Verified from package `LICENSE` |
+| Default model `briaai/RMBG-1.4` | **`bria-rmbg-1.4`** (source-available, non-commercial) | HF model card ([briaai/RMBG-1.4](https://huggingface.co/briaai/RMBG-1.4)): non-commercial / evaluation unless a [BRIA commercial agreement](https://go.bria.ai/3B4Asxv) is purchased. Prefer the HF card + files on the model repo as source of truth (the standalone `bria.ai/…license-agreement` URL returned **404** during the 2026-10-26 audit). Local/browser execution does **not** waive these terms. |
 
-Do **not** treat this integration as production-ready for commercial catalogs until a BRIA commercial license is obtained (or the model is replaced with a commercially licensed alternative / self-hosted weights you are licensed to use).
+Do **not** treat this integration as production-ready for commercial catalogs until a BRIA commercial license is obtained (or the model is replaced with a commercially licensed alternative / self-hosted weights you are licensed to use). This is a **release blocker** for paid catalog workflows.
 
 ## Auto-mask flow
 
@@ -28,8 +28,13 @@ Do **not** treat this integration as production-ready for commercial catalogs un
 | Concurrency | 1 (SDK also serializes internally) |
 | Network for images | none |
 | Network for model | Hugging Face (or your mirror via `modelId`) on first load |
+| Faster cold start | Set `VITE_BG_REMOVE_MODEL_ID` to a self-hosted HF-layout **RMBG-1.4** mirror (id/path must include `RMBG-1.4`; other model families are ignored). Upload also starts a **background preload** (one shared instance). |
+| Release verify (technical) | `npm run verify:release` — typecheck + lint + tests + build + license status print (**does not** approve commercial use) |
+| Commercial ship gate | `npm run verify:commercial-release` — fails while `BRIA_COMMERCIAL_LICENSE_CHECKLIST.md` is **UNRESOLVED** |
 
 Classical Lab-seed code remains in-repo for audits/scripts (`labSeedAutoMask.ts`) but is **not** the Batch UI default.
+
+Release-blocker notes (licensing, cold-start, device plan, tee/sneaker quality): `tmp-release-validation/RELEASE_BLOCKER_INVESTIGATION.md`.
 
 ## Scripts
 
@@ -39,6 +44,8 @@ npm run dev
 npm run typecheck
 npm test
 npm run build
+npm run verify:release              # technical gate (does not approve commercial use)
+npm run verify:commercial-release   # fails while BRIA checklist is UNRESOLVED
 ```
 
 ## Test packs

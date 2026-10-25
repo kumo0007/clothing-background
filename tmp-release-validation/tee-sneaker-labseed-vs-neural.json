@@ -1,0 +1,125 @@
+{
+  "generatedAt": "2026-10-25T16:11:42.142Z",
+  "rows": [
+    {
+      "fixture": "03_tshirt.jpg",
+      "silhouetteSource": "lab-seed-proxy",
+      "size": "294x292",
+      "keepPct": 62.86,
+      "borderStudioRatio": 0.12214912280701755,
+      "paleAmongKeep": 0.9900309448366594,
+      "fragmentation": {
+        "totalComponents": 1,
+        "noiseComponents": 0,
+        "detailComponents": 0,
+        "majorComponents": 1,
+        "significantComponents": 1,
+        "detachedSignificantCount": 0,
+        "detachedSignificantAreaShare": 0,
+        "largestAreaPx": 53967,
+        "largestAreaShare": 1,
+        "keepPixels": 53967,
+        "noiseAreaPx": 8,
+        "majorShareThr": 0.02
+      },
+      "classical": {
+        "needsReview": true,
+        "rules": [
+          {
+            "ruleId": "border_studio_leak",
+            "measured": 0.12214912280701755,
+            "threshold": 0.08,
+            "forcesReview": true
+          },
+          {
+            "ruleId": "score_floor",
+            "measured": 0.54,
+            "threshold": 0.55,
+            "forcesReview": true
+          }
+        ]
+      },
+      "neuralOnSameLabMask": {
+        "needsReview": true,
+        "rules": [
+          {
+            "ruleId": "border_studio_leak",
+            "measured": 0.12214912280701755,
+            "threshold": 0.08,
+            "forcesReview": true
+          }
+        ]
+      },
+      "interpretation": "Lab-seed silhouettes often keep studio card / fragment sneakers. Live RMBG masks for these fixtures previously showed 0 review in browser audit — compare live metrics via ?audit=1 before changing neural thresholds."
+    },
+    {
+      "fixture": "08_sneakers.jpg",
+      "silhouetteSource": "lab-seed-proxy",
+      "size": "294x291",
+      "keepPct": 13.39,
+      "borderStudioRatio": 0,
+      "paleAmongKeep": 0.45247446975648076,
+      "fragmentation": {
+        "totalComponents": 92,
+        "noiseComponents": 59,
+        "detailComponents": 25,
+        "majorComponents": 8,
+        "significantComponents": 33,
+        "detachedSignificantCount": 32,
+        "detachedSignificantAreaShare": 0.6936370777690495,
+        "largestAreaPx": 3321,
+        "largestAreaShare": 0.2898664571877455,
+        "keepPixels": 11457,
+        "noiseAreaPx": 8,
+        "majorShareThr": 0.02
+      },
+      "classical": {
+        "needsReview": true,
+        "rules": [
+          {
+            "ruleId": "bright_fringe",
+            "measured": 0.02321724709784411,
+            "threshold": 0.02,
+            "forcesReview": true
+          },
+          {
+            "ruleId": "pale_keep_uncertain",
+            "measured": 0.45247446975648076,
+            "threshold": 0.45,
+            "forcesReview": true
+          },
+          {
+            "ruleId": "fragmented_keep",
+            "measured": 0.6936370777690495,
+            "threshold": 0.1,
+            "forcesReview": true
+          },
+          {
+            "ruleId": "score_floor",
+            "measured": 0.23999999999999996,
+            "threshold": 0.55,
+            "forcesReview": true
+          }
+        ]
+      },
+      "neuralOnSameLabMask": {
+        "needsReview": true,
+        "rules": [
+          {
+            "ruleId": "fragmented_keep",
+            "measured": 0.6936370777690495,
+            "threshold": 0.12,
+            "forcesReview": true
+          },
+          {
+            "ruleId": "score_floor",
+            "measured": 0.45999999999999996,
+            "threshold": 0.48,
+            "forcesReview": true
+          }
+        ]
+      },
+      "interpretation": "Lab-seed silhouettes often keep studio card / fragment sneakers. Live RMBG masks for these fixtures previously showed 0 review in browser audit — compare live metrics via ?audit=1 before changing neural thresholds."
+    }
+  ]
+}

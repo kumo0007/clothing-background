@@ -11,6 +11,7 @@ describe('BatchPanel — local auto-mask UI', () => {
       <BatchPanel
         imageCount={2}
         maskedCount={0}
+        pendingCount={2}
         busy={false}
         progress={null}
         exportFormat="png"
@@ -38,6 +39,11 @@ describe('BatchPanel — local auto-mask UI', () => {
     expect(screen.queryByText(/Poof/i)).not.toBeInTheDocument()
     expect(screen.getByText(/on-device/i)).toBeInTheDocument()
     expect(screen.getByText(/RMBG/i)).toBeInTheDocument()
+    expect(screen.getByText(/HEIC/i)).toBeInTheDocument()
+    expect(screen.getByTestId('batch-start-cta')).toBeInTheDocument()
+    expect(screen.getByTestId('batch-pending-count')).toHaveTextContent(
+      /2.*pending/,
+    )
   })
 
   it('keeps background, export, and auto-mask actions', async () => {

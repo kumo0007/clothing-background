@@ -7,10 +7,14 @@ import { MaskEditor } from './components/MaskEditor'
 import { ThumbnailGallery } from './components/ThumbnailGallery'
 import { ReviewDiagnosticsPanel } from './components/ReviewDiagnosticsPanel'
 import { autoMaskCornersForImage } from './lib/batch/autoMaskCorners'
+import {
+  buildAutoMaskQueue,
+  countPendingMasks,
+} from './lib/batch/buildAutoMaskQueue'
 import type { MaskDiagnosticSummary } from './types/mask'
 import { buildResultsZip, downloadBlob } from './lib/batch/exportZip'
 import type { ExportFormat } from './lib/export/exportImage'
-import { clearAllMasks, deleteMask } from './lib/mask/maskStore'
+import { clearAllMasks, deleteMask, getMask } from './lib/mask/maskStore'
 import {
   createDefaultAdjustments,
   type ImageAdjustments,
@@ -25,10 +29,25 @@ import type { MaskStateMeta } from './types/mask'
 import { createEmptyMaskMeta } from './types/mask'
 import {
   createImageId,
-  filterImageFiles,
+  describeRejectedImageFiles,
+  filesToAttemptDecode,
+  isHeicLikeFile,
   loadImageDimensions,
 } from './utils/imageFiles'
 import './App.css'
+
+type GarmentAuditApi = {
+  getMask: typeof getMask
+  listImages: () => Array<{
+    id: string
+    name: string
+    width: number
+    height: number
+    objectUrl: string
+  }>
+  getMaskMeta: (id: string) => MaskStateMeta | undefined
+  getTiming: () => Promise<unknown>
+}
 
 type StudioMode = 'gallery' | 'mask' | 'adjust'
 
@@ -67,6 +86,8 @@ function App() {
   projectsRef.current = projects
   /** Prevents duplicate Auto-mask runs from double-clicks / re-renders. */
   const autoMaskInFlightRef = useRef(false)
+  /** Bumped to invalidate in-flight batch UI updates after Clear / unmount. */
+  const batchGenerationRef = useRef(0)
 
   const selectedImage = useMemo(
     () => images.find((image) => image.id === selectedId) ?? null,
@@ -79,8 +100,14 @@ function App() {
     () =>
       images.reduce((count, image) => {
         const project = projects[image.id]
-        return project?.maskMeta.hasEdits ? count + 1 : count
+        const meta = project?.maskMeta
+        return meta?.hasEdits && !meta.autoFailed ? count + 1 : count
       }, 0),
+    [images, projects],
+  )
+
+  const pendingCount = useMemo(
+    () => countPendingMasks(images, projects),
     [images, projects],
   )
 
@@ -95,9 +122,34 @@ function App() {
     return map
   }, [images, projects])
 
+  const maskStatusById = useMemo(() => {
+    const map: Record<string, 'pending' | 'processing' | 'failed' | 'review'> =
+      {}
+    for (const image of images) {
+      const meta = projects[image.id]?.maskMeta
+      if (
+        meta?.processingPhase === 'processing' ||
+        meta?.processingPhase === 'loading-model'
+      ) {
+        map[image.id] = 'processing'
+      } else if (meta?.autoFailed) {
+        map[image.id] = 'failed'
+      } else if (meta?.needsReview) {
+        map[image.id] = 'review'
+      } else if (!meta?.hasEdits) {
+        map[image.id] = 'pending'
+      }
+    }
+    return map
+  }, [images, projects])
+
   const reviewCount = useMemo(
-    () => Object.keys(needsReviewById).length,
-    [needsReviewById],
+    () =>
+      images.reduce((count, image) => {
+        const meta = projects[image.id]?.maskMeta
+        return meta?.needsReview && !meta.autoFailed ? count + 1 : count
+      }, 0),
+    [images, projects],
   )
 
   const failedCount = useMemo(
@@ -110,6 +162,8 @@ function App() {
 
   useEffect(() => {
     return () => {
+      batchGenerationRef.current += 1
+      autoMaskInFlightRef.current = false
       for (const image of imagesRef.current) {
         URL.revokeObjectURL(image.objectUrl)
       }
@@ -117,6 +171,37 @@ function App() {
         URL.revokeObjectURL(asset.objectUrl)
       }
       clearAllMasks()
+    }
+  }, [])
+
+  // Optional audit bridge for release / physical-device probes (?audit=1).
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const enabled = new URLSearchParams(window.location.search).has('audit')
+    if (!enabled) return
+    const api: GarmentAuditApi = {
+      getMask,
+      listImages: () =>
+        imagesRef.current.map((image) => ({
+          id: image.id,
+          name: image.name,
+          width: image.width,
+          height: image.height,
+          objectUrl: image.objectUrl,
+        })),
+      getMaskMeta: (id) => projectsRef.current[id]?.maskMeta,
+      getTiming: async () => {
+        const { getBgRemoveTimingSnapshot } = await import(
+          './lib/mask/bgRemoveSdk'
+        )
+        return getBgRemoveTimingSnapshot()
+      },
+    }
+    ;(window as unknown as { __garmentAudit?: GarmentAuditApi }).__garmentAudit =
+      api
+    return () => {
+      delete (window as unknown as { __garmentAudit?: GarmentAuditApi })
+        .__garmentAudit
     }
   }, [])
 
@@ -134,19 +219,27 @@ function App() {
 
   const handleFilesSelected = useCallback(async (files: File[]) => {
     setError(null)
-    const accepted = filterImageFiles(files)
-    if (accepted.length === 0) {
-      setError('No supported image files were selected.')
+    const attempted = filesToAttemptDecode(files)
+    if (attempted.length === 0) {
+      setError(
+        describeRejectedImageFiles(files) ??
+          'No supported image files were selected.',
+      )
       return
     }
 
     setIsLoading(true)
     try {
       const loaded: UploadedImage[] = []
-      for (const file of accepted) {
+      const decodeFailures: string[] = []
+      const heicDecodeFailures: string[] = []
+      for (const file of attempted) {
         const objectUrl = URL.createObjectURL(file)
         try {
           const { width, height } = await loadImageDimensions(objectUrl)
+          if (width < 1 || height < 1) {
+            throw new Error('zero dimensions')
+          }
           loaded.push({
             id: createImageId(),
             file,
@@ -157,8 +250,30 @@ function App() {
           })
         } catch {
           URL.revokeObjectURL(objectUrl)
-          setError(`Could not load "${file.name}".`)
+          if (isHeicLikeFile(file)) {
+            heicDecodeFailures.push(file.name)
+          } else {
+            decodeFailures.push(file.name)
+          }
         }
+      }
+
+      if (heicDecodeFailures.length > 0 && loaded.length === 0) {
+        setError(describeRejectedImageFiles(files))
+      } else if (heicDecodeFailures.length > 0) {
+        setError(
+          `Skipped HEIC/HEIF that this browser cannot decode: ${heicDecodeFailures
+            .slice(0, 3)
+            .join(', ')}${heicDecodeFailures.length > 3 ? '…' : ''}. Export those as JPEG (Most Compatible) and re-upload.`,
+        )
+      } else if (decodeFailures.length > 0) {
+        setError(
+          `Could not decode ${decodeFailures.length} file${
+            decodeFailures.length === 1 ? '' : 's'
+          }: ${decodeFailures.slice(0, 3).join(', ')}${
+            decodeFailures.length > 3 ? '…' : ''
+          }.`,
+        )
       }
 
       if (loaded.length === 0) {
@@ -175,6 +290,27 @@ function App() {
 
       setImages((previous) => [...previous, ...loaded])
       setSelectedId((current) => current ?? loaded[0].id)
+      // Upload never starts inference — leave an explicit idle cue for mobile.
+      setBatchProgress(
+        `${loaded.length} image${loaded.length === 1 ? '' : 's'} uploaded · 0 masked. Tap Auto-mask all to start on-device processing.`,
+      )
+
+      // Overlap HF weight download with the user reading the CTA (one shared instance).
+      void import('./lib/mask/bgRemoveSdk')
+        .then(({ preloadBgRemoveModel, formatInitProgressLine }) =>
+          preloadBgRemoveModel((progress) => {
+            if (progress.kind !== 'sdk-init' || progress.status !== 'loading') {
+              return
+            }
+            if (autoMaskInFlightRef.current) return
+            setBatchProgress(
+              `${formatInitProgressLine(progress.message, progress.ratio)} · images ready — tap Auto-mask all when you want to process.`,
+            )
+          }),
+        )
+        .catch(() => {
+          // Surface failures only when Auto-mask is pressed.
+        })
     } finally {
       setIsLoading(false)
     }
@@ -205,6 +341,9 @@ function App() {
   }, [])
 
   const handleClear = useCallback(() => {
+    batchGenerationRef.current += 1
+    autoMaskInFlightRef.current = false
+    setBatchBusy(false)
     setImages((previous) => {
       for (const image of previous) {
         URL.revokeObjectURL(image.objectUrl)
@@ -256,6 +395,10 @@ function App() {
         ...current.maskMeta,
         revision: current.maskMeta.revision + 1,
         hasEdits: true,
+        hasManualEdits: true,
+        processingPhase: current.maskMeta.needsReview
+          ? 'needs-review'
+          : 'masked',
         // Keep auto-mask review flags; polygon/brush edits do not clear needsReview.
       },
     }))
@@ -273,10 +416,12 @@ function App() {
           ...current.maskMeta,
           revision: current.maskMeta.revision + 1,
           hasEdits: true,
+          hasManualEdits: true,
           needsReview,
           reviewReason: needsReview ? reviewReason : undefined,
           diagnosticSummary: nextSummary,
           autoFailed: false,
+          processingPhase: needsReview ? 'needs-review' : 'masked',
         },
       }))
     },
@@ -338,56 +483,98 @@ function App() {
   const runLocalAutoMask = useCallback(
     async (scope: 'all' | 'failed' | 'selected') => {
       if (autoMaskInFlightRef.current) {
+        setBatchProgress('Auto-mask already running…')
         return
       }
-      const queue =
-        scope === 'all'
-          ? images
-          : scope === 'selected'
-            ? images.filter((image) => image.id === selectedId)
-            : images.filter(
-                (image) => projectsRef.current[image.id]?.maskMeta.autoFailed,
-              )
+
+      // Always use current image ids from the ref (not a stale closure snapshot).
+      const liveImages = imagesRef.current
+      const queue = buildAutoMaskQueue(
+        liveImages,
+        projectsRef.current,
+        scope,
+        selectedId,
+      )
 
       if (queue.length === 0) {
         setBatchProgress(
           scope === 'failed'
             ? 'No failed images to retry.'
             : scope === 'selected'
-              ? 'Select an image to retry.'
-              : 'No images to auto-mask.',
+              ? 'Select an unmasked or failed image to retry (manual edits are preserved).'
+              : liveImages.length === 0
+                ? 'No images to auto-mask.'
+                : 'All uploaded images already have masks. Use Retry failed for errors, or Clear all to start over.',
         )
         return
       }
 
+      const generation = ++batchGenerationRef.current
+      const isCurrent = () => generation === batchGenerationRef.current
+
       autoMaskInFlightRef.current = true
       setBatchBusy(true)
       setError(null)
+
+      const markQueuePhase = (
+        phase: MaskStateMeta['processingPhase'],
+        extra?: Partial<MaskStateMeta>,
+      ) => {
+        if (!isCurrent()) return
+        setProjects((previous) => {
+          const next = { ...previous }
+          for (const image of queue) {
+            const current = next[image.id] ?? createProjectFields()
+            next[image.id] = {
+              ...current,
+              maskMeta: {
+                ...current.maskMeta,
+                processingPhase: phase,
+                ...extra,
+              },
+            }
+          }
+          return next
+        })
+      }
+
       try {
+        markQueuePhase('loading-model')
         // Warm the shared on-device model once (Web Worker; ~88 MB first download).
-        const { preloadBgRemoveModel } = await import('./lib/mask/bgRemoveSdk')
-        setBatchProgress('Loading local background-removal model…')
+        const { preloadBgRemoveModel, formatInitProgressLine } = await import(
+          './lib/mask/bgRemoveSdk'
+        )
+        if (!isCurrent()) return
+        setBatchProgress(
+          `Loading local background-removal model for ${queue.length} image${
+            queue.length === 1 ? '' : 's'
+          }…`,
+        )
         try {
           const { device } = await preloadBgRemoveModel((progress) => {
+            if (!isCurrent()) return
             if (progress.kind !== 'sdk-init') return
             if (progress.status === 'loading') {
-              const pct =
-                typeof progress.ratio === 'number'
-                  ? Math.round(progress.ratio * 100)
-                  : undefined
               setBatchProgress(
-                `Loading model${progress.message ? `: ${progress.message}` : ''}${
-                  pct !== undefined ? ` (${pct}%)` : ''
-                }`,
+                formatInitProgressLine(progress.message, progress.ratio),
               )
             }
           })
+          if (!isCurrent()) return
           setBatchProgress(`Model ready (${device}). Starting batch…`)
         } catch (initErr) {
           const message =
             initErr instanceof Error
               ? initErr.message
               : 'Failed to load local model.'
+          if (!isCurrent()) return
+          // Model never became ready — mark every queued image failed so
+          // counters leave "0 masked / 0 failed" limbo and Retry failed works.
+          markQueuePhase('failed', {
+            autoFailed: true,
+            needsReview: true,
+            reviewReason: message,
+          })
           setError(message)
           setBatchProgress(`Auto-mask stopped: ${message}`)
           return
@@ -398,11 +585,25 @@ function App() {
         let failCount = 0
         const methodsSeen = new Set<string>()
         const failures: string[] = []
-        // SDK queues internally; keep app concurrency at 1 for memory safety.
+        // One at a time — SDK also serializes; keep app concurrency 1 for mobile RAM.
         const concurrency = 1
         let nextIndex = 0
 
         const runOne = async (image: UploadedImage, ordinal: number) => {
+          if (!isCurrent()) return
+          setProjects((previous) => {
+            const current = previous[image.id] ?? createProjectFields()
+            return {
+              ...previous,
+              [image.id]: {
+                ...current,
+                maskMeta: {
+                  ...current.maskMeta,
+                  processingPhase: 'processing',
+                },
+              },
+            }
+          })
           setBatchProgress(
             `Auto-masking ${ordinal}/${queue.length}: ${image.name} (on-device)`,
           )
@@ -414,7 +615,11 @@ function App() {
               image.height,
               40,
               (progress) => {
-                if (progress.kind === 'sdk-init' && progress.status === 'loading') {
+                if (!isCurrent()) return
+                if (
+                  progress.kind === 'sdk-init' &&
+                  progress.status === 'loading'
+                ) {
                   const pct =
                     typeof progress.ratio === 'number'
                       ? Math.round(progress.ratio * 100)
@@ -430,6 +635,7 @@ function App() {
                 }
               },
             )
+            if (!isCurrent()) return
             methodsSeen.add(auto.methodUsed)
             successCount += 1
             if (auto.needsReview) reviewFlagged += 1
@@ -442,6 +648,7 @@ function App() {
                   maskMeta: {
                     revision: current.maskMeta.revision + 1,
                     hasEdits: true,
+                    hasManualEdits: false,
                     autoConfidence: auto.confidence,
                     needsReview: auto.needsReview,
                     autoMethodUsed: auto.methodUsed,
@@ -450,11 +657,15 @@ function App() {
                       ? auto.reviewReason
                       : undefined,
                     diagnosticSummary: auto.diagnosticSummary,
+                    processingPhase: auto.needsReview
+                      ? 'needs-review'
+                      : 'masked',
                   },
                 },
               }
             })
           } catch (caught) {
+            if (!isCurrent()) return
             failCount += 1
             const message =
               caught instanceof Error
@@ -469,9 +680,11 @@ function App() {
                   ...current,
                   maskMeta: {
                     ...current.maskMeta,
+                    // Do not set hasEdits — failed images must not inflate maskedCount.
                     needsReview: true,
                     autoFailed: true,
                     reviewReason: message,
+                    processingPhase: 'failed',
                   },
                 },
               }
@@ -483,6 +696,7 @@ function App() {
           { length: Math.min(concurrency, queue.length) },
           async () => {
             while (nextIndex < queue.length) {
+              if (!isCurrent()) return
               const index = nextIndex
               nextIndex += 1
               await runOne(queue[index]!, index + 1)
@@ -490,6 +704,7 @@ function App() {
           },
         )
         await Promise.all(workers)
+        if (!isCurrent()) return
 
         const used = [...methodsSeen].join(', ') || 'bg-remove-sdk-rmbg1.4'
         if (failCount > 0) {
@@ -498,16 +713,18 @@ function App() {
             `Auto-mask finished: ${successCount} ok, ${failCount} failed via ${used}` +
               (reviewFlagged > 0
                 ? ` (${reviewFlagged} flagged for review).`
-                : '.'),
+                : '.') +
+              (failCount > 0 ? ' Use Retry failed for the rest.' : ''),
           )
         } else {
           setBatchProgress(
             reviewFlagged > 0
-              ? `Auto-masked ${queue.length} images via ${used} (${reviewFlagged} flagged for review).`
-              : `Auto-masked ${queue.length} images via ${used}.`,
+              ? `Auto-masked ${successCount} images via ${used} (${reviewFlagged} flagged for review).`
+              : `Auto-masked ${successCount} images via ${used}.`,
           )
         }
       } catch (caught) {
+        if (!isCurrent()) return
         const message =
           caught instanceof Error
             ? caught.message
@@ -515,11 +732,13 @@ function App() {
         setError(message)
         setBatchProgress(`Auto-mask stopped: ${message}`)
       } finally {
-        autoMaskInFlightRef.current = false
-        setBatchBusy(false)
+        if (isCurrent()) {
+          autoMaskInFlightRef.current = false
+          setBatchBusy(false)
+        }
       }
     },
-    [images, selectedId],
+    [selectedId],
   )
 
   const handleExportZip = useCallback(
@@ -531,7 +750,8 @@ function App() {
           if (scope === 'all') {
             return true
           }
-          return projects[image.id]?.maskMeta.hasEdits
+          const meta = projects[image.id]?.maskMeta
+          return !!meta?.hasEdits && !meta.autoFailed
         })
         if (selected.length === 0) {
           setError('No images available for ZIP export.')
@@ -601,11 +821,11 @@ function App() {
           <li>Upload one or more product photos</li>
           <li>
             Batch → <strong>Auto-mask all</strong> (or Edit Mask to refine edges)
-          </li>
-          <li>
+            </li>
+            <li>
             In Edit Mask, set your background (color or upload your own image)
-          </li>
-          <li>
+            </li>
+            <li>
             Batch → <strong>Apply background to all</strong>, then Adjust for
             crop / frame / rotate / skew / color
           </li>
@@ -686,6 +906,7 @@ function App() {
               images={images}
               selectedId={selectedId}
               needsReviewById={needsReviewById}
+              maskStatusById={maskStatusById}
               onSelect={(id) => {
                 setSelectedId(id)
                 ensureProject(id)
@@ -717,7 +938,7 @@ function App() {
                   Adjust &amp; Export
                 </button>
               </div>
-            </div>
+        </div>
             <CanvasPreview
               image={selectedImage}
               background={selectedProject?.background ?? null}
@@ -745,7 +966,7 @@ function App() {
                 methodUsed={selectedProject.maskMeta.autoMethodUsed}
                 needsReview={!!selectedProject.maskMeta.needsReview}
                 reviewReason={selectedProject.maskMeta.reviewReason}
-                hasManualEdits={selectedProject.maskMeta.hasEdits}
+                hasManualEdits={!!selectedProject.maskMeta.hasManualEdits}
                 maskRevision={selectedProject.maskMeta.revision}
                 summary={selectedProject.maskMeta.diagnosticSummary}
                 onMaskRepaired={handleDiagnosticRepair}
@@ -792,7 +1013,7 @@ function App() {
                 {selectedProject.maskMeta.autoMethodUsed
                   ? ` · method ${selectedProject.maskMeta.autoMethodUsed}`
                   : ''}
-                {selectedProject.maskMeta.hasEdits
+                {selectedProject.maskMeta.hasManualEdits
                   ? ' · includes manual edits'
                   : ''}
                 {selectedProject.background.type !== 'transparent'
@@ -811,11 +1032,12 @@ function App() {
                 RMBG via bg-remove-sdk).
               </p>
             )}
-          </section>
+      </section>
 
           <BatchPanel
             imageCount={images.length}
             maskedCount={maskedCount}
+            pendingCount={pendingCount}
             reviewCount={reviewCount}
             failedCount={failedCount}
             busy={batchBusy}
@@ -832,7 +1054,8 @@ function App() {
             canRetrySelected={
               !!selectedImage &&
               (projects[selectedImage.id]?.maskMeta.autoFailed === true ||
-                !projects[selectedImage.id]?.maskMeta.hasEdits)
+                (!projects[selectedImage.id]?.maskMeta.hasEdits &&
+                  !projects[selectedImage.id]?.maskMeta.hasManualEdits))
             }
           />
         </main>

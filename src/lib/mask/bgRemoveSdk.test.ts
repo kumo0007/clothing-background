@@ -136,6 +136,27 @@ describe('segmentWithBgRemoveSdk (mocked SDK)', () => {
       segmentWithBgRemoveSdk(new Blob([new Uint8Array([1])]), 2, 1),
     ).rejects.toThrow(/Model init failed/i)
   })
+
+  it('treats inference timeout as failure, not success', async () => {
+    preloadMock.mockResolvedValue({ device: 'wasm' })
+    processMock.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          // Simulate worker hang → app-level timeout rejects.
+          setTimeout(
+            () => reject(new Error('Local inference timed out after 120s.')),
+            0,
+          )
+        }),
+    )
+    const { segmentWithBgRemoveSdk, resetSharedBgRemoverForTests } =
+      await import('./bgRemoveSdk')
+    resetSharedBgRemoverForTests()
+
+    await expect(
+      segmentWithBgRemoveSdk(new Blob([new Uint8Array([1])]), 2, 1),
+    ).rejects.toThrow(/timed out/i)
+  })
 })
 
 describe('SDK mask + manual edit / undo', () => {

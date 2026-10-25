@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-10-26T01:25:00.000Z",
+  "environment": "Chromium Cursor browser, warm Cache API, ?audit=1",
+  "physicalDevice": false,
+  "elapsedMs": 8138,
+  "timing": {
+    "initStartedAt": 14440.9,
+    "readyAt": 21105.8,
+    "initWallMsApprox": 6665,
+    "lastProcessMs": 3463,
+    "totalProcessMs": 7683,
+    "processCount": 2,
+    "note": "Warm cache — no HF download in this run. Cold download ~155s documented in FINAL_RELEASE_READINESS_AUDIT.md"
+  },
+  "rows": [
+    {
+      "name": "03_tshirt.jpg",
+      "method": "bg-remove-sdk-rmbg1.4",
+      "keepPct": 47.3,
+      "softPct": 3.27,
+      "needsReview": false,
+      "findings": [],
+      "heuristicScore": 0.72,
+      "labSeedProxyKeepPct": 62.86,
+      "labSeedProxyBorderStudioRatio": 0.122,
+      "conclusion": "Live RMBG KEEP share is lower than Lab-seed (less card retention). Neural findings empty — Lab border_studio_leak was Lab silhouette artifact, not a missed RMBG defect on this fixture."
+    },
+    {
+      "name": "08_sneakers.jpg",
+      "method": "bg-remove-sdk-rmbg1.4",
+      "keepPct": 31.95,
+      "softPct": 4.37,
+      "needsReview": false,
+      "findings": [],
+      "heuristicScore": 0.72,
+      "labSeedProxyKeepPct": 13.39,
+      "labSeedProxyDetachedShare": 0.694,
+      "conclusion": "Live RMBG KEEP is more coherent than Lab-seed (Lab had 92 components / 69% detached). Neural fragmented_keep correctly silent. Do not weaken thresholds or optimize for review badges."
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-26",
+  "environment": "Desktop Chromium via Cursor browser MCP, Emulation.setDeviceMetricsOverride 390x844 mobile=true",
+  "physicalDevice": "NOT TESTED — no physical iPhone/Android in this session",
+  "upload": {
+    "files": 8,
+    "names": [
+      "01_hoodie.jpg",
+      "02_blazer.jpg",
+      "03_tshirt.jpg",
+      "04_jeans.jpg",
+      "05_coat.jpg",
+      "06_sweater.jpg",
+      "07_slip_dress.jpg",
+      "08_sneakers.jpg"
+    ],
+    "afterUpload": {
+      "masked": "0 masked",
+      "pending": "8 pending",
+      "ctaVisible": true,
+      "progress": "8 images uploaded · 0 masked. Tap Auto-mask all to start on-device processing.",
+      "autoMaskStartedAutomatically": false
+    }
+  },
+  "autoMaskAll": {
+    "engine": "bg-remove-sdk-rmbg1.4",
+    "wallClockApproxSec": 28.5,
+    "final": {
+      "masked": "8 masked",
+      "failed": null,
+      "progress": "Auto-masked 8 images via bg-remove-sdk-rmbg1.4.",
+      "error": null
+    },
+    "note": "Model weights were already cached in this browser profile; first-run mobile download of ~88MB was not re-measured here."
+  },
+  "unitTests": {
+    "vitest": "276 passed",
+    "typecheck": "pass",
+    "lint": "pass (warnings only, pre-existing)",
+    "build": "pass"
+  }
+}

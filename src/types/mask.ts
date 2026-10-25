@@ -38,11 +38,31 @@ export type MaskDiagnosticSummary = {
   }>
 }
 
+/**
+ * Explicit per-image batch / mask lifecycle for UI counters.
+ * Derived fields (hasEdits, autoFailed, needsReview) stay authoritative for
+ * export eligibility; `processingPhase` is the live operator-facing label.
+ */
+export type MaskProcessingPhase =
+  | 'pending'
+  | 'loading-model'
+  | 'processing'
+  | 'masked'
+  | 'needs-review'
+  | 'failed'
+
 export type MaskStateMeta = {
   /** Bumped whenever mask pixels change so React can refresh previews. */
   revision: number
   /** True after the user has painted or otherwise edited the mask. */
   hasEdits: boolean
+  /**
+   * True when the operator painted / peeled / repaired the mask in-studio.
+   * Auto-mask success sets hasEdits but leaves this false so re-runs can skip
+   * successful auto masks without confusing them with manual work — and
+   * never overwrite manual edits without consent.
+   */
+  hasManualEdits?: boolean
   /** Heuristic 0–1 auto-mask confidence (undefined until auto-mask runs). */
   autoConfidence?: number
   /** True when auto-mask signals likely white-on-white / leakage — review recommended. */
@@ -58,11 +78,31 @@ export type MaskStateMeta = {
    * Successful API/manual masks clear this so Retry failed can skip them.
    */
   autoFailed?: boolean
+  /** Live batch phase for UI (pending → processing → masked|failed|needs-review). */
+  processingPhase?: MaskProcessingPhase
 }
 
 export function createEmptyMaskMeta(): MaskStateMeta {
   return {
     revision: 0,
     hasEdits: false,
+    processingPhase: 'pending',
   }
+}
+
+/** Derive a stable UI phase from persisted mask meta. */
+export function resolveMaskProcessingPhase(
+  meta: MaskStateMeta | undefined,
+): MaskProcessingPhase {
+  if (!meta) return 'pending'
+  if (
+    meta.processingPhase === 'loading-model' ||
+    meta.processingPhase === 'processing'
+  ) {
+    return meta.processingPhase
+  }
+  if (meta.autoFailed) return 'failed'
+  if (meta.hasEdits && meta.needsReview) return 'needs-review'
+  if (meta.hasEdits) return 'masked'
+  return meta.processingPhase ?? 'pending'
 }

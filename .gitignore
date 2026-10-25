@@ -32,3 +32,8 @@ public/imgly-bg-data/**
 *.njsproj
 *.sln
 *.sw?
+
+# BRIA commercial agreement artifacts (bookkeeping only — do not commit by default)
+tmp-release-validation/commercial-evidence/**
+!tmp-release-validation/commercial-evidence/README.md
+!tmp-release-validation/commercial-evidence/.gitkeep

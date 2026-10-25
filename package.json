@@ -11,7 +11,11 @@
     "test:watch": "vitest",
     "lint": "oxlint",
     "preview": "vite preview",
-    "fetch:imgly-data": "tsx scripts/fetchImglyBrowserData.mts"
+    "fetch:imgly-data": "tsx scripts/fetchImglyBrowserData.mts",
+    "gate:commercial": "tsx scripts/assertCommercialReleaseGate.mts",
+    "gate:commercial:require": "tsx scripts/assertCommercialReleaseGate.mts --require-commercial",
+    "verify:release": "npm run typecheck && npm run lint && npm test && npm run build && npm run gate:commercial",
+    "verify:commercial-release": "npm run verify:release && npm run gate:commercial:require"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
@@ -37,8 +41,16 @@
     "jsdom": "^30.1.3",
     "oxlint": "^1.88.0",
     "pngjs": "^7.0.0",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "vite": "^8.3.4",
     "vitest": "^5.0.5"
+  },
+  "allowScripts": {
+    "sharp@0.34.5": true,
+    "sharp@0.32.6": true,
+    "onnxruntime-node@1.17.3": true,
+    "onnxruntime-node@1.21.0": true,
+    "protobufjs@7.6.6": true
   }
 }

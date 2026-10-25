@@ -79,6 +79,57 @@ describe('apiTransparentPngMask', () => {
     expect(mask.data[0]).toBe(255)
   })
 
+  it('maps mobile-downscaled alpha back to phone-photo export dimensions', () => {
+    // Simulate inference at 1600 long-edge from a 4032×3024 capture.
+    const srcW = 4032
+    const srcH = 3024
+    const inferW = 1600
+    const inferH = 1200
+    const rgba = rgbaFromAlpha(inferW, inferH, (x, y) => {
+      // KEEP a centered rectangle in inference space
+      const left = Math.floor(inferW * 0.25)
+      const right = Math.floor(inferW * 0.75)
+      const top = Math.floor(inferH * 0.2)
+      const bottom = Math.floor(inferH * 0.8)
+      return x >= left && x < right && y >= top && y < bottom ? 255 : 0
+    })
+    const { mask, resized } = maskFromTransparentRgba(
+      rgba,
+      inferW,
+      inferH,
+      srcW,
+      srcH,
+    )
+    expect(resized).toBe(true)
+    expect(mask.width).toBe(srcW)
+    expect(mask.height).toBe(srcH)
+    // Center of garment region must remain KEEP after upsample.
+    expect(mask.data[Math.floor(srcH / 2) * srcW + Math.floor(srcW / 2)]).toBe(
+      255,
+    )
+    // Far corner must remain BG (alignment not shifted into borders).
+    expect(mask.data[0]).toBe(0)
+    expect(mask.data[srcW * srcH - 1]).toBe(0)
+  })
+
+  it('preserves portrait orientation when remapping downscaled alpha', () => {
+    const srcW = 1080
+    const srcH = 1920
+    const inferW = 900
+    const inferH = 1600
+    const rgba = rgbaFromAlpha(inferW, inferH, (x, y) =>
+      y > inferH * 0.1 && y < inferH * 0.9 && x > inferW * 0.3 && x < inferW * 0.7
+        ? 255
+        : 0,
+    )
+    const { mask } = maskFromTransparentRgba(rgba, inferW, inferH, srcW, srcH)
+    expect(mask.width).toBe(1080)
+    expect(mask.height).toBe(1920)
+    expect(mask.data[Math.floor(srcH / 2) * srcW + Math.floor(srcW / 2)]).toBe(
+      255,
+    )
+  })
+
   it('nearest resize preserves binary corners', () => {
     const source = createMaskBuffer(2, 2, 0)
     source.data[0] = 255

@@ -60,8 +60,10 @@ export function ImageUploader({
       <label className="uploader__label" htmlFor={inputId}>
         <span className="uploader__title">Upload garment images</span>
         <span className="uploader__hint">
-          Drag and drop multiple images, or click to browse. JPEG, PNG, WebP,
-          GIF, and BMP are supported.
+          Drag and drop multiple images, or tap to browse. JPEG, PNG, WebP,
+          GIF, and BMP are supported. iPhone HEIC is not — export as JPEG
+          (Most Compatible) first. Upload does not start masking; use Batch →
+          Auto-mask all.
         </span>
       </label>
       <input

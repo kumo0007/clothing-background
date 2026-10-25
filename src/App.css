@@ -337,6 +337,22 @@
   border-color: var(--review);
 }
 
+.gallery__thumb--pending {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.gallery__review-badge--pending {
+  background: color-mix(in srgb, var(--accent) 75%, #333);
+}
+
+.gallery__review-badge--failed {
+  background: var(--danger);
+}
+
+.gallery__review-badge--processing {
+  background: var(--accent);
+}
+
 .gallery__thumb--selected.gallery__thumb--review {
   border-color: var(--accent);
   box-shadow:
