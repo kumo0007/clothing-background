@@ -12,7 +12,10 @@
  *   reports `TypeError: Importing a module script failed` when script-src
  *   omits that host (seen on iPhone as `[wasm] Importing a module script failed`).
  * - Allow Hugging Face / transformers CDN fetches for RMBG-1.4 weights via
- *   connect-src (images never leave the device).
+ *   connect-src (images never leave the device). HF `resolve/` redirects to
+ *   multi-label hosts such as `us.aws.cdn.hf.co`; Safari treats `*.hf.co` as
+ *   a single label only, so those redirects become `TypeError: Load failed`
+ *   unless `*.cdn.hf.co` / `*.aws.cdn.hf.co` (and xet bridges) are listed.
  * - Keep object-src / frame-ancestors locked down.
  *
  * Must never ship `script-src 'none'` or `default-src 'none'` without an
@@ -34,7 +37,12 @@ export const CSP_DIRECTIVES: Readonly<Record<string, readonly string[]>> = {
     "'self'",
     'https://huggingface.co',
     'https://*.huggingface.co',
+    'https://hf.co',
     'https://*.hf.co',
+    // HF Xet / AWS CDN redirects (Safari needs explicit multi-label hosts).
+    'https://*.cdn.hf.co',
+    'https://*.aws.cdn.hf.co',
+    'https://*.xethub.hf.co',
     'https://cdn.jsdelivr.net',
   ],
   'worker-src': ["'self'", 'blob:'],
@@ -101,6 +109,16 @@ export function assertAppCspAllowsBootstrap(policy: string): void {
   if (!/script-src[^;]*blob:/i.test(policy)) {
     throw new Error(
       `CSP must allow script-src blob: for bg-remove-sdk worker module imports: ${policy}`,
+    )
+  }
+  if (!/connect-src[^;]*cdn\.hf\.co/i.test(policy)) {
+    throw new Error(
+      `CSP must allow connect-src *.cdn.hf.co for Hugging Face weight redirects: ${policy}`,
+    )
+  }
+  if (!/connect-src[^;]*aws\.cdn\.hf\.co/i.test(policy)) {
+    throw new Error(
+      `CSP must allow connect-src *.aws.cdn.hf.co for Safari HF CDN redirects: ${policy}`,
     )
   }
 }

@@ -20,6 +20,8 @@ describe('contentSecurityPolicy', () => {
     expect(policy).toMatch(/script-src[^;]*cdn\.jsdelivr\.net/)
     expect(policy).toMatch(/worker-src[^;]*blob:/)
     expect(policy).toMatch(/connect-src[^;]*huggingface\.co/)
+    expect(policy).toMatch(/connect-src[^;]*cdn\.hf\.co/)
+    expect(policy).toMatch(/connect-src[^;]*aws\.cdn\.hf\.co/)
     expect(policy).not.toMatch(/script-src\s+'none'/)
     expect(policy).not.toMatch(/'unsafe-inline'/)
     expect(policy).not.toMatch(/script-src[^;]*\*/)

@@ -95,6 +95,63 @@ export function isWasmModuleImportFailure(message: string): boolean {
 }
 
 /**
+ * Safari/WebKit generic network failure — often a CSP `connect-src` block on
+ * Hugging Face CDN redirects (`us.aws.cdn.hf.co`), not a missing Wi‑Fi signal.
+ */
+export function isSafariNetworkLoadFailure(message: string): boolean {
+  const m = message.trim()
+  if (!m) return false
+  if (/^Load failed$/i.test(m)) return true
+  if (/TypeError:\s*Load failed/i.test(m)) return true
+  if (/Failed to fetch/i.test(m) && /safari|iphone|ipad|webkit/i.test(m)) {
+    return true
+  }
+  // Bare WebKit fetch rejection text without stack.
+  if (/^TypeError: Load failed$/i.test(m)) return true
+  return false
+}
+
+/** Map opaque Safari/WebKit errors to actionable, privacy-safe copy. */
+export function formatBgRemoveInitFailureMessage(raw: string): string {
+  const message = raw.trim() || 'Failed to load the local background-removal model.'
+  if (isSafariNetworkLoadFailure(message)) {
+    return (
+      `Model weight download failed (Safari: Load failed). ` +
+      `Usually the Hugging Face CDN redirect was blocked or interrupted. ` +
+      `Stay on Wi‑Fi, hard-refresh this tab, then Retry failed. Inference stays on-device.`
+    )
+  }
+  if (isWasmModuleImportFailure(message)) {
+    return (
+      `Model init failed (${message}). Safari could not load the on-device WASM runtime module. ` +
+      `Hard-refresh on Wi‑Fi, then Retry failed. Inference stays on-device.`
+    )
+  }
+  if (isWasmBackendOutOfMemoryFailure(message)) {
+    return (
+      `Model init failed (${message}). Out of memory during WASM session init for RMBG-1.4. ` +
+      `Close other Safari tabs, then Retry failed.`
+    )
+  }
+  if (isWebGpuBackendInitFailure(message)) {
+    return (
+      `Model init failed (${message}). WebGPU runtime unavailable; use WASM for the same RMBG-1.4 model. ` +
+      `Keep this tab open on Wi‑Fi, then Retry failed.`
+    )
+  }
+  if (/timed out/i.test(message)) {
+    return message
+  }
+  if (/Model init failed/i.test(message)) {
+    return message
+  }
+  return (
+    `Model init failed (${message}). Check network access to download weights once, then retry. ` +
+    `Inference stays on-device.`
+  )
+}
+
+/**
  * ORT WASM backend init OOM (not inference-time tensor OOM).
  * Message shape from client: `[wasm] RangeError: Out of memory`.
  */

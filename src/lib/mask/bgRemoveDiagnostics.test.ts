@@ -21,6 +21,8 @@ describe('bgRemoveDiagnostics', () => {
         'no available backend found. ERR: [wasm] RangeError: Out of memory',
       ),
     ).toBe('init-oom')
+    expect(classifyBgRemoveFailure('Load failed')).toBe('download')
+    expect(classifyBgRemoveFailure('TypeError: Load failed')).toBe('download')
   })
 
   it('maps Running model… to operator-facing copy', () => {

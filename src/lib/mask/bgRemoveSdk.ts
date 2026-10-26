@@ -30,8 +30,9 @@ import {
 import {
   describeDevicePreference,
   describeWeightDtype,
+  formatBgRemoveInitFailureMessage,
+  isSafariNetworkLoadFailure,
   isWasmBackendOutOfMemoryFailure,
-  isWasmModuleImportFailure,
   isWebGpuBackendInitFailure,
   resolvePreferredBgRemoveDevice,
   resolvePreferredBgRemoveDtype,
@@ -58,6 +59,8 @@ export {
   resolvePreferredBgRemoveDevice,
   resolvePreferredBgRemoveDtype,
   isWebGpuBackendInitFailure,
+  formatBgRemoveInitFailureMessage,
+  isSafariNetworkLoadFailure,
   isWasmBackendOutOfMemoryFailure,
   isWasmModuleImportFailure,
   isAppleMobileUserAgent,
@@ -446,17 +449,7 @@ export async function preloadBgRemoveModel(
           device: 'wasm',
         })
         recoverSharedBgRemover(retryMessage)
-        if (/timed out/i.test(retryMessage)) {
-          throw new Error(retryMessage)
-        }
-        if (isWasmBackendOutOfMemoryFailure(retryMessage)) {
-          throw new Error(
-            `Model init failed (${retryMessage}). WASM ran out of memory while creating the on-device RMBG-1.4 session. Close other Safari tabs, keep this tab open, then Retry failed (one model instance only).`,
-          )
-        }
-        throw new Error(
-          `Model init failed (${retryMessage}). WASM backend could not start for RMBG-1.4. Check network for weights, keep this Safari tab open, then Retry failed. Inference stays on-device.`,
-        )
+        throw new Error(formatBgRemoveInitFailureMessage(retryMessage))
       }
     }
 
@@ -484,38 +477,21 @@ export async function preloadBgRemoveModel(
           device: 'wasm',
         })
         recoverSharedBgRemover(retryMessage)
-        if (/timed out/i.test(retryMessage)) {
-          throw new Error(retryMessage)
-        }
-        throw new Error(
-          `Model init failed (${retryMessage}). On-device WASM could not allocate for RMBG-1.4 even with quantized weights. Close other tabs, retry with fewer photos first, keep this Safari tab open. Inference stays on-device.`,
-        )
+        throw new Error(formatBgRemoveInitFailureMessage(retryMessage))
       }
     }
 
     // Terminate hung init worker so Retry is not stuck behind it.
     recoverSharedBgRemover(message)
-    if (/timed out/i.test(message)) {
-      throw new Error(message)
+    if (isSafariNetworkLoadFailure(message)) {
+      noteBgRemoveDiagnostic({
+        type: 'init_error',
+        detail: 'safari-load-failed-weight-or-cdn',
+        failureStage: 'download',
+        device: attemptedDevice === 'auto' ? 'unknown' : attemptedDevice,
+      })
     }
-    if (isWasmBackendOutOfMemoryFailure(message)) {
-      throw new Error(
-        `Model init failed (${message}). Out of memory during WASM session init for RMBG-1.4 (not during image inference). Close other Safari tabs, then Retry failed.`,
-      )
-    }
-    if (isWasmModuleImportFailure(message)) {
-      throw new Error(
-        `Model init failed (${message}). Safari could not load the on-device WASM runtime module (ORT .mjs). Hard-refresh this tab on Wi‑Fi, then Retry failed. Inference stays on-device.`,
-      )
-    }
-    if (isWebGpuBackendInitFailure(message)) {
-      throw new Error(
-        `Model init failed (${message}). This browser could not start the WebGPU runtime module; try again to use the WASM backend for the same RMBG-1.4 model, keep this tab open, and stay on Wi‑Fi for the weights.`,
-      )
-    }
-    throw new Error(
-      `Model init failed (${message}). Check network access to download weights once, then retry. Inference stays on-device.`,
-    )
+    throw new Error(formatBgRemoveInitFailureMessage(message))
   } finally {
     // Retry paths already unsubscribed the first listener.
     try {

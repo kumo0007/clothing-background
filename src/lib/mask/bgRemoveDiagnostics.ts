@@ -107,6 +107,9 @@ export function classifyBgRemoveFailure(message: string): BgRemoveFailureStage {
   if (/timed out.*inference|Local inference timed out/i.test(message)) {
     return 'timeout-process'
   }
+  if (/^Load failed$/i.test(message) || /TypeError:\s*Load failed/i.test(message)) {
+    return 'download'
+  }
   if (
     /Out of memory|OOM/i.test(message) &&
     (/\[wasm\]|no available backend|Model init|backend/i.test(message) ||

@@ -4,6 +4,8 @@ import {
   isAppleMobileUserAgent,
   isSafariFamilyUserAgent,
   isWasmBackendOutOfMemoryFailure,
+  formatBgRemoveInitFailureMessage,
+  isSafariNetworkLoadFailure,
   isWasmModuleImportFailure,
   isWebGpuBackendInitFailure,
   resolvePreferredBgRemoveDevice,
@@ -72,6 +74,13 @@ describe('bgRemoveDevice', () => {
         'no available backend found. ERR: [webgpu] TypeError: Importing a module script failed.',
       ),
     ).toBe(false)
+  })
+
+  it('maps Safari Load failed to weight-download guidance', () => {
+    expect(isSafariNetworkLoadFailure('Load failed')).toBe(true)
+    expect(formatBgRemoveInitFailureMessage('Load failed')).toMatch(
+      /weight download failed|Hugging Face CDN/i,
+    )
   })
 
   it('prefers q8 weights for Apple-mobile WASM (same RMBG-1.4 repo)', () => {
