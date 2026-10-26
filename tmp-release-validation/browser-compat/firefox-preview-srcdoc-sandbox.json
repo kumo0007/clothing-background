@@ -1,0 +1,50 @@
+{
+  "production": "https://garment-background-studio.vercel.app/",
+  "asset": "https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js",
+  "sandboxed": {
+    "label": "preview-sandboxed",
+    "child": {
+      "sandbox": "allow-same-origin",
+      "fallbackVisible": true,
+      "rootChildren": 1,
+      "scriptSrcs": [
+        "https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js"
+      ]
+    },
+    "consoleMsgs": [],
+    "mentionsScriptSrcNone": false,
+    "loadingFailedModule": false,
+    "blocksProductionAsset": false
+  },
+  "allowScripts": {
+    "label": "preview-allow-scripts",
+    "child": {
+      "sandbox": "allow-same-origin allow-scripts allow-forms",
+      "fallbackVisible": false,
+      "rootChildren": 1,
+      "scriptSrcs": [
+        "https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js"
+      ]
+    },
+    "consoleMsgs": [
+      "[warning] [JavaScript Warning: \"An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can remove its sandboxing.\" {file: \"http://127.0.0.1:63002/preview-allow-scripts.html\" line: 0}]",
+      "[warning] [JavaScript Warning: \"An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can remove its sandboxing.\" {file: \"http://127.0.0.1:63002/preview-allow-scripts.html\" line: 0}]"
+    ],
+    "mentionsScriptSrcNone": false,
+    "loadingFailedModule": false,
+    "blocksProductionAsset": false
+  },
+  "topLevel": {
+    "docCsps": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    ],
+    "diagnosis": {
+      "isTop": true,
+      "fallback": false,
+      "heading": "Garment Background Studio"
+    },
+    "consoleMsgs": [],
+    "mentionsScriptSrcNone": false
+  },
+  "confirmedSource": "see logs"
+}

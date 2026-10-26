@@ -22,10 +22,21 @@
         <h1>Loading Garment Background Studio…</h1>
         <p>
           If this message does not go away, the browser blocked the app
-          scripts. In Firefox open a top-level tab to this site (not an
-          embedded preview), use a Private Window with extensions disabled,
-          hard-refresh, and check the Console for
-          <code>script-src</code> / Content-Security-Policy errors.
+          scripts. Open
+          <code>https://garment-background-studio.vercel.app/</code>
+          in a normal top-level Firefox tab (address bar), not an IDE or
+          mobile-device preview. Use a Private Window with extensions
+          disabled, then hard-refresh (Ctrl+F5).
+        </p>
+        <p>
+          In the Console CSP error, click the source link beside the message
+          and note the <strong>document URL</strong> shown (for example
+          <code>https://garment-background-studio.vercel.app/</code> vs
+          <code>about:srcdoc</code> / a preview origin). Production itself
+          serves <code>script-src 'self'</code>, not
+          <code>script-src 'none'</code> — a
+          <code>'none'</code> block means that browsing context has a
+          different policy (sandbox, extension, or embed).
         </p>
       </div>
     </div>
