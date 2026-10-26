@@ -6,8 +6,13 @@
  * - Allow WebAssembly compilation for on-device RMBG (`'wasm-unsafe-eval'` —
  *   NOT `'unsafe-eval'`).
  * - Allow blob: workers used by bg-remove-sdk’s inline worker bootstrap.
- * - Allow Hugging Face / transformers CDN fetches for RMBG-1.4 weights only
- *   via connect-src (images never leave the device).
+ * - Allow ORT WASM to dynamically `import()` its JSEP `.mjs` from the
+ *   transformers.js CDN (`script-src` https://cdn.jsdelivr.net) and from
+ *   blob: URLs inside the worker. `connect-src` alone is not enough — Safari
+ *   reports `TypeError: Importing a module script failed` when script-src
+ *   omits that host (seen on iPhone as `[wasm] Importing a module script failed`).
+ * - Allow Hugging Face / transformers CDN fetches for RMBG-1.4 weights via
+ *   connect-src (images never leave the device).
  * - Keep object-src / frame-ancestors locked down.
  *
  * Must never ship `script-src 'none'` or `default-src 'none'` without an
@@ -16,7 +21,12 @@
 
 export const CSP_DIRECTIVES: Readonly<Record<string, readonly string[]>> = {
   'default-src': ["'self'"],
-  'script-src': ["'self'", "'wasm-unsafe-eval'"],
+  'script-src': [
+    "'self'",
+    "'wasm-unsafe-eval'",
+    'blob:',
+    'https://cdn.jsdelivr.net',
+  ],
   'style-src': ["'self'"],
   'img-src': ["'self'", 'blob:', 'data:'],
   'font-src': ["'self'"],
@@ -82,5 +92,15 @@ export function assertAppCspAllowsBootstrap(policy: string): void {
   }
   if (!/script-src[^;]*'wasm-unsafe-eval'/i.test(policy)) {
     throw new Error(`CSP must allow 'wasm-unsafe-eval' for ONNX WASM: ${policy}`)
+  }
+  if (!/script-src[^;]*cdn\.jsdelivr\.net/i.test(policy)) {
+    throw new Error(
+      `CSP must allow script-src https://cdn.jsdelivr.net for ORT WASM .mjs imports: ${policy}`,
+    )
+  }
+  if (!/script-src[^;]*blob:/i.test(policy)) {
+    throw new Error(
+      `CSP must allow script-src blob: for bg-remove-sdk worker module imports: ${policy}`,
+    )
   }
 }

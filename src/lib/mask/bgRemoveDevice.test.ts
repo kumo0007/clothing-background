@@ -4,6 +4,7 @@ import {
   isAppleMobileUserAgent,
   isSafariFamilyUserAgent,
   isWasmBackendOutOfMemoryFailure,
+  isWasmModuleImportFailure,
   isWebGpuBackendInitFailure,
   resolvePreferredBgRemoveDevice,
   resolvePreferredBgRemoveDtype,
@@ -58,6 +59,19 @@ describe('bgRemoveDevice', () => {
     expect(isWasmBackendOutOfMemoryFailure('Local inference timed out')).toBe(
       false,
     )
+  })
+
+  it('classifies WASM module script import failures (iPhone Safari CSP)', () => {
+    expect(
+      isWasmModuleImportFailure(
+        'no available backend found. ERR: [wasm] TypeError: Importing a module script failed.',
+      ),
+    ).toBe(true)
+    expect(
+      isWasmModuleImportFailure(
+        'no available backend found. ERR: [webgpu] TypeError: Importing a module script failed.',
+      ),
+    ).toBe(false)
   })
 
   it('prefers q8 weights for Apple-mobile WASM (same RMBG-1.4 repo)', () => {

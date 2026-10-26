@@ -1,67 +1,49 @@
 # iPhone 15 Safari auto-mask — diagnostic report
 
-**Date:** 2026-10-26 (WASM OOM pass)  
-**Client:** Safari on iPhone 15  
-**Production model:** unchanged id — `bg-remove-sdk` + BRIA `briaai/RMBG-1.4`  
-**Production deploy:** `garment-background-studio-hp2vdkwc8-tomsmit1107s-projects.vercel.app` → https://garment-background-studio.vercel.app/  
-**Physical iPhone 15 validation:** **NOT PERFORMED** (no device on this agent)
-
----
-
-## Latest client error (after WebGPU→WASM preference)
-
+**Date:** 2026-10-26 (WASM module-import / CSP pass)  
+**Client screenshot:** Safari iOS · `garment-background-studio.vercel.app`  
+**Error on device:**
 ```text
-Model init failed (no available backend found. ERR: [wasm] RangeError: Out of memory).
+Model init failed (no available backend found. ERR: [wasm]
+TypeError: Importing a module script failed.).
+Check network access to download weights once, then retry.
 ```
 
-This is **ORT WASM backend / session bring-up**, not per-image inference and not a missing weight download. The `[wasm]` tag comes from ONNX Runtime’s `no available backend found` aggregator when `backend.init('wasm')` throws `RangeError: Out of memory` (typical Safari failure allocating a large contiguous WASM/JS buffer while constructing the session).
+**Model:** unchanged — `bg-remove-sdk` + BRIA `briaai/RMBG-1.4`  
+**Physical validation after this CSP fix:** **NOT PERFORMED** on a tethered device in this agent session (screenshot is client evidence of the pre-fix failure mode).
 
 ---
 
-## Root cause
+## Root cause (this screenshot)
 
-| Factor | Evidence |
+| Item | Finding |
 | --- | --- |
-| Stage | Init — WASM EP `init()` / model session load (message is backend ERR, before process stages) |
-| Why fp16 hurts | App/SDK passed `dtype: 'fp16'` (~88 MB). transformers.js **defaults WASM → q8**; forcing fp16 on WASM inflates heap during session create |
-| Concurrency | Single shared `BgRemover` (good); eager preload on upload could still overlap decode of 8 large JPEGs on iPhone |
-| Duplicate sessions | Not indicated; recover disposes the worker. Immediate WASM retry after WebGPU failure could leave peak memory until GC |
-| Not assumed | “Device simply has insufficient RAM” without identifying the allocation — the failing allocation is **WASM backend/session init**, not an arbitrary heap ceiling bump |
+| Stage | WASM **runtime module import** during ORT backend init (not weight download, not inference) |
+| Mechanism | `bg-remove-sdk` / transformers.js loads `ort-wasm-simd-threaded.jsep.mjs` via dynamic `import()`, typically from `https://cdn.jsdelivr.net/npm/@huggingface/transformers@…/dist/` (and/or blob: URLs inside the worker) |
+| Why Safari fails | Document CSP had `connect-src … https://cdn.jsdelivr.net` but **`script-src` only `'self' 'wasm-unsafe-eval'`**. Module `import()` is governed by **script-src**; Safari reports `TypeError: Importing a module script failed` |
+| Relation to prior bugs | Distinct from WebGPU module-import and from `[wasm] RangeError: Out of memory` |
 
 ---
 
-## Fix (smallest safe, same model id)
+## Fix
 
 | Change | Detail |
 | --- | --- |
-| Apple-mobile WASM dtype | Prefer **`q8`** (quantized artifact of the same `briaai/RMBG-1.4` repo — transformers.js WASM default) |
-| fp16 WASM OOM retry | One recover + retry with **q8** if init still reports `[wasm] Out of memory` |
-| Memory hygiene | `yieldForWasmMemoryPressure()` before WASM init / after dispose; **skip eager preload on Apple mobile** until Auto-mask |
-| Diagnostics | `init_stage` (download / runtime / session), `init-oom` failure stage, backend_select includes dtype |
-| Unchanged | `bg-remove-sdk` package, model id, on-device only, serial batch, manual edit / export / Retry |
+| `script-src` | Add `blob:` + `https://cdn.jsdelivr.net` (keep `'self'` + `'wasm-unsafe-eval'`; no `*`, no `unsafe-inline` / `unsafe-eval`) |
+| `vercel.json` + `contentSecurityPolicy.ts` | Kept in sync; assert helpers require jsDelivr + blob in script-src |
+| Error copy | Clearer message when WASM module import fails |
+| Prior mobile prefs | Still prefer WASM + q8 on Apple mobile; still single shared session |
 
 ---
 
-## Tests & build
+## Tests / build / deploy
 
 | Check | Result |
 | --- | --- |
-| Device/dtype/OOM classifiers | Unit tests |
-| WASM fp16 OOM → q8 retry | Unit test |
-| iPhone UA → `device: 'wasm'`, `dtype: 'q8'` | Unit test |
-| `npm run typecheck` | **Pass** |
-| `npm test` | **Pass** (338 tests) |
-| `npm run build` | **Pass** |
-
----
-
-## Physical device
-
-| Check | Status |
-| --- | --- |
-| iPhone 15 Safari · 8 images · Auto-mask all · no OOM | **PENDING / NOT PERFORMED** |
-
-Record PASS/FAIL with iOS version when a physical device is available. Do **not** treat desktop or unit tests as device proof.
+| CSP unit tests | Expect jsDelivr + blob in script-src |
+| Device classifiers | WASM module-import detection |
+| typecheck / test / build | **Pass** (339 tests) |
+| Production deploy | **Live** — `script-src` includes `blob:` + `https://cdn.jsdelivr.net` (verified via curl) |
 
 ---
 
@@ -69,6 +51,6 @@ Record PASS/FAIL with iOS version when a physical device is available. Do **not*
 
 | Claim | Status |
 | --- | --- |
-| OOM localized to WASM backend/session init under fp16 | **Yes (code-level)** |
-| Fix prefers/retries q8 for same RMBG-1.4 on mobile WASM | **Yes (in repo)** |
-| 8/8 images on physical iPhone 15 Safari | **Not verified** |
+| Screenshot error explained by CSP blocking ORT `.mjs` | **Yes** |
+| CSP updated to allow that import | **Yes** |
+| iPhone 15 Safari 8/8 auto-mask proven after deploy | **Not claimed** — retest on device after hard-refresh |

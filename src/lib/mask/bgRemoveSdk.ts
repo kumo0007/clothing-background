@@ -31,6 +31,7 @@ import {
   describeDevicePreference,
   describeWeightDtype,
   isWasmBackendOutOfMemoryFailure,
+  isWasmModuleImportFailure,
   isWebGpuBackendInitFailure,
   resolvePreferredBgRemoveDevice,
   resolvePreferredBgRemoveDtype,
@@ -58,6 +59,7 @@ export {
   resolvePreferredBgRemoveDtype,
   isWebGpuBackendInitFailure,
   isWasmBackendOutOfMemoryFailure,
+  isWasmModuleImportFailure,
   isAppleMobileUserAgent,
   isSafariFamilyUserAgent,
   describeDevicePreference,
@@ -499,6 +501,11 @@ export async function preloadBgRemoveModel(
     if (isWasmBackendOutOfMemoryFailure(message)) {
       throw new Error(
         `Model init failed (${message}). Out of memory during WASM session init for RMBG-1.4 (not during image inference). Close other Safari tabs, then Retry failed.`,
+      )
+    }
+    if (isWasmModuleImportFailure(message)) {
+      throw new Error(
+        `Model init failed (${message}). Safari could not load the on-device WASM runtime module (ORT .mjs). Hard-refresh this tab on Wi‑Fi, then Retry failed. Inference stays on-device.`,
       )
     }
     if (isWebGpuBackendInitFailure(message)) {

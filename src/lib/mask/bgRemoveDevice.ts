@@ -82,6 +82,19 @@ export function isWebGpuBackendInitFailure(message: string): boolean {
 }
 
 /**
+ * ORT WASM failed to dynamically import its runtime `.mjs` (often CSP
+ * script-src blocking cdn.jsdelivr.net / blob: inside the worker).
+ */
+export function isWasmModuleImportFailure(message: string): boolean {
+  const m = message.trim()
+  if (!m) return false
+  if (!/Importing a module script failed/i.test(m)) return false
+  if (/\[wasm\]/i.test(m)) return true
+  if (/no available backend found/i.test(m) && /wasm/i.test(m)) return true
+  return false
+}
+
+/**
  * ORT WASM backend init OOM (not inference-time tensor OOM).
  * Message shape from client: `[wasm] RangeError: Out of memory`.
  */

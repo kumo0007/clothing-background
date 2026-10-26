@@ -16,6 +16,8 @@ describe('contentSecurityPolicy', () => {
     expect(() => assertAppCspAllowsBootstrap(policy)).not.toThrow()
     expect(policy).toMatch(/script-src[^;]*'self'/)
     expect(policy).toMatch(/'wasm-unsafe-eval'/)
+    expect(policy).toMatch(/script-src[^;]*blob:/)
+    expect(policy).toMatch(/script-src[^;]*cdn\.jsdelivr\.net/)
     expect(policy).toMatch(/worker-src[^;]*blob:/)
     expect(policy).toMatch(/connect-src[^;]*huggingface\.co/)
     expect(policy).not.toMatch(/script-src\s+'none'/)
