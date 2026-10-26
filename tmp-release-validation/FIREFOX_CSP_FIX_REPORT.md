@@ -100,29 +100,32 @@ Shared source of truth: `src/lib/security/contentSecurityPolicy.ts` (regenerate 
 
 ---
 
-## 5. Deploy status
+## 5. Deploy status (verified)
 
-- Fix is committed to git as `vercel.json` + CSP module (requires push / Vercel production deploy).  
-- Until production serves the new headers, `curl -sI` will still show **no** CSP.  
-- After deploy, expect:
+| Step | Result |
+| --- | --- |
+| Git push `1a45ba7` → `main` | Done |
+| Production HTML entry | `/assets/index-C3JO3DUu.js` |
+| Production `Content-Security-Policy` | Present — `script-src 'self' 'wasm-unsafe-eval'` (not `'none'`) |
+| Playwright Firefox 131 post-deploy | **UI renders** (`hasHeading: true`); **0** console errors; **0** page errors; CSP header observed on document + assets |
+
+Effective deployed document CSP (abbreviated):
 
 ```http
-Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; …
+Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; …; object-src 'none'; frame-ancestors 'none'
 ```
 
-and Firefox Network → document → Response Headers should match. Console must **not** report `script-src 'none'` for `/assets/index-*.js`.
+### If a blank page still appears for a specific client
 
-### If blank page persists after redeploy
-
-1. In Vercel → Project → **Settings → Security / Headers**, remove any extra CSP with `default-src 'none'` or `script-src 'none'` (intersecting policies).  
-2. Hard-refresh Firefox (Ctrl+F5) or try a Private Window (extensions off).  
-3. Approve team access if agents need to inspect dashboard headers: use the Vercel consent link from the agent session.
+1. Hard-refresh (Ctrl+F5) or Firefox Private Window (extensions off) — stale caches may still hold an old policy.  
+2. In Vercel → Project → **Settings → Security / Headers**, remove any **additional** CSP with `default-src 'none'` / `script-src 'none'` (multiple CSPs intersect).  
+3. Confirm Network → document shows the policy above and that `/assets/index-*.js` is status 200.
 
 ---
 
 ## 6. Remaining issues
 
-- Pre-fix production responses we measured had **no CSP** — client `script-src 'none'` was **not** observed on the wire from this environment.  
-- Dashboard header inspection blocked (`403` team scope) until consent.  
-- Post-deploy Firefox confirmation of “no CSP violation + UI renders” must be recorded after the new deployment is live.  
-- Model / commercial blockers unchanged.
+- Pre-fix production responses measured here had **no CSP**; the client’s `script-src 'none'` was not present on the wire from this agent before deploy (possible dashboard/extension/cache source).  
+- Dashboard header inventory still needs team consent for full audit.  
+- Host Firefox desktop DevTools (non-Playwright) not used in this pass.  
+- Model / commercial readiness unchanged (**NOT READY FOR COMMERCIAL PRODUCTION**).
