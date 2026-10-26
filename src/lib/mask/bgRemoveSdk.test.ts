@@ -137,6 +137,80 @@ describe('segmentWithBgRemoveSdk (mocked SDK)', () => {
     ).rejects.toThrow(/Model init failed/i)
   })
 
+  it('retries WASM after a WebGPU-only backend init failure (same RMBG-1.4)', async () => {
+    const webgpuErr = new Error(
+      'no available backend found. ERR: [webgpu] TypeError: Importing a module script failed.',
+    )
+    preloadMock
+      .mockRejectedValueOnce(webgpuErr)
+      .mockResolvedValueOnce({ device: 'wasm' })
+    processMock.mockResolvedValue({
+      blob: makeTransparentPngBlob(2, 1, () => 255),
+      width: 2,
+      height: 1,
+    })
+
+    const { createBgRemover } = await import('bg-remove-sdk')
+    const {
+      segmentWithBgRemoveSdk,
+      resetSharedBgRemoverForTests,
+      getBgRemoveDiagnosticSnapshot,
+      resetBgRemoveDiagnosticsForTests,
+    } = await import('./bgRemoveSdk')
+    resetSharedBgRemoverForTests()
+    resetBgRemoveDiagnosticsForTests()
+    vi.mocked(createBgRemover).mockClear()
+
+    const result = await segmentWithBgRemoveSdk(
+      new Blob([new Uint8Array([1])]),
+      2,
+      1,
+    )
+
+    expect(result.genuineModelInference).toBe(true)
+    expect(result.device).toBe('wasm')
+    expect(preloadMock).toHaveBeenCalledTimes(2)
+    expect(createBgRemover).toHaveBeenCalled()
+    const snap = getBgRemoveDiagnosticSnapshot()
+    expect(
+      snap.events.some(
+        (e) =>
+          e.type === 'backend_fallback' && e.detail?.includes('retry-wasm'),
+      ),
+    ).toBe(true)
+    expect(disposeMock).toHaveBeenCalled()
+  })
+
+  it('creates remover with wasm preference on iPhone Safari UA', async () => {
+    const originalUa = navigator.userAgent
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      get: () =>
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+    })
+    preloadMock.mockResolvedValue({ device: 'wasm' })
+    processMock.mockResolvedValue({
+      blob: makeTransparentPngBlob(2, 1, () => 255),
+      width: 2,
+      height: 1,
+    })
+    const { createBgRemover } = await import('bg-remove-sdk')
+    const { segmentWithBgRemoveSdk, resetSharedBgRemoverForTests } =
+      await import('./bgRemoveSdk')
+    resetSharedBgRemoverForTests()
+    vi.mocked(createBgRemover).mockClear()
+
+    await segmentWithBgRemoveSdk(new Blob([new Uint8Array([1])]), 2, 1)
+
+    expect(createBgRemover).toHaveBeenCalledWith(
+      expect.objectContaining({ device: 'wasm', dtype: 'fp16' }),
+    )
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      get: () => originalUa,
+    })
+  })
+
   it('treats inference timeout as failure, not success', async () => {
     preloadMock.mockResolvedValue({ device: 'wasm' })
     processMock.mockImplementation(

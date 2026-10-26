@@ -21,6 +21,8 @@ export type BgRemoveDiagnosticEvent = {
     | 'init_progress'
     | 'init_ready'
     | 'init_error'
+    | 'backend_select'
+    | 'backend_fallback'
     | 'process_start'
     | 'process_progress'
     | 'process_done'
@@ -91,7 +93,15 @@ export function classifyBgRemoveFailure(message: string): BgRemoveFailureStage {
   if (/timed out.*inference|Local inference timed out/i.test(message)) {
     return 'timeout-process'
   }
-  if (/Model init failed|download/i.test(message)) return 'init'
+  if (
+    /no available backend|Importing a module script failed|webgpu/i.test(
+      message,
+    ) &&
+    /init|backend|module|Model init/i.test(message)
+  ) {
+    return 'init'
+  }
+  if (/Model init failed|download|backend/i.test(message)) return 'init'
   if (/Out of memory|memory/i.test(message)) return 'process'
   if (/cancel|disposed|reloaded/i.test(message)) return 'cancelled'
   if (/decode|Invalid source|Empty image/i.test(message)) return 'decode'

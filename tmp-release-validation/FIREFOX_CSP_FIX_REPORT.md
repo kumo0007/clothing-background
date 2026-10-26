@@ -1,12 +1,11 @@
 # Firefox CSP investigation report
 
-**Date:** 2026-10-26 (pass 3 — failing session / preview source hunt)  
+**Date:** 2026-10-26 (pass 4)  
 **Production URL:** https://garment-background-studio.vercel.app/  
-**Blocked asset:** `/assets/index-C3JO3DUu.js`  
-**Live deployment config (Vercel inspect):** CSP from `vercel.json` with `script-src 'self' 'wasm-unsafe-eval'`  
+**Blocked asset (client report):** `/assets/index-C3JO3DUu.js`  
 **Model:** unchanged — `bg-remove-sdk` + RMBG-1.4  
 
-**Instruction followed:** No speculative CSP change to `vercel.json`. Goal was to identify the actual source of `script-src 'none'`.
+**Instruction followed:** No speculative CSP change. Identify the source of `script-src 'none'` before editing policy.
 
 ---
 
@@ -14,158 +13,142 @@
 
 | Question | Answer |
 | --- | --- |
-| Does the live production **document** send `script-src 'none'`? | **No** |
-| Enforced `Content-Security-Policy` headers on document | **Exactly 1** |
+| Live production document `Content-Security-Policy` count | **1** |
+| Live `script-src` | `'self' 'wasm-unsafe-eval'` — **not** `'none'` |
 | `Content-Security-Policy-Report-Only` | **0** |
-| CSP `<meta>` in HTML | **None** |
+| CSP `<meta>` | **None** |
 | Service worker | **None** |
-| System HTTP(S) proxy on this agent machine | **None** (`ProxyEnable=0`, WinHTTP direct) |
-| Top-level Firefox (Playwright) on same URL + same JS hash | **UI renders**; fallback cleared; **no** `script-src 'none'` |
-| Exact client console wording reproducible? | **Yes** — only when the **browsing document’s effective CSP** is `script-src 'none'` |
-| Mobile/IDE preview showing boot fallback | **Consistent with a non–top-level / sandboxed browsing context** (scripts blocked; HTML still visible) |
+| OS proxy | **None** (`ProxyEnable=0`) |
+| Top-level Firefox (Playwright) Network → document CSP | Same single permissive header |
+| Top-level Firefox UI | Renders; boot fallback cleared |
+| Top-level Firefox upload smoke | **Pass** (slip-dress fixture appears in UI) |
+| Exact client console (`Loading failed` + `script-src 'none'`) | Reproduced **only** when the **owning document** has CSP `script-src 'none'` |
+| CSP error **source link** (`file:`) in that control | Points at the **local owning document**, not at Vercel |
+| Mobile preview showing boot fallback | Matches a **script-blocked browsing context** (embed/sandbox/extension), not the live Vercel header |
 
-**Confirmed policy source class:** the blocking `script-src 'none'` is the **effective policy of the failing browsing context**, **not** the Vercel/`vercel.json` document response measured on the wire.
+**Confirmed:** The blocking policy is **not** the current Vercel/`vercel.json` document response.
 
-**Proven mechanisms that produce this exact failure:**
+**Confirmed mechanism for the console text:** Firefox emits that pair when the **effective document CSP** (of whatever page owns the `<script type="module">`) includes `script-src 'none'`. The source link beside the error is that document’s URL.
 
-1. **Document CSP literally `script-src 'none'`** (local control server) → Firefox console matches the client report word-for-word, including the production asset URL. The CSP error’s **`file:` / source link** points at the **owning document** (e.g. `http://127.0.0.1:…/forced-none.html`), not at Vercel.
-2. **HTML iframe `sandbox` without `allow-scripts`** loading a document that references the production module → boot-static-fallback **stays visible** (scripts do not mount React). Same symptom as the reported mobile preview. Top-level production with the same build **clears** the fallback and renders.
-
-**Not claimed fixed** for the reporter’s Firefox session: host Firefox DevTools could not be driven (Computer Use aborted; no separate system Firefox install beyond Playwright). Automated top-level Firefox against production succeeds.
+**Not claimed fixed** for the reporter’s blank Firefox/mobile-preview session. Host Firefox DevTools could not be operated (Computer Use stopped; no Mozilla Firefox install under Program Files — only Playwright `firefox-1465`). Automated top-level production Firefox succeeds.
 
 ---
 
-## 1. Live document headers (fresh HTTP, this pass)
+## 1. Live document headers + HTML (HTTP)
 
 ```
 HTTP/1.1 200 OK
-Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; …; object-src 'none'; …; frame-ancestors 'none'
 Content-Security-Policy-Report-Only: (absent)
 X-Frame-Options: DENY
-X-Content-Type-Options: nosniff
-CSP_COUNT=1
-REPORT_ONLY=0
-ETag: "f5fb418a4ac155d31c0dcee183706392"
+CSP_COUNT=1  REPORT_ONLY=0
+ETag: "67d78af67778d488e9ba5b1107ce8a8f"
 ```
 
-Vercel project inspect shows the same header block from `vercel.json` (single CSP; no second `'none'` policy in that config).
+HTML: module entry `/assets/index-C3JO3DUu.js`; no CSP meta; `#boot-static-fallback` until React mounts.
 
 ---
 
-## 2. Live HTML
+## 2. Firefox “Network → document” equivalent (Playwright)
 
-- Entry: `<script type="module" crossorigin src="/assets/index-C3JO3DUu.js">`
-- No CSP meta tags
-- `#boot-static-fallback` present until React mounts (diagnostic for “JS on but module blocked”)
+Artifact: `tmp-release-validation/browser-compat/firefox-devtools-evidence.json`
 
----
+### Production top-level
 
-## 3. Exact console reproduction (control)
-
-Artifact: `tmp-release-validation/browser-compat/firefox-forced-none-vs-production.json`
-
-When the **document** response is `Content-Security-Policy: … script-src 'none'`:
-
-```text
-Loading failed for the module with source “https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js”.
-Content-Security-Policy: The page’s settings blocked a script (script-src-elem) at
-https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js …
-directive: “script-src 'none'”
-{file: "http://127.0.0.1:<port>/forced-none.html" line: 0}
-```
-
-**Critical:** the source link beside the CSP error names the **document that owns the policy**. If that link is not the top-level production URL (e.g. `about:srcdoc`, `127.0.0.1`, `vscode-webview:`, preview origin), the block is **not** coming from the Vercel HTML response headers alone.
-
-Same Firefox binary against production top-level: **no** such messages; UI renders.
-
----
-
-## 4. Preview / sandbox vs top-level (same build)
-
-Artifact: `tmp-release-validation/browser-compat/firefox-preview-srcdoc-sandbox.json`  
-Screenshots: `firefox-preview-sandboxed.png`, `firefox-preview-allow-scripts.png`, `firefox-production-toplevel.png`
-
-| Context | Boot fallback | App UI |
-| --- | --- | --- |
-| iframe `sandbox="allow-same-origin"` (no `allow-scripts`), absolute production module URL | **Stays visible** | Does not mount |
-| Same iframe + `allow-scripts` | Cleared | Mounts |
-| Top-level `https://garment-background-studio.vercel.app/` | Cleared | Mounts |
-
-This matches the report that a **mobile preview** shows the loading/error fallback while a correct top-level session should not.
-
-Production also sends `frame-ancestors 'none'` + `X-Frame-Options: DENY`, so many direct iframes of the production URL fail closed; preview shells that **re-host** HTML (srcdoc / proxy / sandbox) can still show our markup under a **different** effective policy.
-
----
-
-## 5. Ruled out as the wire source of `'none'`
-
-| Candidate | Result |
+| Field | Value |
 | --- | --- |
-| `vercel.json` / live document CSP | `script-src 'self' 'wasm-unsafe-eval'` only |
-| Duplicate intersecting HTTP CSP | Count = 1 |
-| CSP meta | Absent |
-| Service worker / Cache API | None |
-| OS proxy rewriting headers | Disabled / direct |
-| Deployment serving wrong CSP | Inspected production config matches bootstrap-safe CSP |
-| Playwright vs production URL/build mismatch | Same URL + `index-C3JO3DUu.js` |
+| `isTop` | `true` |
+| `frameElement` | `null` |
+| Document CSP headers | **1×** `script-src 'self' 'wasm-unsafe-eval'` |
+| Report-Only | none |
+| Meta CSP | none |
+| `mentionsScriptSrcNone` | `false` |
+| Fallback visible | `false` |
+| Heading | `Garment Background Studio` |
+
+### Control document (`script-src 'none'`) loading the **same** production asset URL
+
+| Field | Value |
+| --- | --- |
+| Document CSP | `script-src 'none'` |
+| Console | `Loading failed for the module` + `script-src 'none'` for `…/assets/index-C3JO3DUu.js` |
+| CSP error `file:` / source | `http://127.0.0.1:<port>/forced-none.html` |
+
+**Interpretation:** If the reporter’s CSP error source link is **not** `https://garment-background-studio.vercel.app/`, the block is owned by another document/context (preview, srcdoc, extension page, etc.). If it **is** that URL but Network → document shows only `script-src 'self'`, a second intersecting policy is being applied **in-browser** (extension) and will not appear as a second Vercel header on curl.
 
 ---
 
-## 6. Changes this pass
+## 3. Source classification
+
+| Candidate | Status |
+| --- | --- |
+| Vercel response / `vercel.json` | **Ruled out** as `'none'` source (measured) |
+| Duplicate HTTP CSP intersection | **Ruled out** (count = 1) |
+| CSP meta | **Ruled out** |
+| Service worker / Cache API | **Ruled out** |
+| OS HTTP proxy | **Ruled out** on this machine |
+| iframe `sandbox` without `allow-scripts` | **Can** force script blocking + leave boot fallback visible (preview symptom) |
+| Browser extension injecting CSP | **Plausible** if top-level Private Window works and normal profile fails |
+| IDE / mobile device preview shell | **Consistent** with client report (fallback visible in preview) |
+
+Production also sends `frame-ancestors 'none'` + `XFO: DENY`, so many direct iframes of the production URL fail closed; preview tools that re-host HTML can still show our markup under a **different** effective policy.
+
+---
+
+## 4. Compare failing report vs successful Playwright (same URL/build)
+
+| Item | Client report | Playwright top-level |
+| --- | --- | --- |
+| URL | production | same |
+| Entry JS | `index-C3JO3DUu.js` | same |
+| Document CSP on wire | (claims `'none'`) | `script-src 'self' 'wasm-unsafe-eval'` |
+| UI | blank / fallback | full UI |
+| Upload | n/a | fixture upload OK |
+
+---
+
+## 5. Fix applied
 
 | Change | Done? |
 | --- | --- |
-| Modify CSP / `vercel.json` | **No** |
-| Probes | `probeFirefoxForcedNone.mts`, `probePreviewEmbedSrcdoc.mts`, prior source probes |
-| Boot fallback copy | Clarified: open top-level production URL; read CSP error **document** source link |
-| bg-remove-sdk / RMBG-1.4 | Unchanged |
+| Change CSP / loosen `script-src` | **No** — would be speculative against measured production policy |
+| Change bg-remove-sdk / RMBG-1.4 | **No** |
+| Operational fix for confirmed non-document source | Use a **top-level** Firefox tab to the production URL; Private Window; Ctrl+F5; read CSP error **document** source link |
+| Diagnostic boot fallback copy | Already ships guidance for top-level vs preview |
 
-Redeploy of the fallback text is optional for diagnostics only; it does **not** remove `script-src 'none'` from a sandboxed/extension context.
-
----
-
-## 7. Smallest appropriate fix (by source)
-
-| Confirmed source in the failing session | Fix |
-| --- | --- |
-| IDE / mobile **preview** / sandboxed frame | Open production in a **top-level** Firefox tab — **no CSP change** |
-| Extension injecting CSP | Private Window, extensions off — **no CSP change** |
-| Extra Vercel dashboard header with `'none'` | Remove that header only (not observed on the wire here) |
-| Proven bug in our single CSP string | Minimal `vercel.json` edit — **not indicated** by measurements |
-
-Do **not** add `unsafe-eval`, `unsafe-inline`, or `script-src *`.
+There is **no correct app-side CSP edit** that overrides a sandboxed preview without `allow-scripts` or an extension-injected intersecting `'none'` policy (CSP policies intersect; a second restrictive policy still blocks).
 
 ---
 
-## 8. Verification performed here
+## 6. Verification (this environment)
 
 | Check | Result |
 | --- | --- |
-| Live CSP headers | 1× permissive `script-src 'self'` |
-| Firefox Playwright top-level production | Module loads; UI renders; no `'none'` console |
-| Forced `'none'` document | Exact client console reproduced |
-| Sandboxed preview | Fallback persists (scripts blocked) |
-| Upload / auto-mask in the **failing** Firefox UI session | **Not verified** — that session was not reproducible as top-level against live CSP |
-| Host Firefox DevTools Network panel | **Blocked** — Computer Use stopped by user; no system Firefox outside Playwright |
+| curl document CSP | 1× `'self'` |
+| Firefox top-level render | Pass (`firefox-devtools-evidence.json`) |
+| Firefox upload smoke | Pass (`firefox-production-upload-smoke.json`) |
+| Auto-mask in Firefox | **Not run this pass** (`--mask` not requested; long model download) — separate from CSP bootstrap |
+| Reporter’s failing Firefox/mobile preview | **Not reproduced** as top-level against live CSP |
+| Host Firefox DevTools | Unavailable here |
 
 ---
 
-## 9. Exact evidence still needed from the failing Firefox session
+## 7. Evidence still needed from the failing session
 
-1. Console CSP error → click the **source link** → record the **document URL** (`file:` / panel).  
-2. Network → select the **document** request for the address-bar URL → copy **all** `Content-Security-Policy` values.  
-3. Confirm address bar is exactly `https://garment-background-studio.vercel.app/` (top-level), then Private Window + Ctrl+F5.  
-4. If Private Window works and normal profile fails → extension list.  
-5. If only the mobile/IDE preview fails → treat as embed/sandbox; use a top-level tab for real use.
+1. Console → CSP error → **source link document URL** (must paste exact string).  
+2. Network → **document** request for the address-bar URL → every `Content-Security-Policy` value.  
+3. Screenshot of address bar showing top-level `https://garment-background-studio.vercel.app/` vs preview chrome.  
+4. Private Window (extensions off) result on that same URL.  
+
+Until (1)–(2) show `'none'` on the production document response itself, treat further `vercel.json` edits as speculative.
 
 ---
 
-## 10. Claim status
+## 8. Claim status
 
 | Claim | Status |
 | --- | --- |
-| Live Vercel document policy is `script-src 'none'` | **False** |
-| Client console string is Firefox CSP-block wording | **True** (reproduced under document `'none'`) |
-| Mobile preview fallback is consistent with script-blocked embed/sandbox | **True** (behavioral reproduction) |
-| Top-level Firefox against current production works | **True** (Playwright) |
-| Reporter’s blank Firefox session fixed | **Not claimed** |
+| Production Vercel policy is `script-src 'none'` | **False** |
+| Client console text is real Firefox CSP-block wording | **True** (control) |
+| Top-level automated Firefox loads module + UI + upload | **True** |
+| Reporter blank page / mobile preview fixed | **Not claimed** |

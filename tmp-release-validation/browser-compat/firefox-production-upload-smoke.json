@@ -1,0 +1,23 @@
+{
+  "production": "https://garment-background-studio.vercel.app/",
+  "fixture": "tmp-release-validation\\07_slip_dress.jpg",
+  "docCsps": [
+    "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+  ],
+  "rendered": {
+    "fallback": false,
+    "heading": "Garment Background Studio",
+    "upload": true
+  },
+  "upload": {
+    "bodyMentionsUploaded": true,
+    "noImagesYet": false,
+    "snippet": "Skip to content\nGarment Background Studio\n\nUpload clothing photos, auto-mask on-device with a local AI model (no API key; images stay in the browser), swap in a shared background, and export a ZIP. Original garment RGB stays untouched — only the alpha mask is derived.\n\nUpload one or more product photos\nBatch → Auto-mask all (or Edit Mask to refine edges)\nIn Edit Mask, set your background (color or"
+  },
+  "mask": {
+    "skipped": true
+  },
+  "consoleMentionsScriptSrcNone": false,
+  "consoleMsgs": [],
+  "ok": true
+}

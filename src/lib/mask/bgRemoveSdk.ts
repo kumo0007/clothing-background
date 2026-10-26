@@ -26,6 +26,12 @@ import {
   formatSdkProcessStage,
   noteBgRemoveDiagnostic,
 } from './bgRemoveDiagnostics'
+import {
+  describeDevicePreference,
+  isWebGpuBackendInitFailure,
+  resolvePreferredBgRemoveDevice,
+  type BgRemoveDevicePreference,
+} from './bgRemoveDevice'
 
 export {
   getBgRemoveTimingSnapshot,
@@ -40,6 +46,15 @@ export {
   resetBgRemoveDiagnosticsForTests,
   classifyBgRemoveFailure,
 } from './bgRemoveDiagnostics'
+
+export {
+  resolvePreferredBgRemoveDevice,
+  isWebGpuBackendInitFailure,
+  isAppleMobileUserAgent,
+  isSafariFamilyUserAgent,
+  describeDevicePreference,
+} from './bgRemoveDevice'
+export type { BgRemoveDevicePreference } from './bgRemoveDevice'
 
 export const BG_REMOVE_SDK_METHOD = 'bg-remove-sdk-rmbg1.4'
 export const BG_REMOVE_SDK_PROVIDER = 'bg-remove-sdk'
@@ -152,18 +167,32 @@ export type BgRemoveSdkResult = {
 
 let sharedRemover: BgRemover | null = null
 let preloadPromise: Promise<{ device: 'webgpu' | 'wasm' }> | null = null
+/** Device passed into the current shared remover (same RMBG-1.4 model). */
+let sharedDevicePreference: BgRemoveDevicePreference | null = null
+
+function buildRemoverOptions(device: BgRemoveDevicePreference) {
+  const modelId = resolveBgRemoveModelId()
+  return {
+    device,
+    dtype: 'fp16' as const,
+    useBrowserCache: true,
+    // Optional self-hosted / mirrored RMBG-1.4 weights only (see allowlist).
+    ...(modelId ? { modelId } : {}),
+  }
+}
 
 /** Single shared remover — do not create per image. */
-export function getSharedBgRemover(): BgRemover {
+export function getSharedBgRemover(
+  devicePreference: BgRemoveDevicePreference = resolvePreferredBgRemoveDevice(),
+): BgRemover {
   if (!sharedRemover) {
-    const modelId = resolveBgRemoveModelId()
-    sharedRemover = createBgRemover({
-      device: 'auto',
-      dtype: 'fp16',
-      useBrowserCache: true,
-      // Optional self-hosted / mirrored RMBG-1.4 weights only (see allowlist).
-      ...(modelId ? { modelId } : {}),
+    sharedDevicePreference = devicePreference
+    noteBgRemoveDiagnostic({
+      type: 'backend_select',
+      device: devicePreference === 'auto' ? 'unknown' : devicePreference,
+      detail: describeDevicePreference(devicePreference).slice(0, 120),
     })
+    sharedRemover = createBgRemover(buildRemoverOptions(devicePreference))
   }
   return sharedRemover
 }
@@ -187,6 +216,7 @@ export function recoverSharedBgRemover(reason: string): void {
   }
   sharedRemover = null
   preloadPromise = null
+  sharedDevicePreference = null
 }
 
 /** Test / teardown helper. */
@@ -232,7 +262,12 @@ export async function preloadBgRemoveModel(
     }
   })
 
-  noteBgRemoveDiagnostic({ type: 'init_start', detail: 'preload' })
+  const attemptedDevice = sharedDevicePreference ?? resolvePreferredBgRemoveDevice()
+  noteBgRemoveDiagnostic({
+    type: 'init_start',
+    detail: `preload:${describeDevicePreference(attemptedDevice)}`.slice(0, 120),
+    device: attemptedDevice === 'auto' ? 'unknown' : attemptedDevice,
+  })
 
   try {
     if (!preloadPromise) {
@@ -261,17 +296,113 @@ export async function preloadBgRemoveModel(
       type: 'init_error',
       detail: message.slice(0, 160),
       failureStage: classifyBgRemoveFailure(message),
+      device: attemptedDevice === 'auto' ? 'unknown' : attemptedDevice,
     })
+
+    // Same RMBG-1.4 model: if WebGPU EP failed to import its module, retry WASM once.
+    if (
+      isWebGpuBackendInitFailure(message) &&
+      attemptedDevice !== 'wasm'
+    ) {
+      noteBgRemoveDiagnostic({
+        type: 'backend_fallback',
+        device: 'wasm',
+        detail: 'webgpu-init-failed-retry-wasm',
+        failureStage: 'init',
+      })
+      recoverSharedBgRemover(message)
+      unsub()
+      const wasmRemover = getSharedBgRemover('wasm')
+      const wasmUnsub = wasmRemover.onInit((state) => {
+        if (state.status === 'loading') {
+          noteBgRemoveInitProgress(state.message, state.ratio)
+          onProgress?.({
+            kind: 'sdk-init',
+            status: 'loading',
+            message: state.message ?? 'Retrying on-device model (WASM)…',
+            ratio: state.ratio,
+          })
+        } else if (state.status === 'ready') {
+          noteBgRemoveReady()
+          onProgress?.({
+            kind: 'sdk-init',
+            status: 'ready',
+            device: state.device,
+            ratio: 1,
+          })
+        } else if (state.status === 'error') {
+          noteBgRemoveInitProgress(state.message)
+          onProgress?.({
+            kind: 'sdk-init',
+            status: 'error',
+            message: state.message,
+          })
+        }
+      })
+      try {
+        onProgress?.({
+          kind: 'sdk-init',
+          status: 'loading',
+          message: 'WebGPU unavailable — loading WASM backend (same RMBG-1.4)…',
+        })
+        preloadPromise = withTimeout(
+          wasmRemover.preload(),
+          BG_REMOVE_PRELOAD_TIMEOUT_MS,
+          `Model download timed out after ${Math.round(BG_REMOVE_PRELOAD_TIMEOUT_MS / 1000)}s. Check network access for the ~88 MB weights, stay on Wi‑Fi, keep this Safari tab open, then tap Auto-mask again.`,
+        ).catch((retryErr) => {
+          preloadPromise = null
+          throw retryErr
+        })
+        const ready = await preloadPromise
+        noteBgRemoveDiagnostic({
+          type: 'init_ready',
+          device: ready.device,
+          detail: 'preload-resolved-after-wasm-fallback',
+        })
+        return ready
+      } catch (retryErr) {
+        const retryMessage =
+          retryErr instanceof Error
+            ? retryErr.message
+            : 'Failed to load the local background-removal model on WASM.'
+        noteBgRemoveDiagnostic({
+          type: 'init_error',
+          detail: retryMessage.slice(0, 160),
+          failureStage: classifyBgRemoveFailure(retryMessage),
+          device: 'wasm',
+        })
+        recoverSharedBgRemover(retryMessage)
+        if (/timed out/i.test(retryMessage)) {
+          throw new Error(retryMessage)
+        }
+        throw new Error(
+          `Model init failed (${retryMessage}). WASM backend could not start for RMBG-1.4. Check network for the ~88 MB weights, keep this Safari tab open, then Retry failed. Inference stays on-device.`,
+        )
+      } finally {
+        wasmUnsub()
+      }
+    }
+
     // Terminate hung init worker so Retry is not stuck behind it.
     recoverSharedBgRemover(message)
     if (/timed out/i.test(message)) {
       throw new Error(message)
     }
+    if (isWebGpuBackendInitFailure(message)) {
+      throw new Error(
+        `Model init failed (${message}). This browser could not start the WebGPU runtime module; try again to use the WASM backend for the same RMBG-1.4 model, keep this tab open, and stay on Wi‑Fi for the ~88 MB weights.`,
+      )
+    }
     throw new Error(
       `Model init failed (${message}). Check network access to download weights (~88 MB fp16) once, then retry. Inference stays on-device.`,
     )
   } finally {
-    unsub()
+    // wasm-fallback path already unsubscribed the first listener.
+    try {
+      unsub()
+    } catch {
+      // ignore double-unsub
+    }
   }
 }
 

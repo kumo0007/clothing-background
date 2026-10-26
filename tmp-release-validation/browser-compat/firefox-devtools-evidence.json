@@ -1,0 +1,75 @@
+{
+  "profileDir": "C:\\Users\\KUMO\\AppData\\Local\\Temp\\ff-devtools-8cXWiq",
+  "productionCapture": {
+    "label": "production-toplevel",
+    "url": "https://garment-background-studio.vercel.app/",
+    "isTop": true,
+    "frameElement": null,
+    "documentRequest": {
+      "url": "https://garment-background-studio.vercel.app/",
+      "status": 200,
+      "cspHeaders": [
+        "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      ],
+      "reportOnlyHeaders": [],
+      "allSecurityHeaders": {
+        "content-security-policy": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      }
+    },
+    "metaCsp": [],
+    "scripts": [
+      {
+        "src": "https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js",
+        "type": "module"
+      }
+    ],
+    "fallbackVisible": false,
+    "heading": "Garment Background Studio",
+    "consoleMsgs": [],
+    "cspErrorSourceFiles": [],
+    "mentionsScriptSrcNone": false
+  },
+  "controlCapture": {
+    "label": "control-script-src-none",
+    "url": "http://127.0.0.1:59791/forced-none.html",
+    "isTop": true,
+    "frameElement": null,
+    "documentRequest": {
+      "url": "http://127.0.0.1:59791/forced-none.html",
+      "status": 200,
+      "cspHeaders": [
+        "default-src 'self'; script-src 'none'"
+      ],
+      "reportOnlyHeaders": [],
+      "allSecurityHeaders": {
+        "content-security-policy": "default-src 'self'; script-src 'none'"
+      }
+    },
+    "metaCsp": [],
+    "scripts": [
+      {
+        "src": "https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js",
+        "type": "module"
+      }
+    ],
+    "fallbackVisible": true,
+    "heading": null,
+    "consoleMsgs": [
+      "[warning] [JavaScript Warning: \"Loading failed for the module with source “https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js”.\" {file: \"http://127.0.0.1:59791/forced-none.html\" line: 2}]",
+      "[error] [JavaScript Error: \"Content-Security-Policy: The page’s settings blocked a script (script-src-elem) at https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js from being executed because it violates the following directive: “script-src 'none'”\" {file: \"http://127.0.0.1:59791/forced-none.html\" line: 0}]"
+    ],
+    "cspErrorSourceFiles": [
+      "http://127.0.0.1:59791/forced-none.html",
+      "http://127.0.0.1:59791/forced-none.html"
+    ],
+    "mentionsScriptSrcNone": true
+  },
+  "interpretation": {
+    "productionDocumentHasScriptSrcNone": false,
+    "controlErrorOwnedByLocalDocument": true,
+    "productionTopLevelRenders": true
+  }
+}
