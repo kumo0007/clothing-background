@@ -1,0 +1,39 @@
+{
+  "mode": "sandbox-vs-toplevel",
+  "asset": "https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js",
+  "production": "https://garment-background-studio.vercel.app/",
+  "sandbox": {
+    "frameDiag": {
+      "sandbox": "allow-same-origin",
+      "childHref": "http://127.0.0.1:58721/child.html",
+      "childScripts": [
+        {
+          "src": "https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js",
+          "type": "module"
+        }
+      ],
+      "childRootText": "sandbox-child"
+    },
+    "consoleMsgs": [],
+    "pageErrors": [],
+    "failed": [],
+    "matchesScriptSrcNone": false
+  },
+  "topLevel": {
+    "diagnosis": {
+      "isTop": true,
+      "rootChildren": 1,
+      "hasHeading": true,
+      "href": "https://garment-background-studio.vercel.app/"
+    },
+    "documentCsps": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    ],
+    "consoleMsgs": [],
+    "pageErrors": [],
+    "failed": [],
+    "matchesScriptSrcNone": false,
+    "renders": true
+  },
+  "conclusion": "see logs"
+}

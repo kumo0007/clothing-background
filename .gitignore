@@ -37,3 +37,6 @@ public/imgly-bg-data/**
 tmp-release-validation/commercial-evidence/**
 !tmp-release-validation/commercial-evidence/README.md
 !tmp-release-validation/commercial-evidence/.gitkeep
+
+.vercel
+.env*

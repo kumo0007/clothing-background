@@ -1,0 +1,14 @@
+{
+  "mode": "sandboxed-iframe-no-allow-scripts",
+  "target": "https://garment-background-studio.vercel.app/",
+  "frameInfo": {
+    "sandbox": "allow-same-origin",
+    "childHref": null,
+    "childRoot": -1,
+    "childError": null
+  },
+  "consoleMsgs": [
+    "[JavaScript Error: \"Content-Security-Policy: The page’s settings blocked the loading of a resource (frame-ancestors) at <unknown> because it violates the following directive: “frame-ancestors 'none'”\" {file: \"chrome://juggler/content/NetworkObserver.js\" line: 412}]"
+  ],
+  "note": "Browsers force CSP script-src none (or equivalent) on sandboxed iframes without allow-scripts. Top-level navigation is unaffected."
+}

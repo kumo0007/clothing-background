@@ -1,0 +1,61 @@
+{
+  "url": "https://garment-background-studio.vercel.app/",
+  "profileDir": "C:\\Users\\KUMO\\AppData\\Local\\Temp\\ff-csp-PsQ1Tq",
+  "diagnosis": {
+    "href": "https://garment-background-studio.vercel.app/",
+    "origin": "https://garment-background-studio.vercel.app",
+    "isTopFrame": true,
+    "frameElement": null,
+    "referrer": "",
+    "metaCsp": [
+      {
+        "httpEquiv": "",
+        "name": null,
+        "content": ""
+      },
+      {
+        "httpEquiv": "",
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0"
+      }
+    ],
+    "scripts": [
+      {
+        "src": "https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js",
+        "type": "module",
+        "crossOrigin": "anonymous",
+        "async": false,
+        "defer": false
+      }
+    ],
+    "rootChildren": 1,
+    "hasHeading": true,
+    "title": "Garment Background Studio",
+    "cspViolations": [],
+    "serviceWorkers": [],
+    "cacheNames": []
+  },
+  "consoleMsgs": [],
+  "pageErrors": [],
+  "cspHeaderOccurrences": [
+    {
+      "url": "https://garment-background-studio.vercel.app/",
+      "values": [
+        "enforce:default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      ]
+    },
+    {
+      "url": "https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js",
+      "values": [
+        "enforce:default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      ]
+    },
+    {
+      "url": "https://garment-background-studio.vercel.app/assets/index-DL3_6wAk.css",
+      "values": [
+        "enforce:default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      ]
+    }
+  ],
+  "consoleMentionsScriptSrcNone": false
+}

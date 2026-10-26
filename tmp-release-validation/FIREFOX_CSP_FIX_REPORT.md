@@ -1,131 +1,158 @@
-# Firefox CSP fix report
+# Firefox CSP investigation report
 
-**Date:** 2026-10-26  
+**Date:** 2026-10-26 (failing-session source hunt, pass 2)  
 **Production URL:** https://garment-background-studio.vercel.app/  
-**Entry module (pre-redeploy):** `/assets/index-DnmKjkLx.js`  
+**Blocked asset (client + control):** `/assets/index-C3JO3DUu.js`  
+**Production deployment (this pass):** `dpl_FNvCPkWZeihgZRBHXqRf9JdYKzff` (CLI `--prod`; ships static boot fallback HTML; **CSP unchanged**)  
+**Prior CSP-fix commit still in git history:** `26500421edc26e7f52bb551de6f7241a455464f7`  
 **Model:** unchanged — `bg-remove-sdk` + RMBG-1.4  
 
----
-
-## 1. Client-reported failure
-
-Firefox Console: the Vite entry script is refused because it violates **`script-src 'none'`**, leaving a blank page (no app UI).
-
-Exact filename on the live HTML at investigation time: `assets/index-DnmKjkLx.js` (not `DnmKlkX` — likely a transcription typo).
+**Instruction followed:** No speculative CSP edit to `vercel.json`. Policy source identified by reproduction of the exact console wording under a controlled `script-src 'none'` document, then compared to live production.
 
 ---
 
-## 2. What was on the wire before the fix
+## Executive finding
 
-| Probe | Content-Security-Policy | Notes |
-| --- | --- | --- |
-| `curl -sI` production HTML | **Absent** | HSTS present; no CSP / CSP-Report-Only |
-| `curl` with Firefox UA | **Absent** | Same |
-| Playwright Firefox 131 response headers | **Absent** | App **did** render in that probe |
-| HTML `<meta http-equiv="Content-Security-Policy">` | **Absent** | No CSP meta in deployed or source `index.html` |
-| Repo (`vercel.json`, headers files) | **None** before this change | GitHub search: 0 CSP matches |
+| Question | Answer |
+| --- | --- |
+| Live production document CSP count | **1** enforced, **0** report-only |
+| Live `script-src` | `'self' 'wasm-unsafe-eval'` — **not** `'none'` |
+| CSP `<meta>` in HTML | **None** |
+| Service worker | **None** |
+| Production commit matches CSP fix | **Yes** (`2650042` on alias `garment-background-studio.vercel.app`) |
+| Top-level Firefox Playwright on production | **Renders UI**; **no** `script-src 'none'`; **no** “Loading failed for the module” |
+| Exact client console wording reproducible? | **Yes** — only when the **document** CSP is `script-src 'none'` (local control server) |
+| Is `vercel.json` / live document the blocking policy? | **No** |
 
-**Conclusion on policy source:** There was **no CSP in the repository** and **no CSP header** on the production responses we measured from this environment. A `script-src 'none'` / `default-src 'none'` policy that blocks the entry module therefore must come from one of:
+**Verdict:** The console pair  
+`Loading failed for the module` + `script-src 'none'`  
+is Firefox’s wording when the **browsing document’s effective CSP** forbids scripts. The **current production document response does not contain that policy**. Therefore the failing Firefox session is **not** applying the live `vercel.json` CSP alone — it is applying a **different/additional** enforced policy in that session (extension rewrite, injected header/meta, sandboxed/embedded document, or a non-production document).
 
-1. A **Vercel project / dashboard security-header** setting not present in git (requires team auth to inspect — consent link requested), and/or  
-2. A **second, client-local** policy (extension, corporate proxy, cached document), and/or  
-3. A **prior deploy** the client still has cached.
-
-Multiple CSP headers **intersect** (all must pass). If a dashboard policy is `default-src 'none'` with no `script-src`, scripts stay blocked even after adding a good `vercel.json` CSP — the dashboard policy must be removed or updated.
+**Client blank page is not declared fixed.** Top-level automated Firefox against current production succeeds.
 
 ---
 
-## 3. Fix applied in-repo
+## 1. Live document headers (fresh HTTP)
 
-### `vercel.json` (new)
-
-Sets a single bootstrap-safe CSP for `/(.*)` plus standard hardening headers (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`).
-
-Effective CSP value:
-
-```text
-default-src 'self';
-script-src 'self' 'wasm-unsafe-eval';
-style-src 'self';
-img-src 'self' blob: data:;
-font-src 'self';
-connect-src 'self' https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net;
-worker-src 'self' blob:;
-child-src 'self' blob:;
-media-src 'self' blob:;
-object-src 'none';
-base-uri 'self';
-form-action 'self';
-frame-ancestors 'none'
+```
+Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; …; object-src 'none'; …; frame-ancestors 'none'
+Content-Security-Policy-Report-Only: (absent)
+X-Frame-Options: DENY
+CSP_COUNT=1  REPORT_ONLY=0
+ETag: "cc3d4b2f064f73d5800be2d4da54c1ef"
+X-Vercel-Cache: HIT
 ```
 
-| Choice | Reason |
-| --- | --- |
-| `script-src 'self'` | Allows Vite `/assets/*.js` entry + chunks |
-| `'wasm-unsafe-eval'` | Required for ONNX/transformers WASM under CSP (not `'unsafe-eval'`) |
-| `worker-src` / `child-src` `blob:` | bg-remove-sdk inline worker |
-| `connect-src` HF + jsDelivr | Model weight / runtime asset fetches |
-| No `script-src *` | Avoided |
-| No `'unsafe-inline'` / `'unsafe-eval'` | Avoided |
-
-Shared source of truth: `src/lib/security/contentSecurityPolicy.ts` (regenerate via `npx tsx scripts/generateVercelJson.mts`).
-
-### Tests
-
-`src/lib/security/contentSecurityPolicy.test.ts` asserts:
-
-- Policy is not script-blocking (`'none'`).  
-- `vercel.json` CSP matches the module.  
-- `index.html` has no conflicting CSP meta.
+Same single CSP on `/assets/index-C3JO3DUu.js` (header on static asset; enforcement for module execution is still the **document** policy).
 
 ---
 
-## 4. Verification commands (local)
+## 2. Live HTML
 
-| Command | Exit |
-| --- | ---: |
-| `npm run typecheck` | **0** |
-| CSP unit tests | **0** (4) |
-| `npm test` | **0** (**327** / **52**) |
-| `npm run build` | **0** |
+- Entry: `<script type="module" crossorigin src="/assets/index-C3JO3DUu.js">`
+- No `<meta http-equiv="Content-Security-Policy">`
+- `vercel.json` value matches the live header string exactly
 
-### Browser probes (this agent)
+---
+
+## 3. Exact console reproduction (control vs production)
+
+Artifact: `tmp-release-validation/browser-compat/firefox-forced-none-vs-production.json`
+
+### Control — document header `Content-Security-Policy: default-src 'self'; script-src 'none'`
+
+Firefox console (Playwright):
+
+```text
+Loading failed for the module with source “https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js”.
+Content-Security-Policy: The page’s settings blocked a script (script-src-elem) at
+https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js from being executed
+because it violates the following directive: “script-src 'none'”
+```
+
+This **matches the client report** (same asset URL + `script-src 'none'`).
+
+### Production top-level — same Firefox binary, same asset
 
 | Check | Result |
 | --- | --- |
-| Playwright Firefox → production (before redeploy) | UI rendered; **no** CSP header; **no** CSP console violation |
-| Playwright Firefox → local preview | UI rendered |
-| Deploy + re-check production CSP header | **Pending redeploy** (see §5) |
-| Host Firefox desktop DevTools with user console | **Not available** here |
+| Document CSP observed | 1× `script-src 'self' 'wasm-unsafe-eval'` |
+| Console `script-src 'none'` | **false** |
+| “Loading failed for the module” | **false** |
+| UI | `hasHeading: true`, `#root` children = 1 |
+
+Artifact: `tmp-release-validation/browser-compat/firefox-csp-source-probe.json`
 
 ---
 
-## 5. Deploy status (verified)
+## 4. Frame / embed / SW checks
 
-| Step | Result |
+| Source candidate | Evidence |
 | --- | --- |
-| Git push `1a45ba7` → `main` | Done |
-| Production HTML entry | `/assets/index-C3JO3DUu.js` |
-| Production `Content-Security-Policy` | Present — `script-src 'self' 'wasm-unsafe-eval'` (not `'none'`) |
-| Playwright Firefox 131 post-deploy | **UI renders** (`hasHeading: true`); **0** console errors; **0** page errors; CSP header observed on document + assets |
-
-Effective deployed document CSP (abbreviated):
-
-```http
-Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; …; object-src 'none'; frame-ancestors 'none'
-```
-
-### If a blank page still appears for a specific client
-
-1. Hard-refresh (Ctrl+F5) or Firefox Private Window (extensions off) — stale caches may still hold an old policy.  
-2. In Vercel → Project → **Settings → Security / Headers**, remove any **additional** CSP with `default-src 'none'` / `script-src 'none'` (multiple CSPs intersect).  
-3. Confirm Network → document shows the policy above and that `/assets/index-*.js` is status 200.
+| Main document response | Single permissive CSP — **ruled out** as the `'none'` source |
+| HTML meta CSP | Absent — ruled out |
+| Service worker / Cache API | None registered; `/sw.js` not part of app |
+| Sandboxed iframe without `allow-scripts` | Spec forces script blocking; production also sends `frame-ancestors 'none'` + `XFO: DENY` so many embeds fail closed |
+| Playwright fresh profile (no extensions) | Production works |
+| Host Firefox desktop | **Not installed** on this agent machine (`firefox.exe` not under Program Files; only Playwright `firefox-1465`) |
+| Vercel dashboard duplicate CSP | Not present on the wire (only one header). Team project inspect intermittently failed; wire evidence still shows a single policy |
+| Deployment mismatch | Production alias serves `2650042` with bootstrap-safe CSP |
 
 ---
 
-## 6. Remaining issues
+## 5. Deployed commit vs `vercel.json`
 
-- Pre-fix production responses measured here had **no CSP**; the client’s `script-src 'none'` was not present on the wire from this agent before deploy (possible dashboard/extension/cache source).  
-- Dashboard header inventory still needs team consent for full audit.  
-- Host Firefox desktop DevTools (non-Playwright) not used in this pass.  
-- Model / commercial readiness unchanged (**NOT READY FOR COMMERCIAL PRODUCTION**).
+| Item | Value |
+| --- | --- |
+| Production deployment | `dpl_8umCW39tUhNvzr3Dhct2ofC2o62a` |
+| `githubCommitSha` | `26500421edc26e7f52bb551de6f7241a455464f7` |
+| Alias | `garment-background-studio.vercel.app` |
+| `vercel.json` CSP | Identical to live header |
+
+---
+
+## 6. Changes this pass
+
+| Change | Done? |
+| --- | --- |
+| Modify CSP / `vercel.json` | **No** (would be speculative; live policy already allows `'self'`) |
+| Diagnostic probes | `probeFirefoxForcedNone.mts`, fixed `probeFirefoxCspSource.mts`, sandbox probes |
+| Static boot fallback in `index.html` | **Yes** — deployed to production (`dpl_FNvCPkWZeihgZRBHXqRf9JdYKzff`); visible inside `#root` until React mounts; survives “JS on but module CSP-blocked” (unlike `<noscript>`). **Not a CSP fix.** |
+| Post-deploy Firefox verify | Top-level Playwright: module loads, UI renders, `consoleMentionsScriptSrcNone: false`, CSP still 1× `script-src 'self' 'wasm-unsafe-eval'` |
+| Model / inference | Unchanged |
+
+---
+
+## 7. Smallest appropriate fix (by confirmed source)
+
+| If failing session’s policy comes from… | Fix |
+| --- | --- |
+| Extension / corporate filter injecting CSP | Disable extension / Private Window — **no app CSP change** |
+| Embedded / sandboxed preview | Open **top-level** address-bar tab — framing denied by design |
+| Extra Vercel project header with `'none'` | Remove that dashboard header only (wire currently shows none) |
+| Proven bad value in our single CSP | Then edit `vercel.json` minimally — **not indicated now** |
+
+Do **not** add `unsafe-eval`, `unsafe-inline`, or `script-src *` without a demonstrated need against the live single policy.
+
+---
+
+## 8. Evidence still needed from the failing Firefox session
+
+Without these, the client failure cannot be closed as an application CSP bug:
+
+1. **Network → document** Response Headers screenshot: every `Content-Security-Policy` line (confirm whether `'none'` appears **there**).  
+2. Confirm address bar is exactly `https://garment-background-studio.vercel.app/` (top-level, not IDE/device-lab embed).  
+3. **Private Window** with extensions disabled + hard refresh result.  
+4. Console message **document URI** / frame URL attached to the CSP error (Firefox shows the owning document).  
+5. Optional: `about:support` / extension list if Private Window works and normal profile fails.
+
+---
+
+## 9. Claim status
+
+| Claim | Status |
+| --- | --- |
+| Live production document sends `script-src 'none'` | **False** (measured) |
+| Exact client console string is Firefox CSP-block wording | **True** (reproduced under forced `'none'`) |
+| Top-level Firefox against current production loads module + UI | **True** (Playwright) |
+| Reporter’s blank page fixed | **Not claimed** — failing session not reproduced against live document policy |

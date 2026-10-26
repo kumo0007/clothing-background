@@ -7,7 +7,28 @@
     <title>Garment Background Studio</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!--
+        Visible until the entry module mounts React. Survives CSP/sandbox
+        script blocks (unlike <noscript>, which stays hidden when JS is "on"
+        but the module is refused). Replaced by createRoot(...).render().
+      -->
+      <div
+        class="app-boot-error"
+        id="boot-static-fallback"
+        data-testid="boot-static-fallback"
+        role="status"
+      >
+        <h1>Loading Garment Background Studio…</h1>
+        <p>
+          If this message does not go away, the browser blocked the app
+          scripts. In Firefox open a top-level tab to this site (not an
+          embedded preview), use a Private Window with extensions disabled,
+          hard-refresh, and check the Console for
+          <code>script-src</code> / Content-Security-Policy errors.
+        </p>
+      </div>
+    </div>
     <noscript>
       <div class="app-boot-error" role="alert">
         <h1>JavaScript required</h1>

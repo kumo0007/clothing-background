@@ -1,0 +1,40 @@
+{
+  "forced": {
+    "label": "document-csp-script-src-none",
+    "url": "http://127.0.0.1:61395/forced-none.html",
+    "diag": {
+      "href": "http://127.0.0.1:61395/forced-none.html",
+      "isTop": true,
+      "rootText": "forced-none",
+      "rootChildren": 0,
+      "hasHeading": false
+    },
+    "consoleMsgs": [
+      "[warning] [JavaScript Warning: \"Loading failed for the module with source “https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js”.\" {file: \"http://127.0.0.1:61395/forced-none.html\" line: 2}]",
+      "[error] [JavaScript Error: \"Content-Security-Policy: The page’s settings blocked a script (script-src-elem) at https://garment-background-studio.vercel.app/assets/index-C3JO3DUu.js from being executed because it violates the following directive: “script-src 'none'”\" {file: \"http://127.0.0.1:61395/forced-none.html\" line: 0}]"
+    ],
+    "pageErrors": [],
+    "mentionsScriptSrcNone": true,
+    "loadingFailedModule": true
+  },
+  "top": {
+    "label": "production-top-level",
+    "url": "https://garment-background-studio.vercel.app/",
+    "diag": {
+      "href": "https://garment-background-studio.vercel.app/",
+      "isTop": true,
+      "rootText": "Skip to contentGarment Background StudioUpload clothing photos, auto-mask on-dev",
+      "rootChildren": 1,
+      "hasHeading": true
+    },
+    "consoleMsgs": [],
+    "pageErrors": [],
+    "mentionsScriptSrcNone": false,
+    "loadingFailedModule": false
+  },
+  "comparison": {
+    "forcedBlocksWithNoneMessage": true,
+    "productionTopLevelMentionsNone": false,
+    "productionRenders": true
+  }
+}
