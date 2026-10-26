@@ -1,16 +1,16 @@
 # iPhone 15 Safari auto-mask — diagnostic report
 
-**Date:** 2026-10-26 (HF CDN `Load failed` / connect-src pass)  
+**Date:** 2026-10-26 (same-origin RMBG-1.4 q8 mirror pass)  
 **Client screenshot:** Safari iOS · `garment-background-studio.vercel.app`  
 **Error on device:**
 ```text
 Auto-mask failed: Load failed
 Use Batch → Retry selected / Retry failed.
 ```
-Batch badges: **2 images · 0 masked · 2 failed**
+Batch: **2 images · 0 masked · 2 failed**
 
-**Model:** unchanged — `bg-remove-sdk` + BRIA `briaai/RMBG-1.4`  
-**Physical validation after this CSP fix:** **NOT PERFORMED** on a tethered device in this agent session (screenshot is client evidence of the pre-fix failure mode).
+**Model:** unchanged family — `bg-remove-sdk` + BRIA `briaai/RMBG-1.4` (**q8** ONNX)  
+**Physical validation after this fix:** **NOT PERFORMED** on a tethered device in this agent session.
 
 ---
 
@@ -18,10 +18,10 @@ Batch badges: **2 images · 0 masked · 2 failed**
 
 | Item | Finding |
 | --- | --- |
-| Stage | Model **weight download** during init (not WASM compile, not inference) |
-| Mechanism | Hugging Face `resolve/` redirects weights to multi-label CDN hosts such as `https://us.aws.cdn.hf.co/...` |
-| Why Safari fails | Document CSP had `connect-src … https://*.hf.co` but Safari treats `*.hf.co` as **one DNS label only**, so `us.aws.cdn.hf.co` was blocked → WebKit surfaces opaque **`TypeError: Load failed`** |
-| Relation to prior bugs | Distinct from WebGPU module-import, WASM OOM (`RangeError`), and ORT `.mjs` `script-src` failures |
+| Symptom | Bare `Load failed` persisted after CSP allowlists + Cache API clear/retry |
+| Mechanism | Worker still fetched weights from `huggingface.co` → redirect `us.aws.cdn.hf.co`; Safari WebKit continues to fail that path opaquely |
+| Why UI showed bare text | Device session likely still failing at download before/without applying the long formatter path, or stale tab; production already contained the longer copy |
+| Durable fix needed | Stop depending on HF CDN from the phone: **same-origin** static mirror |
 
 ---
 
@@ -29,11 +29,11 @@ Batch badges: **2 images · 0 masked · 2 failed**
 
 | Change | Detail |
 | --- | --- |
-| `connect-src` | Add `https://*.cdn.hf.co`, `https://*.aws.cdn.hf.co`, `https://*.xethub.hf.co` |
-| `vercel.json` + `contentSecurityPolicy.ts` | Kept in sync; assert helpers require `cdn.hf.co` + `aws.cdn.hf.co` |
-| Error copy | `formatBgRemoveInitFailureMessage` maps bare `Load failed` to weight-download / HF CDN guidance |
-| Diagnostics | `classifyBgRemoveFailure('Load failed')` → `download` |
-| Prior mobile prefs | Still prefer WASM + q8 on Apple mobile; still single shared session; no eager preload on Apple mobile |
+| `scripts/fetchRmbgBrowserWeights.mts` | Mirror `config.json`, `preprocessor_config.json`, `onnx/model_quantized.onnx` (~44 MB) into `public/models/briaai/RMBG-1.4/` at build |
+| `scripts/emitBgRemoveWorker.mts` | Patch SDK worker: `allowLocalModels=true`, `allowRemoteModels=false`, `localModelPath="/models/"` → `public/bg-remove-worker.js` |
+| `bgRemoveSdk.ts` | Pass `workerUrl` + force **q8** when same-origin weights are enabled |
+| Batch copy | “~44 MB” from this site (not HF CDN) |
+| Prior CSP / cache-clear | Kept as defense in depth |
 
 ---
 
@@ -41,13 +41,11 @@ Batch badges: **2 images · 0 masked · 2 failed**
 
 | Check | Result |
 | --- | --- |
-| CSP unit tests | Expect `cdn.hf.co` + `aws.cdn.hf.co` in connect-src; vercel.json matches builder |
-| Device classifiers | Safari Load failed → download guidance |
-| Diagnostics | Load failed → `download` stage |
-| typecheck / test / build | **Pass** (340 tests) |
-| Production deploy | **Live** — `dpl_H2dKLL4d5G2Wzs3Zpm6cYqHuxR6N` → https://garment-background-studio.vercel.app |
-| Live CSP curl | `connect-src` includes `https://*.cdn.hf.co` + `https://*.aws.cdn.hf.co` + `https://*.xethub.hf.co` |
-| HF redirect probe | `huggingface.co/.../model_quantized.onnx` → `302` → `https://us.aws.cdn.hf.co/...` |
+| Unit | 342 passed (worker patch contract, q8/workerUrl options, Load failed cache retry) |
+| Build | Emits worker + mirrors weights into `dist/models/…` |
+| Production deploy | **Live** — `dpl_4i9BEShXDr2wP7fRPinuDhDpaGRV` |
+| Live HEAD `/models/…/model_quantized.onnx` | **200** · `Content-Length: 44403226` |
+| Live HEAD `/bg-remove-worker.js` | **200** · patched worker |
 
 ---
 
@@ -55,7 +53,6 @@ Batch badges: **2 images · 0 masked · 2 failed**
 
 | Claim | Status |
 | --- | --- |
-| Screenshot “Load failed” explained by CSP blocking HF CDN redirect | **Yes** |
-| CSP updated to allow `*.cdn.hf.co` / `*.aws.cdn.hf.co` | **Yes** |
-| Clearer operator message for bare Load failed | **Yes** |
-| iPhone 15 Safari auto-mask proven after deploy | **Not claimed** — hard-refresh production, then Batch → Retry failed on device |
+| Safari no longer needs HF CDN for RMBG-1.4 q8 | **Yes** (same-origin `/models/…`) |
+| Model family still RMBG-1.4 | **Yes** (quantized artifact of same repo) |
+| iPhone 15 Safari auto-mask proven | **Not claimed** — hard-refresh, confirm Batch hint says “~44 MB” / “from this site”, then Auto-mask / Retry failed |

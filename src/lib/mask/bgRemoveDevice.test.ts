@@ -79,7 +79,7 @@ describe('bgRemoveDevice', () => {
   it('maps Safari Load failed to weight-download guidance', () => {
     expect(isSafariNetworkLoadFailure('Load failed')).toBe(true)
     expect(formatBgRemoveInitFailureMessage('Load failed')).toMatch(
-      /weight download failed|Hugging Face CDN/i,
+      /weight download failed|\/models\//i,
     )
   })
 

@@ -22,6 +22,8 @@ describe('contentSecurityPolicy', () => {
     expect(policy).toMatch(/connect-src[^;]*huggingface\.co/)
     expect(policy).toMatch(/connect-src[^;]*cdn\.hf\.co/)
     expect(policy).toMatch(/connect-src[^;]*aws\.cdn\.hf\.co/)
+    expect(policy).toMatch(/connect-src[^;]*us\.aws\.cdn\.hf\.co/)
+    expect(policy).toMatch(/connect-src[^;]*cas-bridge\.xethub\.hf\.co/)
     expect(policy).not.toMatch(/script-src\s+'none'/)
     expect(policy).not.toMatch(/'unsafe-inline'/)
     expect(policy).not.toMatch(/script-src[^;]*\*/)

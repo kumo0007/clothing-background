@@ -1,4 +1,5 @@
 import { useCallback, useId, useRef, useState, type DragEvent } from 'react'
+import { IMAGE_FILE_ACCEPT } from '../utils/imageFiles'
 
 type ImageUploaderProps = {
   onFilesSelected: (files: File[]) => void
@@ -25,6 +26,12 @@ export function ImageUploader({
     },
     [onFilesSelected],
   )
+
+  const openPicker = useCallback(() => {
+    if (disabled) return
+    // Explicit .click() is more reliable on iOS Safari than label+opacity:0 alone.
+    inputRef.current?.click()
+  }, [disabled])
 
   const onDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -57,26 +64,46 @@ export function ImageUploader({
       onDrop={onDrop}
       data-testid="image-uploader"
     >
+      {/*
+        Nest input inside label (Safari-friendly). Keep a visible Choose button
+        that calls input.click() — opacity:0 overlays alone often fail on iOS.
+      */}
       <label className="uploader__label" htmlFor={inputId}>
         <span className="uploader__title">Upload garment images</span>
         <span className="uploader__hint">
-          Drag and drop multiple images, or tap to browse. JPEG, PNG, WebP,
-          GIF, and BMP are supported. iPhone HEIC is not — export as JPEG
-          (Most Compatible) first. Upload does not start masking; use Batch →
-          Auto-mask all.
+          Tap <strong>Choose photos</strong> to open the iPhone library, or
+          drag and drop. JPEG, PNG, WebP, GIF, and BMP work everywhere. Safari
+          can often decode HEIC; if it fails, export as JPEG (Most Compatible).
+          Upload does not start masking — use Batch → Auto-mask all.
         </span>
+        <span className="uploader__actions">
+          <button
+            type="button"
+            className="button button--primary uploader__choose"
+            disabled={disabled}
+            data-testid="image-upload-choose"
+            onClick={(event) => {
+              // Prevent the label from also forwarding a second click.
+              event.preventDefault()
+              event.stopPropagation()
+              openPicker()
+            }}
+          >
+            Choose photos
+          </button>
+        </span>
+        <input
+          ref={inputRef}
+          id={inputId}
+          className="uploader__input"
+          type="file"
+          accept={IMAGE_FILE_ACCEPT}
+          multiple
+          disabled={disabled}
+          onChange={(event) => handleFiles(event.target.files)}
+          data-testid="image-file-input"
+        />
       </label>
-      <input
-        ref={inputRef}
-        id={inputId}
-        className="uploader__input"
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif,image/bmp"
-        multiple
-        disabled={disabled}
-        onChange={(event) => handleFiles(event.target.files)}
-        data-testid="image-file-input"
-      />
     </div>
   )
 }

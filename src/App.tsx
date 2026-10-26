@@ -602,6 +602,8 @@ function App() {
             autoFailed: true,
             needsReview: true,
             reviewReason: message,
+            // Drop stale mask findings (e.g. extreme_keep_area from an earlier run).
+            diagnosticSummary: undefined,
           })
           setError(message)
           setBatchProgress(`Auto-mask stopped: ${message}`)
@@ -712,6 +714,7 @@ function App() {
                     needsReview: true,
                     autoFailed: true,
                     reviewReason: message,
+                    diagnosticSummary: undefined,
                     processingPhase: 'failed',
                   },
                 },

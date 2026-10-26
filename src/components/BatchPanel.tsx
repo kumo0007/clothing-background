@@ -59,9 +59,10 @@ export function BatchPanel({
         <div className="batch-panel__title">
           <h2 id="batch-heading">Batch</h2>
           <p className="batch-panel__hint">
-            On-device RMBG (first run ~88&nbsp;MB; inference can take minutes on
-            iPhone). Keep the Safari tab open. JPEG/PNG/WebP only — HEIC must
-            be exported as JPEG (Most Compatible) before upload.
+            On-device RMBG-1.4 q8 from this site (first run ~44&nbsp;MB;
+            inference can take minutes on iPhone). Keep the Safari tab open.
+            JPEG/PNG/WebP only — HEIC must be exported as JPEG (Most
+            Compatible) before upload.
           </p>
         </div>
         <div className="batch-panel__stats" aria-label="Batch status">

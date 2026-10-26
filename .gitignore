@@ -22,6 +22,12 @@ public/imgly-bg-data/**
 !public/imgly-bg-data/.gitkeep
 !public/imgly-bg-data/**/.gitkeep
 
+# Same-origin RMBG-1.4 q8 mirror + patched worker (generated at build)
+public/models/briaai/**
+!public/models/briaai/.gitkeep
+public/bg-remove-worker.js
+public/bg-remove-worker.upstream.js
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

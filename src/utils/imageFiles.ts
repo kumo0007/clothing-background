@@ -1,10 +1,21 @@
 const ACCEPTED_MIME_TYPES = new Set([
   'image/jpeg',
+  'image/jpg',
+  'image/pjpeg',
   'image/png',
   'image/webp',
   'image/gif',
   'image/bmp',
+  'image/x-ms-bmp',
 ])
+
+/**
+ * `<input accept>` for iPhone Safari Photo Library.
+ * MIME-only lists (no `image/*` / extensions) often hide Photos or drop HEIC
+ * before `change` fires — leaving "No images uploaded yet" with no error.
+ */
+export const IMAGE_FILE_ACCEPT =
+  'image/*,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.gif,.bmp,.heic,.heif'
 
 export function isHeicLikeFile(file: File): boolean {
   if (/image\/hei[cf]/i.test(file.type)) return true
@@ -12,9 +23,12 @@ export function isHeicLikeFile(file: File): boolean {
 }
 
 export function isAcceptedImageFile(file: File): boolean {
-  if (ACCEPTED_MIME_TYPES.has(file.type)) {
+  const type = (file.type || '').toLowerCase()
+  if (type && ACCEPTED_MIME_TYPES.has(type)) {
     return true
   }
+  // iOS sometimes reports JPEG photos as empty type or image/jpg.
+  if (type === 'image/jpg' || type === 'image/pjpeg') return true
 
   // Some browsers omit MIME for certain extensions; fall back to extension.
   return /\.(jpe?g|png|webp|gif|bmp)$/i.test(file.name)

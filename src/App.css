@@ -243,6 +243,7 @@
 }
 
 .uploader__label {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -259,13 +260,34 @@
   line-height: 1.4;
 }
 
+.uploader__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.uploader__choose {
+  /* Keep the CTA above any residual hit-testing quirks on the file input. */
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
 .uploader__input {
+  /* Visually hidden but still in the label for a11y; do NOT use opacity:0
+     full-bleed overlays — iOS Safari often ignores taps on those. */
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  /* Large font-size improves the native control hit target if it becomes visible. */
+  font-size: 16px;
 }
 
 .gallery-empty {

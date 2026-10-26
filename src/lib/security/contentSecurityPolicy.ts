@@ -39,10 +39,14 @@ export const CSP_DIRECTIVES: Readonly<Record<string, readonly string[]>> = {
     'https://*.huggingface.co',
     'https://hf.co',
     'https://*.hf.co',
-    // HF Xet / AWS CDN redirects (Safari needs explicit multi-label hosts).
+    // HF Xet / AWS CDN redirects. Safari only expands `*` one DNS label, so
+    // list both wildcards and the exact regional hosts seen in resolve/.
     'https://*.cdn.hf.co',
     'https://*.aws.cdn.hf.co',
+    'https://us.aws.cdn.hf.co',
+    'https://eu.aws.cdn.hf.co',
     'https://*.xethub.hf.co',
+    'https://cas-bridge.xethub.hf.co',
     'https://cdn.jsdelivr.net',
   ],
   'worker-src': ["'self'", 'blob:'],
@@ -119,6 +123,11 @@ export function assertAppCspAllowsBootstrap(policy: string): void {
   if (!/connect-src[^;]*aws\.cdn\.hf\.co/i.test(policy)) {
     throw new Error(
       `CSP must allow connect-src *.aws.cdn.hf.co for Safari HF CDN redirects: ${policy}`,
+    )
+  }
+  if (!/connect-src[^;]*us\.aws\.cdn\.hf\.co/i.test(policy)) {
+    throw new Error(
+      `CSP must allow connect-src https://us.aws.cdn.hf.co (exact HF Xet host): ${policy}`,
     )
   }
 }

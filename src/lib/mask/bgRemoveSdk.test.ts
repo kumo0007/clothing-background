@@ -29,6 +29,8 @@ const preloadMock = vi.fn()
 const onInitMock = vi.fn(() => () => undefined)
 const disposeMock = vi.fn()
 
+const clearModelCacheMock = vi.fn(async (_modelId?: string) => undefined)
+
 vi.mock('bg-remove-sdk', () => ({
   createBgRemover: vi.fn(() => ({
     process: processMock,
@@ -39,6 +41,7 @@ vi.mock('bg-remove-sdk', () => ({
     init: vi.fn(),
     reload: vi.fn(),
   })),
+  clearModelCache: clearModelCacheMock,
 }))
 
 vi.mock('../image/imageDataFromUrl', () => ({
@@ -70,6 +73,8 @@ describe('segmentWithBgRemoveSdk (mocked SDK)', () => {
     onInitMock.mockReset()
     onInitMock.mockReturnValue(() => undefined)
     disposeMock.mockReset()
+    clearModelCacheMock.mockReset()
+    clearModelCacheMock.mockResolvedValue(undefined)
     vi.clearAllMocks()
   })
 
@@ -124,6 +129,11 @@ describe('segmentWithBgRemoveSdk (mocked SDK)', () => {
 
     expect(createBgRemover).toHaveBeenCalledTimes(1)
     expect(processMock).toHaveBeenCalledTimes(2)
+    const opts = vi.mocked(createBgRemover).mock.calls[0]?.[0] as
+      | { dtype?: string; workerUrl?: string }
+      | undefined
+    expect(opts?.dtype).toBe('q8')
+    expect(opts?.workerUrl).toMatch(/bg-remove-worker\.js/)
   })
 
   it('surfaces model init failures clearly', async () => {
@@ -137,18 +147,15 @@ describe('segmentWithBgRemoveSdk (mocked SDK)', () => {
     ).rejects.toThrow(/Model init failed/i)
   })
 
-  it('retries q8 after WASM fp16 Out-of-memory backend init (same RMBG-1.4)', async () => {
-    const oom = new Error(
-      'no available backend found. ERR: [wasm] RangeError: Out of memory',
-    )
-    preloadMock.mockRejectedValueOnce(oom).mockResolvedValueOnce({ device: 'wasm' })
+  it('clears model cache and retries once after Safari Load failed', async () => {
+    preloadMock
+      .mockRejectedValueOnce(new Error('Load failed'))
+      .mockResolvedValueOnce({ device: 'wasm' })
     processMock.mockResolvedValue({
       blob: makeTransparentPngBlob(2, 1, () => 255),
       width: 2,
       height: 1,
     })
-
-    const { createBgRemover } = await import('bg-remove-sdk')
     const {
       segmentWithBgRemoveSdk,
       resetSharedBgRemoverForTests,
@@ -157,28 +164,44 @@ describe('segmentWithBgRemoveSdk (mocked SDK)', () => {
     } = await import('./bgRemoveSdk')
     resetSharedBgRemoverForTests()
     resetBgRemoveDiagnosticsForTests()
-    vi.mocked(createBgRemover).mockClear()
 
-    // Desktop UA → first attempt fp16; OOM triggers q8 retry.
     const result = await segmentWithBgRemoveSdk(
       new Blob([new Uint8Array([1])]),
       2,
       1,
     )
     expect(result.genuineModelInference).toBe(true)
+    expect(clearModelCacheMock).toHaveBeenCalled()
     expect(preloadMock).toHaveBeenCalledTimes(2)
     expect(
       getBgRemoveDiagnosticSnapshot().events.some(
         (e) =>
           e.type === 'backend_fallback' &&
-          e.detail?.includes('wasm-fp16-oom-retry-q8'),
+          e.detail?.includes('safari-load-failed-clear-cache-retry'),
       ),
     ).toBe(true)
+  })
+
+  it('uses same-origin q8 only — WASM OOM does not attempt fp16', async () => {
+    const oom = new Error(
+      'no available backend found. ERR: [wasm] RangeError: Out of memory',
+    )
+    preloadMock.mockRejectedValue(oom)
+
+    const { createBgRemover } = await import('bg-remove-sdk')
+    const { segmentWithBgRemoveSdk, resetSharedBgRemoverForTests } =
+      await import('./bgRemoveSdk')
+    resetSharedBgRemoverForTests()
+    vi.mocked(createBgRemover).mockClear()
+
+    await expect(
+      segmentWithBgRemoveSdk(new Blob([new Uint8Array([1])]), 2, 1),
+    ).rejects.toThrow(/Out of memory/i)
+    expect(preloadMock).toHaveBeenCalledTimes(1)
     const dtypeCalls = vi.mocked(createBgRemover).mock.calls.map(
       (c) => (c[0] as { dtype?: string } | undefined)?.dtype,
     )
-    expect(dtypeCalls).toContain('fp16')
-    expect(dtypeCalls).toContain('q8')
+    expect(dtypeCalls.every((d) => d === 'q8')).toBe(true)
   })
 
   it('retries WASM after a WebGPU-only backend init failure (same RMBG-1.4)', async () => {

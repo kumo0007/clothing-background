@@ -117,8 +117,8 @@ export function formatBgRemoveInitFailureMessage(raw: string): string {
   if (isSafariNetworkLoadFailure(message)) {
     return (
       `Model weight download failed (Safari: Load failed). ` +
-      `Usually the Hugging Face CDN redirect was blocked or interrupted. ` +
-      `Stay on Wi‑Fi, hard-refresh this tab, then Retry failed. Inference stays on-device.`
+      `Weights should load from this site (/models/…); hard-refresh, stay on Wi‑Fi, then Retry failed. ` +
+      `Inference stays on-device.`
     )
   }
   if (isWasmModuleImportFailure(message)) {
@@ -180,6 +180,8 @@ export function resolvePreferredBgRemoveDtype(
   if (appleMobile && (device === 'wasm' || device === 'auto')) {
     return 'q8'
   }
+  // Same-origin mirror vendors quantized ONNX; WASM prefers q8 everywhere.
+  if (device === 'wasm') return 'q8'
   return 'fp16'
 }
 

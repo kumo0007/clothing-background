@@ -9,7 +9,12 @@
  * source-available under BRIA’s non-commercial / evaluation terms (`bria-rmbg-1.4`).
  * Local inference does not waive licensing; commercial use needs a BRIA agreement.
  */
-import { createBgRemover, type BgRemover, type InitState } from 'bg-remove-sdk'
+import {
+  clearModelCache,
+  createBgRemover,
+  type BgRemover,
+  type InitState,
+} from 'bg-remove-sdk'
 import type { MaskPixelBuffer } from '../../types/mask'
 import { maskFromTransparentRgba } from './apiTransparentPngMask'
 import { reviewSdkMask } from './sdkMaskReview'
@@ -76,6 +81,13 @@ export type {
 
 export const BG_REMOVE_SDK_METHOD = 'bg-remove-sdk-rmbg1.4'
 export const BG_REMOVE_SDK_PROVIDER = 'bg-remove-sdk'
+
+/**
+ * Same-origin RMBG-1.4 q8 mirror under `/models/…` + patched `/bg-remove-worker.js`.
+ * Avoids Safari `Load failed` on Hugging Face CDN redirects.
+ */
+export const BG_REMOVE_SAME_ORIGIN_WEIGHTS = true
+export const BG_REMOVE_WORKER_URL_PATH = '/bg-remove-worker.js'
 
 /**
  * Upstream Hugging Face id used when `VITE_BG_REMOVE_MODEL_ID` is unset.
@@ -189,18 +201,36 @@ let preloadPromise: Promise<{ device: 'webgpu' | 'wasm' }> | null = null
 let sharedDevicePreference: BgRemoveDevicePreference | null = null
 let sharedWeightDtype: BgRemoveWeightDtype | null = null
 
+function resolveBgRemoveWorkerUrl(): string | undefined {
+  if (!BG_REMOVE_SAME_ORIGIN_WEIGHTS) return undefined
+  if (typeof window === 'undefined' || !window.location?.origin) {
+    return undefined
+  }
+  try {
+    return new URL(BG_REMOVE_WORKER_URL_PATH, window.location.origin).href
+  } catch {
+    return BG_REMOVE_WORKER_URL_PATH
+  }
+}
+
 function buildRemoverOptions(
   device: BgRemoveDevicePreference,
   dtype: BgRemoveWeightDtype = resolvePreferredBgRemoveDtype(device),
 ) {
   const modelId = resolveBgRemoveModelId()
+  // Same-origin mirror only vendors quantized ONNX — keep dtype on q8.
+  const effectiveDtype: BgRemoveWeightDtype = BG_REMOVE_SAME_ORIGIN_WEIGHTS
+    ? 'q8'
+    : dtype
+  const workerUrl = resolveBgRemoveWorkerUrl()
   return {
     device,
     // SDK public types list fp16|fp32; q8 is valid at runtime for transformers.js.
-    dtype: dtype as 'fp16' | 'fp32',
+    dtype: effectiveDtype as 'fp16' | 'fp32',
     useBrowserCache: true,
     // Optional self-hosted / mirrored RMBG-1.4 weights only (see allowlist).
     ...(modelId ? { modelId } : {}),
+    ...(workerUrl ? { workerUrl } : {}),
   }
 }
 
@@ -212,18 +242,21 @@ export function getSharedBgRemover(
   ),
 ): BgRemover {
   if (!sharedRemover) {
+    const effectiveDtype: BgRemoveWeightDtype = BG_REMOVE_SAME_ORIGIN_WEIGHTS
+      ? 'q8'
+      : dtypePreference
     sharedDevicePreference = devicePreference
-    sharedWeightDtype = dtypePreference
+    sharedWeightDtype = effectiveDtype
     noteBgRemoveDiagnostic({
       type: 'backend_select',
       device: devicePreference === 'auto' ? 'unknown' : devicePreference,
-      detail: `${describeDevicePreference(devicePreference)}; ${describeWeightDtype(dtypePreference)}`.slice(
+      detail: `${describeDevicePreference(devicePreference)}; ${describeWeightDtype(effectiveDtype)}`.slice(
         0,
         160,
       ),
     })
     sharedRemover = createBgRemover(
-      buildRemoverOptions(devicePreference, dtypePreference),
+      buildRemoverOptions(devicePreference, effectiveDtype),
     )
   }
   return sharedRemover
@@ -252,9 +285,39 @@ export function recoverSharedBgRemover(reason: string): void {
   sharedWeightDtype = null
 }
 
+/**
+ * Drop transformers.js Cache API entries for RMBG-1.4.
+ * Safari can keep a poisoned entry after a prior CSP/`Load failed` attempt;
+ * dispose alone does not clear it.
+ */
+export async function clearBgRemoveModelCache(
+  reason = 'manual-clear',
+): Promise<void> {
+  const modelId =
+    resolveBgRemoveModelId() ?? DEFAULT_BG_REMOVE_HF_MODEL_ID
+  noteBgRemoveDiagnostic({
+    type: 'recover_worker',
+    detail: `clear-model-cache:${reason}`.slice(0, 160),
+    failureStage: 'download',
+  })
+  try {
+    await clearModelCache(modelId)
+  } catch {
+    // Cache API may be unavailable; continue with a cold download attempt.
+  }
+}
+
+let safariLoadFailedCacheRetryUsed = false
+
+/** Test helper — allow another Cache-API retry after Load failed. */
+export function resetSafariLoadFailedCacheRetryForTests(): void {
+  safariLoadFailedCacheRetryUsed = false
+}
+
 /** Test / teardown helper. */
 export function resetSharedBgRemoverForTests(): void {
   recoverSharedBgRemover('test-reset')
+  resetSafariLoadFailedCacheRetryForTests()
 }
 
 /**
@@ -268,7 +331,10 @@ export async function preloadBgRemoveModel(
   const attemptedDevice =
     sharedDevicePreference ?? resolvePreferredBgRemoveDevice()
   const attemptedDtype =
-    sharedWeightDtype ?? resolvePreferredBgRemoveDtype(attemptedDevice)
+    sharedWeightDtype ??
+    (BG_REMOVE_SAME_ORIGIN_WEIGHTS
+      ? 'q8'
+      : resolvePreferredBgRemoveDtype(attemptedDevice))
 
   // Let Safari reclaim memory from prior workers / decoded frames before WASM grow.
   if (attemptedDevice === 'wasm' || attemptedDtype === 'q8') {
@@ -481,6 +547,45 @@ export async function preloadBgRemoveModel(
       }
     }
 
+    // Safari "Load failed" after a prior CSP block often means a poisoned
+    // Cache API entry for the HF CDN redirect — clear + one cold retry.
+    if (
+      isSafariNetworkLoadFailure(message) &&
+      !safariLoadFailedCacheRetryUsed
+    ) {
+      safariLoadFailedCacheRetryUsed = true
+      noteBgRemoveDiagnostic({
+        type: 'backend_fallback',
+        detail: 'safari-load-failed-clear-cache-retry',
+        failureStage: 'download',
+        device: attemptedDevice === 'auto' ? 'unknown' : attemptedDevice,
+      })
+      recoverSharedBgRemover(message)
+      await clearBgRemoveModelCache('safari-load-failed')
+      await yieldForWasmMemoryPressure()
+      try {
+        return await retryWith(
+          attemptedDevice,
+          attemptedDtype,
+          'safari-load-failed-clear-cache-retry',
+          'Clearing cached weights — redownloading RMBG-1.4…',
+        )
+      } catch (retryErr) {
+        const retryMessage =
+          retryErr instanceof Error
+            ? retryErr.message
+            : 'Failed to reload RMBG-1.4 after clearing cache.'
+        noteBgRemoveDiagnostic({
+          type: 'init_error',
+          detail: retryMessage.slice(0, 160),
+          failureStage: classifyBgRemoveFailure(retryMessage),
+          device: attemptedDevice === 'auto' ? 'unknown' : attemptedDevice,
+        })
+        recoverSharedBgRemover(retryMessage)
+        throw new Error(formatBgRemoveInitFailureMessage(retryMessage))
+      }
+    }
+
     // Terminate hung init worker so Retry is not stuck behind it.
     recoverSharedBgRemover(message)
     if (isSafariNetworkLoadFailure(message)) {
@@ -608,6 +713,10 @@ export async function segmentWithBgRemoveSdk(
     })
     // Critical: terminate hung worker so later queue items / Retry are not blocked.
     recoverSharedBgRemover(message)
+    if (isSafariNetworkLoadFailure(message)) {
+      void clearBgRemoveModelCache('process-load-failed')
+      throw new Error(formatBgRemoveInitFailureMessage(message))
+    }
     if (/timed out/i.test(message)) {
       throw new Error(message)
     }
