@@ -6,6 +6,14 @@ type ImageUploaderProps = {
   disabled?: boolean
 }
 
+/**
+ * iPhone Safari file-picker notes:
+ * - Programmatic `input.click()` is ignored when the input is `display:none`,
+ *   `visibility:hidden`, zero-sized, or `clip`ped.
+ * - A near-opaque (`opacity: 0.01`) full-bleed input on top of a `<label>`
+ *   receives the real user tap and opens Photos reliably.
+ * - Nesting a real `<button>` inside the label + `preventDefault` breaks that.
+ */
 export function ImageUploader({
   onFilesSelected,
   disabled = false,
@@ -26,12 +34,6 @@ export function ImageUploader({
     },
     [onFilesSelected],
   )
-
-  const openPicker = useCallback(() => {
-    if (disabled) return
-    // Explicit .click() is more reliable on iOS Safari than label+opacity:0 alone.
-    inputRef.current?.click()
-  }, [disabled])
 
   const onDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -64,33 +66,26 @@ export function ImageUploader({
       onDrop={onDrop}
       data-testid="image-uploader"
     >
-      {/*
-        Nest input inside label (Safari-friendly). Keep a visible Choose button
-        that calls input.click() — opacity:0 overlays alone often fail on iOS.
-      */}
       <label className="uploader__label" htmlFor={inputId}>
         <span className="uploader__title">Upload garment images</span>
         <span className="uploader__hint">
-          Tap <strong>Choose photos</strong> to open the iPhone library, or
-          drag and drop. JPEG, PNG, WebP, GIF, and BMP work everywhere. Safari
-          can often decode HEIC; if it fails, export as JPEG (Most Compatible).
-          Upload does not start masking — use Batch → Auto-mask all.
+          Tap the green <strong>Choose photos</strong> control (or anywhere in
+          this box) to open Photos / Files. JPEG, PNG, WebP, GIF, BMP — Safari
+          often accepts HEIC too; if not, export JPEG (Most Compatible). Upload
+          does not start masking — use Batch → Auto-mask all.
         </span>
         <span className="uploader__actions">
-          <button
-            type="button"
+          {/*
+            Visual CTA only — pointer-events:none so the tap hits the file
+            input layered above. Do not use <button> here (blocks iOS picker).
+          */}
+          <span
             className="button button--primary uploader__choose"
-            disabled={disabled}
             data-testid="image-upload-choose"
-            onClick={(event) => {
-              // Prevent the label from also forwarding a second click.
-              event.preventDefault()
-              event.stopPropagation()
-              openPicker()
-            }}
+            aria-hidden="true"
           >
             Choose photos
-          </button>
+          </span>
         </span>
         <input
           ref={inputRef}
@@ -102,6 +97,8 @@ export function ImageUploader({
           disabled={disabled}
           onChange={(event) => handleFiles(event.target.files)}
           data-testid="image-file-input"
+          // Help VoiceOver / TalkBack name the control.
+          aria-label="Choose photos to upload"
         />
       </label>
     </div>

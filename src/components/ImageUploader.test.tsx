@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { IMAGE_FILE_ACCEPT } from '../utils/imageFiles'
 import { ImageUploader } from './ImageUploader'
@@ -15,13 +14,15 @@ describe('ImageUploader', () => {
     expect(input.accept).toMatch(/heic/i)
   })
 
-  it('Choose photos opens the file picker via input.click()', async () => {
-    const user = userEvent.setup()
+  it('keeps a visible Choose photos affordance and a full-bleed file input', () => {
     render(<ImageUploader onFilesSelected={() => undefined} />)
+    expect(screen.getByTestId('image-upload-choose')).toHaveTextContent(
+      /Choose photos/i,
+    )
     const input = screen.getByTestId('image-file-input') as HTMLInputElement
-    const clickSpy = vi.spyOn(input, 'click')
-    await user.click(screen.getByTestId('image-upload-choose'))
-    expect(clickSpy).toHaveBeenCalled()
+    expect(input.getAttribute('aria-label') ?? '').toMatch(/Choose photos/i)
+    // Must not be the clipped 1×1 pattern — iOS blocks activation on those.
+    expect(input.className).toContain('uploader__input')
   })
 
   it('forwards selected files from the input change event', () => {
@@ -33,5 +34,14 @@ describe('ImageUploader', () => {
     })
     fireEvent.change(input, { target: { files: [file] } })
     expect(onFilesSelected).toHaveBeenCalledWith([file])
+  })
+
+  it('does not nest a button that would steal the iOS tap from the file input', () => {
+    render(<ImageUploader onFilesSelected={() => undefined} />)
+    const choose = screen.getByTestId('image-upload-choose')
+    expect(choose.tagName).not.toBe('BUTTON')
+    expect(
+      screen.queryByRole('button', { name: /Choose photos/i }),
+    ).not.toBeInTheDocument()
   })
 })

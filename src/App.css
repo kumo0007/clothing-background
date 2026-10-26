@@ -244,20 +244,25 @@
 
 .uploader__label {
   position: relative;
+  z-index: 0;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   cursor: pointer;
+  /* Ensure the absolute file input has a non-zero box to cover. */
+  min-height: 7.5rem;
 }
 
 .uploader__title {
   font-weight: 600;
+  pointer-events: none;
 }
 
 .uploader__hint {
   color: var(--text-muted);
   font-size: 0.88rem;
   line-height: 1.4;
+  pointer-events: none;
 }
 
 .uploader__actions {
@@ -265,28 +270,33 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.35rem;
+  pointer-events: none;
 }
 
 .uploader__choose {
-  /* Keep the CTA above any residual hit-testing quirks on the file input. */
-  position: relative;
-  z-index: 2;
-  pointer-events: auto;
+  /* Decorative — real taps go to .uploader__input above. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  user-select: none;
 }
 
 .uploader__input {
-  /* Visually hidden but still in the label for a11y; do NOT use opacity:0
-     full-bleed overlays — iOS Safari often ignores taps on those. */
+  /*
+    Full-bleed over the label. Must stay "visible" to WebKit (not clip /
+    display:none / 0×0) or iOS ignores activation. opacity 0.01 is enough.
+  */
   position: absolute;
-  width: 1px;
-  height: 1px;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
   border: 0;
-  /* Large font-size improves the native control hit target if it becomes visible. */
+  opacity: 0.01;
+  cursor: pointer;
   font-size: 16px;
 }
 
