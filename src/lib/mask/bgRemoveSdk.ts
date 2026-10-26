@@ -21,6 +21,11 @@ import {
   noteBgRemoveProcessMs,
   noteBgRemoveReady,
 } from './bgRemoveTiming'
+import {
+  classifyBgRemoveFailure,
+  formatSdkProcessStage,
+  noteBgRemoveDiagnostic,
+} from './bgRemoveDiagnostics'
 
 export {
   getBgRemoveTimingSnapshot,
@@ -28,6 +33,13 @@ export {
   classifyInitMessage,
   resetBgRemoveTimingForTests,
 } from './bgRemoveTiming'
+
+export {
+  getBgRemoveDiagnosticSnapshot,
+  formatSdkProcessStage,
+  resetBgRemoveDiagnosticsForTests,
+  classifyBgRemoveFailure,
+} from './bgRemoveDiagnostics'
 
 export const BG_REMOVE_SDK_METHOD = 'bg-remove-sdk-rmbg1.4'
 export const BG_REMOVE_SDK_PROVIDER = 'bg-remove-sdk'
@@ -156,11 +168,30 @@ export function getSharedBgRemover(): BgRemover {
   return sharedRemover
 }
 
-/** Test / teardown helper. */
-export function resetSharedBgRemoverForTests(): void {
-  sharedRemover?.dispose()
+/**
+ * Dispose the shared worker and clear the preload latch.
+ * Required after init/process timeouts: `withTimeout` rejects the app promise
+ * but the SDK may still hold a hung job on its internal queue, blocking later
+ * images until the worker is terminated.
+ */
+export function recoverSharedBgRemover(reason: string): void {
+  noteBgRemoveDiagnostic({
+    type: 'recover_worker',
+    detail: reason.slice(0, 160),
+    failureStage: classifyBgRemoveFailure(reason),
+  })
+  try {
+    sharedRemover?.dispose()
+  } catch {
+    // ignore dispose races
+  }
   sharedRemover = null
   preloadPromise = null
+}
+
+/** Test / teardown helper. */
+export function resetSharedBgRemoverForTests(): void {
+  recoverSharedBgRemover('test-reset')
 }
 
 /**
@@ -201,23 +232,38 @@ export async function preloadBgRemoveModel(
     }
   })
 
+  noteBgRemoveDiagnostic({ type: 'init_start', detail: 'preload' })
+
   try {
     if (!preloadPromise) {
       preloadPromise = withTimeout(
         remover.preload(),
         BG_REMOVE_PRELOAD_TIMEOUT_MS,
-        `Model download timed out after ${Math.round(BG_REMOVE_PRELOAD_TIMEOUT_MS / 1000)}s. Check network access for the ~88 MB weights, stay on Wi‑Fi, then tap Auto-mask again.`,
+        `Model download timed out after ${Math.round(BG_REMOVE_PRELOAD_TIMEOUT_MS / 1000)}s. Check network access for the ~88 MB weights, stay on Wi‑Fi, keep this Safari tab open, then tap Auto-mask again.`,
       ).catch((err) => {
         preloadPromise = null
         throw err
       })
     }
-    return await preloadPromise
+    const ready = await preloadPromise
+    noteBgRemoveDiagnostic({
+      type: 'init_ready',
+      device: ready.device,
+      detail: 'preload-resolved',
+    })
+    return ready
   } catch (err) {
     const message =
       err instanceof Error
         ? err.message
         : 'Failed to load the local background-removal model.'
+    noteBgRemoveDiagnostic({
+      type: 'init_error',
+      detail: message.slice(0, 160),
+      failureStage: classifyBgRemoveFailure(message),
+    })
+    // Terminate hung init worker so Retry is not stuck behind it.
+    recoverSharedBgRemover(message)
     if (/timed out/i.test(message)) {
       throw new Error(message)
     }
@@ -280,22 +326,61 @@ export async function segmentWithBgRemoveSdk(
     sourceHeight,
   )
 
+  noteBgRemoveDiagnostic({
+    type: 'process_start',
+    device,
+    width: prepared.width,
+    height: prepared.height,
+    detail: prepared.scaled ? 'downscaled-input' : 'full-res-input',
+  })
+
   let processed
+  const processStartedAt =
+    typeof performance !== 'undefined' ? performance.now() : Date.now()
+  /** Keep UI alive during long WASM runs (iOS may look frozen without ticks). */
+  const heartbeat = setInterval(() => {
+    const elapsedSec = Math.round(
+      ((typeof performance !== 'undefined' ? performance.now() : Date.now()) -
+        processStartedAt) /
+        1000,
+    )
+    options.onProgress?.({
+      kind: 'sdk-process',
+      stage: `Running on-device inference… (${elapsedSec}s, ${device})`,
+    })
+  }, 5_000)
+
   try {
     processed = await withTimeout(
       remover.process(prepared.blob, 'png', (p) => {
+        const stage = formatSdkProcessStage(p.stage)
+        noteBgRemoveDiagnostic({
+          type: 'process_progress',
+          detail: stage.slice(0, 80),
+          device,
+        })
         options.onProgress?.({
           kind: 'sdk-process',
-          stage: p.stage,
+          stage,
           ratio: p.ratio,
         })
       }),
       BG_REMOVE_PROCESS_TIMEOUT_MS,
-      `Local inference timed out after ${Math.round(BG_REMOVE_PROCESS_TIMEOUT_MS / 1000)}s. Try a smaller photo or Retry failed.`,
+      `Local inference timed out after ${Math.round(BG_REMOVE_PROCESS_TIMEOUT_MS / 1000)}s (${device}). Keep this Safari tab open, try a smaller photo, then Retry failed.`,
     )
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'Local inference failed.'
+    noteBgRemoveDiagnostic({
+      type: 'process_error',
+      detail: message.slice(0, 160),
+      device,
+      width: prepared.width,
+      height: prepared.height,
+      failureStage: classifyBgRemoveFailure(message),
+    })
+    // Critical: terminate hung worker so later queue items / Retry are not blocked.
+    recoverSharedBgRemover(message)
     if (/timed out/i.test(message)) {
       throw new Error(message)
     }
@@ -310,7 +395,20 @@ export async function segmentWithBgRemoveSdk(
       )
     }
     throw new Error(`Local background removal failed: ${message}`)
+  } finally {
+    clearInterval(heartbeat)
   }
+
+  noteBgRemoveDiagnostic({
+    type: 'process_done',
+    device,
+    width: prepared.width,
+    height: prepared.height,
+    elapsedMs: Math.round(
+      (typeof performance !== 'undefined' ? performance.now() : Date.now()) -
+        processStartedAt,
+    ),
+  })
 
   const decoded = await decodeBlobToRgba(processed.blob)
   // Alpha polarity: 255 KEEP / 0 BG / gray soft — never inverted or hard-thresholded.

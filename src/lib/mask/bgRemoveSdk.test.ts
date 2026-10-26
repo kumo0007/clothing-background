@@ -157,6 +157,91 @@ describe('segmentWithBgRemoveSdk (mocked SDK)', () => {
       segmentWithBgRemoveSdk(new Blob([new Uint8Array([1])]), 2, 1),
     ).rejects.toThrow(/timed out/i)
   })
+
+  it('recovers the shared worker after a hung process so the next image can run', async () => {
+    preloadMock.mockResolvedValue({ device: 'wasm' })
+    processMock
+      .mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            setTimeout(
+              () =>
+                reject(new Error('Local inference timed out after 120s.')),
+              0,
+            )
+          }),
+      )
+      .mockResolvedValueOnce({
+        blob: makeTransparentPngBlob(2, 1, () => 255),
+        width: 2,
+        height: 1,
+      })
+
+    const { createBgRemover } = await import('bg-remove-sdk')
+    const {
+      segmentWithBgRemoveSdk,
+      resetSharedBgRemoverForTests,
+      getBgRemoveDiagnosticSnapshot,
+      resetBgRemoveDiagnosticsForTests,
+    } = await import('./bgRemoveSdk')
+    resetSharedBgRemoverForTests()
+    resetBgRemoveDiagnosticsForTests()
+    vi.mocked(createBgRemover).mockClear()
+
+    await expect(
+      segmentWithBgRemoveSdk(new Blob([new Uint8Array([1])]), 2, 1),
+    ).rejects.toThrow(/timed out/i)
+    expect(disposeMock).toHaveBeenCalled()
+    expect(
+      getBgRemoveDiagnosticSnapshot().events.some(
+        (e) => e.type === 'recover_worker',
+      ),
+    ).toBe(true)
+
+    // Fresh shared instance after recover.
+    await expect(
+      segmentWithBgRemoveSdk(new Blob([new Uint8Array([2])]), 2, 1),
+    ).resolves.toMatchObject({ genuineModelInference: true })
+    expect(createBgRemover).toHaveBeenCalled()
+  })
+
+  it('records process diagnostics without image payloads', async () => {
+    preloadMock.mockResolvedValue({ device: 'webgpu' })
+    processMock.mockImplementation(
+      (_blob: Blob, _fmt: string, onProgress?: (p: { stage: string }) => void) => {
+        onProgress?.({ stage: 'Running model…' })
+        return Promise.resolve({
+          blob: makeTransparentPngBlob(2, 1, () => 200),
+          width: 2,
+          height: 1,
+        })
+      },
+    )
+    const {
+      segmentWithBgRemoveSdk,
+      resetSharedBgRemoverForTests,
+      getBgRemoveDiagnosticSnapshot,
+      resetBgRemoveDiagnosticsForTests,
+      formatSdkProcessStage,
+    } = await import('./bgRemoveSdk')
+    resetSharedBgRemoverForTests()
+    resetBgRemoveDiagnosticsForTests()
+
+    const stages: string[] = []
+    await segmentWithBgRemoveSdk(new Blob([new Uint8Array([1])]), 2, 1, {
+      onProgress: (e) => {
+        if (e.kind === 'sdk-process') stages.push(e.stage)
+      },
+    })
+
+    expect(formatSdkProcessStage('Running model…')).toMatch(/on-device inference/i)
+    expect(stages.some((s) => /on-device inference/i.test(s))).toBe(true)
+    const snap = getBgRemoveDiagnosticSnapshot()
+    expect(snap.lastDevice).toBe('webgpu')
+    expect(snap.events.some((e) => e.type === 'process_start')).toBe(true)
+    expect(snap.events.some((e) => e.type === 'process_done')).toBe(true)
+    expect(JSON.stringify(snap)).not.toMatch(/IMG_|password|token|VITE_/i)
+  })
 })
 
 describe('SDK mask + manual edit / undo', () => {

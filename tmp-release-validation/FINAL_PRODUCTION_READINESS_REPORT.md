@@ -1,11 +1,13 @@
 # Final production readiness report — Garment Background Studio
 
-**Date:** 2026-10-26 (implementation freeze / external blocker tracking)  
-**Production model:** `bg-remove-sdk` + BRIA RMBG-1.4 — **frozen / unchanged**  
+**Date:** 2026-10-26 (updated — iPhone 15 Safari stall diagnostics)  
+**Production model:** `bg-remove-sdk` + BRIA RMBG-1.4 — **unchanged**  
 **Commercial verdict:** **NOT READY FOR COMMERCIAL PRODUCTION**
 
 **Handoff:** [`COMMERCIAL_RELEASE_HANDOFF.md`](./COMMERCIAL_RELEASE_HANDOFF.md)  
-**Human evidence procedure:** [`HUMAN_REVIEW_EVIDENCE_PROCEDURE.md`](./HUMAN_REVIEW_EVIDENCE_PROCEDURE.md)
+**Human evidence procedure:** [`HUMAN_REVIEW_EVIDENCE_PROCEDURE.md`](./HUMAN_REVIEW_EVIDENCE_PROCEDURE.md)  
+**iPhone stall diagnostics:** [`IPHONE15_SAFARI_DIAGNOSTIC_REPORT.md`](./IPHONE15_SAFARI_DIAGNOSTIC_REPORT.md)  
+**Browser compatibility:** [`BROWSER_COMPATIBILITY_REPORT.md`](./BROWSER_COMPATIBILITY_REPORT.md) — Firefox 131 probe: UI renders; blank page **not reproduced**
 
 **Companion docs:**
 
@@ -39,17 +41,20 @@
 
 ---
 
-## 2. Commands executed (this freeze pass)
+## 2. Commands executed (latest — iPhone stall pass)
 
 | Command | Exit | Detail |
 | --- | ---: | --- |
-| Focused vitest (model freeze + license status + gate wiring) | **0** | **19** tests / **3** files — production still `bg-remove-sdk-rmbg1.4` / `briaai/RMBG-1.4` |
-| `npm run gate:commercial` | **0** | Informational; status **unresolved**; outcome **blocked** |
-| `npm run gate:commercial:require` | **1** | Expected — BLOCKED bookkeeping status=unresolved |
-| Full `npm run verify:release` | **Not re-run** this freeze (docs-only; no production code changes) | Last prior run: exit **0**, **312** tests / **48** files |
-| Full `npm run verify:commercial-release` | **Not re-run** this freeze | Last prior run: exit **1** (expected); require gate reconfirmed above |
+| `npm run typecheck` | **0** | |
+| `npm test` | **0** | **318** tests / **49** files |
+| `npm run build` | **0** | Production build OK |
+| Physical iPhone 15 Safari retest | **NOT RUN** | See `IPHONE15_SAFARI_DIAGNOSTIC_REPORT.md` |
 
-Docs-only freeze: full suite not re-executed. Require-gate behavior confirmed via `gate:commercial:require`.
+Commercial authorization remains **UNVERIFIED**; prior `verify:commercial-release` exit **1** still expected until human review.
+
+### iPhone 15 Safari note
+
+Client stall (`Running model…`, 0 masked / 8 pending) was investigated. **`Running model…` = on-device inference**, not download. In-repo fixes: pending counters exclude in-flight work; worker **recover** after timeout so the batch is not blocked by a hung SDK queue; privacy-safe diagnostics + heartbeat progress. **Not claimed fixed on device** — physical retest required.
 
 ---
 

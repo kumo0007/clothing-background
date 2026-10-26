@@ -4,8 +4,10 @@ import './BatchPanel.css'
 type BatchPanelProps = {
   imageCount: number
   maskedCount: number
-  /** Images still waiting for a first successful auto-mask. */
+  /** Images still waiting for a first successful auto-mask (excludes in-flight). */
   pendingCount?: number
+  /** Images currently loading the model or running inference. */
+  runningCount?: number
   /** Images still flagged for operator QC after auto-mask. */
   reviewCount?: number
   /** Images whose last auto-mask attempt failed. */
@@ -28,6 +30,7 @@ export function BatchPanel({
   imageCount,
   maskedCount,
   pendingCount = 0,
+  runningCount = 0,
   reviewCount = 0,
   failedCount = 0,
   busy,
@@ -56,9 +59,9 @@ export function BatchPanel({
         <div className="batch-panel__title">
           <h2 id="batch-heading">Batch</h2>
           <p className="batch-panel__hint">
-            On-device RMBG (first run ~88&nbsp;MB). JPEG/PNG/WebP only — iPhone
-            HEIC must be exported as JPEG (Most Compatible) before upload.
-            Check Review badges, then export.
+            On-device RMBG (first run ~88&nbsp;MB; inference can take minutes on
+            iPhone). Keep the Safari tab open. JPEG/PNG/WebP only — HEIC must
+            be exported as JPEG (Most Compatible) before upload.
           </p>
         </div>
         <div className="batch-panel__stats" aria-label="Batch status">
@@ -68,6 +71,14 @@ export function BatchPanel({
           <span className="batch-panel__stat" data-testid="batch-masked-count">
             <strong>{maskedCount}</strong> masked
           </span>
+          {runningCount > 0 ? (
+            <span
+              className="batch-panel__stat"
+              data-testid="batch-running-count"
+            >
+              <strong>{runningCount}</strong> running
+            </span>
+          ) : null}
           {pendingCount > 0 ? (
             <span
               className="batch-panel__stat batch-panel__stat--pending"

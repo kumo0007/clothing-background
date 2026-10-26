@@ -1,0 +1,16 @@
+{
+  "firefox": {
+    "browser": "firefox",
+    "url": "https://garment-background-studio.vercel.app/",
+    "title": "Garment Background Studio",
+    "rootChildCount": 1,
+    "rootTextSample": "Skip to contentGarment Background StudioUpload clothing photos, auto-mask on-device with a local AI model (no API key; images stay in the browser), swap in a shared background, and export a ZIP. Original garment RGB stays untouched — only t",
+    "hasAppHeading": true,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failedRequests": []
+  },
+  "chromium": {
+    "error": "browserType.launch: Executable doesn't exist at C:\\Users\\KUMO\\AppData\\Local\\ms-playwright\\chromium-1140\\chrome-win\\chrome.exe\n╔═════════════════════════════════════════════════════════════════════════╗\n║ Looks like Playwright Test or Playwright was just installed or updated. ║\n║ Please run the following command to download new browsers:              ║\n║                                                                         ║\n║     npx playwright install                                              ║\n║                                                                         ║\n║ <3 Playwright Team                                                      ║\n╚═════════════════════════════════════════════════════════════════════════╝"
+  }
+}

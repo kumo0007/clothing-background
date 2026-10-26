@@ -7,6 +7,11 @@ export default defineConfig({
   // Do not set Cross-Origin-Embedder-Policy: require-corp here — it blocks
   // Hugging Face CDN model fetches used by bg-remove-sdk / transformers.js
   // unless every asset sends Cross-Origin-Resource-Policy.
+  build: {
+    // Explicit modern-evergreen target (includes current Firefox modules).
+    // Auto-mask still needs Worker + OffscreenCanvas (SDK); UI must boot without them.
+    target: ['es2022', 'firefox105', 'chrome105', 'safari16.4', 'edge105'],
+  },
   optimizeDeps: {
     include: [
       'bg-remove-sdk',

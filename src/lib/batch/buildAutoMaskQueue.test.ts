@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildAutoMaskQueue,
+  countInFlightMasks,
   countPendingMasks,
 } from './buildAutoMaskQueue'
 import type { UploadedImage } from '../../types'
@@ -67,13 +68,24 @@ describe('buildAutoMaskQueue', () => {
     ).toEqual(['b'])
   })
 
-  it('countPendingMasks excludes masked and failed', () => {
+  it('countPendingMasks excludes masked, failed, and in-flight', () => {
     const projects = {
       a: project({}),
       b: project({ hasEdits: true }),
       c: project({ autoFailed: true }),
-      d: project({ processingPhase: 'pending' }),
+      d: project({ processingPhase: 'processing' }),
     }
-    expect(countPendingMasks(images, projects)).toBe(2)
+    // a pending; b masked; c failed; d in-flight → 1 pending
+    expect(countPendingMasks(images, projects)).toBe(1)
+  })
+
+  it('countInFlightMasks counts loading-model and processing only', () => {
+    const projects = {
+      a: project({ processingPhase: 'loading-model' }),
+      b: project({ processingPhase: 'processing' }),
+      c: project({ processingPhase: 'pending' }),
+      d: project({ hasEdits: true }),
+    }
+    expect(countInFlightMasks(images, projects)).toBe(2)
   })
 })

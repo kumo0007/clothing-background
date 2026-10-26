@@ -1,0 +1,82 @@
+{
+  "url": "https://garment-background-studio.vercel.app/",
+  "docCsp": {
+    "metas": [
+      {
+        "httpEquiv": "",
+        "name": null,
+        "content": ""
+      },
+      {
+        "httpEquiv": "",
+        "name": "viewport",
+        "content": "width=device-width, initial-scale=1.0"
+      }
+    ],
+    "scripts": [
+      {
+        "src": "https://garment-background-studio.vercel.app/assets/index-DnmKjkLx.js",
+        "type": "module",
+        "crossOrigin": "anonymous"
+      }
+    ],
+    "rootChildren": 1,
+    "title": "Garment Background Studio",
+    "hasHeading": true
+  },
+  "violationLog": [],
+  "consoleMsgs": [],
+  "pageErrors": [],
+  "responseHeaders": {
+    "https://garment-background-studio.vercel.app/": {
+      "accept-ranges": "bytes",
+      "access-control-allow-origin": "*",
+      "age": "87",
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-disposition": "inline",
+      "content-type": "text/html; charset=utf-8",
+      "date": "Mon, 26 Oct 2026 02:03:29 GMT",
+      "etag": "\"2f5e45aac1cbb14b32992c2d1ba4ce45\"",
+      "last-modified": "Mon, 26 Oct 2026 02:02:01 GMT",
+      "server": "Vercel",
+      "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+      "x-vercel-cache": "HIT",
+      "x-vercel-id": "bom1::rmqpm-1792980209036-823f7ae99550",
+      "content-length": "475",
+      "x-firefox-spdy": "h2"
+    },
+    "https://garment-background-studio.vercel.app/assets/index-DnmKjkLx.js": {
+      "access-control-allow-origin": "*",
+      "age": "61",
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-disposition": "inline; filename=\"index-DnmKjkLx.js\"",
+      "content-encoding": "br",
+      "content-type": "application/javascript; charset=utf-8",
+      "date": "Mon, 26 Oct 2026 02:03:29 GMT",
+      "etag": "W/\"f9471a503aadc34f9734790ec7956e8c\"",
+      "last-modified": "Mon, 26 Oct 2026 02:02:28 GMT",
+      "server": "Vercel",
+      "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+      "x-vercel-cache": "HIT",
+      "x-vercel-id": "bom1::qmwkv-1792980209307-7c590c643bf3",
+      "x-firefox-spdy": "h2"
+    },
+    "https://garment-background-studio.vercel.app/assets/index-BsYJiPwY.css": {
+      "access-control-allow-origin": "*",
+      "age": "0",
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-disposition": "inline; filename=\"index-BsYJiPwY.css\"",
+      "content-encoding": "br",
+      "content-type": "text/css; charset=utf-8",
+      "date": "Mon, 26 Oct 2026 02:03:29 GMT",
+      "etag": "W/\"a3162c0ca5b5b0924bcc7c4db34fc20d\"",
+      "last-modified": "Mon, 26 Oct 2026 02:03:29 GMT",
+      "server": "Vercel",
+      "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+      "x-vercel-cache": "MISS",
+      "x-vercel-id": "bom1::scch7-1792980209309-e06dc78417cc",
+      "x-firefox-spdy": "h2"
+    }
+  },
+  "cspViolations": []
+}

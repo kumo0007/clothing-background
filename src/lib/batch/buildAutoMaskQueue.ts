@@ -46,6 +46,15 @@ export function buildAutoMaskQueue(
   return eligible(selected) ? [selected] : []
 }
 
+function isInFlightPhase(phase: MaskStateMeta['processingPhase']): boolean {
+  return phase === 'processing' || phase === 'loading-model'
+}
+
+/**
+ * Images waiting for a first successful auto-mask and not currently running.
+ * In-flight (`processing` / `loading-model`) are excluded so the UI does not
+ * look stuck at “8 pending” while image 1 is actually inferencing.
+ */
 export function countPendingMasks(
   images: UploadedImage[],
   projects: Record<string, ProjectLike | undefined>,
@@ -54,6 +63,19 @@ export function countPendingMasks(
     const meta = projects[image.id]?.maskMeta
     if (meta?.hasEdits && !meta.autoFailed) return count
     if (meta?.autoFailed) return count
+    if (isInFlightPhase(meta?.processingPhase)) return count
     return count + 1
+  }, 0)
+}
+
+/** Images currently loading the model or running inference. */
+export function countInFlightMasks(
+  images: UploadedImage[],
+  projects: Record<string, ProjectLike | undefined>,
+): number {
+  return images.reduce((count, image) => {
+    const meta = projects[image.id]?.maskMeta
+    if (isInFlightPhase(meta?.processingPhase)) return count + 1
+    return count
   }, 0)
 }

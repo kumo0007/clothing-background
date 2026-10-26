@@ -93,3 +93,48 @@ select:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+.app-boot-error {
+  max-width: 40rem;
+  margin: 2rem auto;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--border-strong, #aeb8c4);
+  border-radius: var(--radius, 12px);
+  background: var(--panel, #fff);
+  color: var(--text, #14181f);
+  box-shadow: var(--shadow-md, 0 8px 24px rgba(20, 24, 31, 0.08));
+}
+
+.app-boot-error h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+}
+
+.app-boot-error p {
+  margin: 0 0 0.75rem;
+  color: var(--text-muted, #5a6573);
+}
+
+.app-boot-error__detail {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  overflow: auto;
+  font-size: 0.85rem;
+  background: var(--uploader, #f7f9fb);
+  border-radius: 8px;
+}
+
+.app-boot-error__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.app-boot-error__actions button {
+  cursor: pointer;
+  border: 1px solid var(--border, #d5dce0);
+  border-radius: 8px;
+  padding: 0.45rem 0.85rem;
+  background: var(--button, #eef1f4);
+  color: var(--text, #14181f);
+}

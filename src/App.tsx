@@ -9,6 +9,7 @@ import { ReviewDiagnosticsPanel } from './components/ReviewDiagnosticsPanel'
 import { autoMaskCornersForImage } from './lib/batch/autoMaskCorners'
 import {
   buildAutoMaskQueue,
+  countInFlightMasks,
   countPendingMasks,
 } from './lib/batch/buildAutoMaskQueue'
 import type { MaskDiagnosticSummary } from './types/mask'
@@ -108,6 +109,11 @@ function App() {
 
   const pendingCount = useMemo(
     () => countPendingMasks(images, projects),
+    [images, projects],
+  )
+
+  const runningCount = useMemo(
+    () => countInFlightMasks(images, projects),
     [images, projects],
   )
 
@@ -561,7 +567,11 @@ function App() {
             }
           })
           if (!isCurrent()) return
-          setBatchProgress(`Model ready (${device}). Starting batch…`)
+          // Clear loading-model on the whole queue so only the active image shows running.
+          markQueuePhase('pending')
+          setBatchProgress(
+            `Model ready (${device}). Starting batch… Keep this tab open on iPhone.`,
+          )
         } catch (initErr) {
           const message =
             initErr instanceof Error
@@ -1038,6 +1048,7 @@ function App() {
             imageCount={images.length}
             maskedCount={maskedCount}
             pendingCount={pendingCount}
+            runningCount={runningCount}
             reviewCount={reviewCount}
             failedCount={failedCount}
             busy={batchBusy}
