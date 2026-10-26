@@ -242,62 +242,91 @@
   pointer-events: none;
 }
 
-.uploader__label {
-  position: relative;
-  z-index: 0;
+.uploader__copy {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  cursor: pointer;
-  /* Ensure the absolute file input has a non-zero box to cover. */
-  min-height: 7.5rem;
 }
 
 .uploader__title {
+  margin: 0;
   font-weight: 600;
-  pointer-events: none;
 }
 
 .uploader__hint {
+  margin: 0;
   color: var(--text-muted);
   font-size: 0.88rem;
   line-height: 1.4;
-  pointer-events: none;
 }
 
 .uploader__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.35rem;
-  pointer-events: none;
-}
-
-.uploader__choose {
-  /* Decorative — real taps go to .uploader__input above. */
-  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  user-select: none;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
-.uploader__input {
-  /*
-    Full-bleed over the label. Must stay "visible" to WebKit (not clip /
-    display:none / 0×0) or iOS ignores activation. opacity 0.01 is enough.
-  */
-  position: absolute;
-  inset: 0;
-  z-index: 1;
+/*
+  Native file control — iOS Safari opens Photos from ::file-selector-button.
+  Do not cover this with opacity overlays or call input.click() from JS.
+*/
+.uploader__native-file {
+  display: block;
   width: 100%;
-  height: 100%;
+  max-width: 100%;
   margin: 0;
   padding: 0;
   border: 0;
-  opacity: 0.01;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 16px; /* avoid iOS zoom on focus */
+  line-height: 1.2;
+}
+
+.uploader__native-file::file-selector-button,
+.uploader__native-file::-webkit-file-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0.75rem 0 0;
+  padding: 0.65rem 1.1rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent, #1f6b4a);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.2;
   cursor: pointer;
-  font-size: 16px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.uploader__native-file:disabled::file-selector-button,
+.uploader__native-file:disabled::-webkit-file-upload-button {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.uploader__native-file:focus-visible {
+  outline: 2px solid var(--accent, #1f6b4a);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .gallery-empty {

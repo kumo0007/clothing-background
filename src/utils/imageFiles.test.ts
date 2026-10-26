@@ -7,10 +7,10 @@ import {
 } from './imageFiles'
 
 describe('IMAGE_FILE_ACCEPT', () => {
-  it('includes image/* and HEIC so iPhone Photos can hand files to JS', () => {
+  it('stays short with image/* so iPhone Photos can open the picker', () => {
     expect(IMAGE_FILE_ACCEPT).toMatch(/image\/\*/)
     expect(IMAGE_FILE_ACCEPT).toMatch(/\.heic/i)
-    expect(IMAGE_FILE_ACCEPT).toMatch(/image\/heic/i)
+    expect(IMAGE_FILE_ACCEPT.length).toBeLessThan(40)
   })
 })
 
