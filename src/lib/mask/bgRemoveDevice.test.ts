@@ -3,8 +3,10 @@ import {
   describeDevicePreference,
   isAppleMobileUserAgent,
   isSafariFamilyUserAgent,
+  isWasmBackendOutOfMemoryFailure,
   isWebGpuBackendInitFailure,
   resolvePreferredBgRemoveDevice,
+  resolvePreferredBgRemoveDtype,
 } from './bgRemoveDevice'
 
 describe('bgRemoveDevice', () => {
@@ -45,6 +47,29 @@ describe('bgRemoveDevice', () => {
         'no available backend found. ERR: [wasm] Error: boom',
       ),
     ).toBe(false)
+  })
+
+  it('classifies WASM backend Out of memory during init', () => {
+    expect(
+      isWasmBackendOutOfMemoryFailure(
+        'no available backend found. ERR: [wasm] RangeError: Out of memory',
+      ),
+    ).toBe(true)
+    expect(isWasmBackendOutOfMemoryFailure('Local inference timed out')).toBe(
+      false,
+    )
+  })
+
+  it('prefers q8 weights for Apple-mobile WASM (same RMBG-1.4 repo)', () => {
+    const ua =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'
+    expect(resolvePreferredBgRemoveDtype('wasm', ua)).toBe('q8')
+    expect(
+      resolvePreferredBgRemoveDtype(
+        'auto',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/129.0.0.0 Safari/537.36',
+      ),
+    ).toBe('fp16')
   })
 
   it('describes preferences for diagnostics', () => {

@@ -16,6 +16,11 @@ describe('bgRemoveDiagnostics', () => {
       classifyBgRemoveFailure('Model download timed out after 180s.'),
     ).toBe('timeout-init')
     expect(classifyBgRemoveFailure('Model init failed (network)')).toBe('init')
+    expect(
+      classifyBgRemoveFailure(
+        'no available backend found. ERR: [wasm] RangeError: Out of memory',
+      ),
+    ).toBe('init-oom')
   })
 
   it('maps Running model… to operator-facing copy', () => {

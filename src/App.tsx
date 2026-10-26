@@ -301,18 +301,36 @@ function App() {
         `${loaded.length} image${loaded.length === 1 ? '' : 's'} uploaded · 0 masked. Tap Auto-mask all to start on-device processing.`,
       )
 
-      // Overlap HF weight download with the user reading the CTA (one shared instance).
+      // Overlap HF weight download with reading the CTA on desktop only.
+      // On Apple mobile, defer preload until Auto-mask so WASM init does not
+      // compete with freshly decoded upload buffers (fp16/WASM OOM risk).
       void import('./lib/mask/bgRemoveSdk')
-        .then(({ preloadBgRemoveModel, formatInitProgressLine }) =>
-          preloadBgRemoveModel((progress) => {
-            if (progress.kind !== 'sdk-init' || progress.status !== 'loading') {
+        .then(
+          ({
+            preloadBgRemoveModel,
+            formatInitProgressLine,
+            isAppleMobileUserAgent,
+          }) => {
+            if (
+              isAppleMobileUserAgent(
+                typeof navigator !== 'undefined' ? navigator.userAgent : '',
+                typeof navigator !== 'undefined'
+                  ? navigator.maxTouchPoints ?? 0
+                  : 0,
+              )
+            ) {
               return
             }
-            if (autoMaskInFlightRef.current) return
-            setBatchProgress(
-              `${formatInitProgressLine(progress.message, progress.ratio)} · images ready — tap Auto-mask all when you want to process.`,
-            )
-          }),
+            return preloadBgRemoveModel((progress) => {
+              if (progress.kind !== 'sdk-init' || progress.status !== 'loading') {
+                return
+              }
+              if (autoMaskInFlightRef.current) return
+              setBatchProgress(
+                `${formatInitProgressLine(progress.message, progress.ratio)} · images ready — tap Auto-mask all when you want to process.`,
+              )
+            })
+          },
         )
         .catch(() => {
           // Surface failures only when Auto-mask is pressed.

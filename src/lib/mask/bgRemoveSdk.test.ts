@@ -137,6 +137,50 @@ describe('segmentWithBgRemoveSdk (mocked SDK)', () => {
     ).rejects.toThrow(/Model init failed/i)
   })
 
+  it('retries q8 after WASM fp16 Out-of-memory backend init (same RMBG-1.4)', async () => {
+    const oom = new Error(
+      'no available backend found. ERR: [wasm] RangeError: Out of memory',
+    )
+    preloadMock.mockRejectedValueOnce(oom).mockResolvedValueOnce({ device: 'wasm' })
+    processMock.mockResolvedValue({
+      blob: makeTransparentPngBlob(2, 1, () => 255),
+      width: 2,
+      height: 1,
+    })
+
+    const { createBgRemover } = await import('bg-remove-sdk')
+    const {
+      segmentWithBgRemoveSdk,
+      resetSharedBgRemoverForTests,
+      getBgRemoveDiagnosticSnapshot,
+      resetBgRemoveDiagnosticsForTests,
+    } = await import('./bgRemoveSdk')
+    resetSharedBgRemoverForTests()
+    resetBgRemoveDiagnosticsForTests()
+    vi.mocked(createBgRemover).mockClear()
+
+    // Desktop UA → first attempt fp16; OOM triggers q8 retry.
+    const result = await segmentWithBgRemoveSdk(
+      new Blob([new Uint8Array([1])]),
+      2,
+      1,
+    )
+    expect(result.genuineModelInference).toBe(true)
+    expect(preloadMock).toHaveBeenCalledTimes(2)
+    expect(
+      getBgRemoveDiagnosticSnapshot().events.some(
+        (e) =>
+          e.type === 'backend_fallback' &&
+          e.detail?.includes('wasm-fp16-oom-retry-q8'),
+      ),
+    ).toBe(true)
+    const dtypeCalls = vi.mocked(createBgRemover).mock.calls.map(
+      (c) => (c[0] as { dtype?: string } | undefined)?.dtype,
+    )
+    expect(dtypeCalls).toContain('fp16')
+    expect(dtypeCalls).toContain('q8')
+  })
+
   it('retries WASM after a WebGPU-only backend init failure (same RMBG-1.4)', async () => {
     const webgpuErr = new Error(
       'no available backend found. ERR: [webgpu] TypeError: Importing a module script failed.',
@@ -203,7 +247,7 @@ describe('segmentWithBgRemoveSdk (mocked SDK)', () => {
     await segmentWithBgRemoveSdk(new Blob([new Uint8Array([1])]), 2, 1)
 
     expect(createBgRemover).toHaveBeenCalledWith(
-      expect.objectContaining({ device: 'wasm', dtype: 'fp16' }),
+      expect.objectContaining({ device: 'wasm', dtype: 'q8' }),
     )
     Object.defineProperty(navigator, 'userAgent', {
       configurable: true,

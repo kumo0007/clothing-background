@@ -6,7 +6,9 @@
 
 export type BgRemoveFailureStage =
   | 'init'
+  | 'init-oom'
   | 'download'
+  | 'session'
   | 'process'
   | 'decode'
   | 'timeout-init'
@@ -23,6 +25,7 @@ export type BgRemoveDiagnosticEvent = {
     | 'init_error'
     | 'backend_select'
     | 'backend_fallback'
+    | 'init_stage'
     | 'process_start'
     | 'process_progress'
     | 'process_done'
@@ -85,6 +88,17 @@ export function getBgRemoveDiagnosticSnapshot(): {
   }
 }
 
+/** Classify SDK init progress strings into allocation stages (no PII). */
+export function classifyInitProgressStage(
+  message: string | undefined,
+): 'download' | 'session' | 'runtime' | 'other' {
+  const m = (message ?? '').trim()
+  if (/Downloading/i.test(m)) return 'download'
+  if (/Initializing runtime|Loading model/i.test(m)) return 'runtime'
+  if (/Loaded |ready/i.test(m)) return 'session'
+  return 'other'
+}
+
 /** Map raw Error messages to a coarse failure stage (no PII). */
 export function classifyBgRemoveFailure(message: string): BgRemoveFailureStage {
   if (/timed out.*download|Model download timed out/i.test(message)) {
@@ -92,6 +106,13 @@ export function classifyBgRemoveFailure(message: string): BgRemoveFailureStage {
   }
   if (/timed out.*inference|Local inference timed out/i.test(message)) {
     return 'timeout-process'
+  }
+  if (
+    /Out of memory|OOM/i.test(message) &&
+    (/\[wasm\]|no available backend|Model init|backend/i.test(message) ||
+      /RangeError/i.test(message))
+  ) {
+    return 'init-oom'
   }
   if (
     /no available backend|Importing a module script failed|webgpu/i.test(
