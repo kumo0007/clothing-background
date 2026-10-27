@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Batch busy fixture</title>
+    <link rel="stylesheet" href="/src/index.css" />
+    <link rel="stylesheet" href="/src/App.css" />
+    <link rel="stylesheet" href="/src/components/BatchPanel.css" />
+  </head>
+  <body>
+    <div class="app">
+      <main class="app__main app__main--gallery">
+        <section class="panel batch-panel" data-testid="batch-panel">
+          <div class="batch-panel__header">
+            <div class="batch-panel__title">
+              <h2>Batch</h2>
+              <p class="batch-panel__hint">
+                Remove backgrounds on this device. First run downloads ~44 MB —
+                keep this tab open on Wi‑Fi.
+              </p>
+            </div>
+            <div class="batch-panel__stats" aria-label="Batch status">
+              <span class="batch-panel__stat"
+                ><strong>3</strong
+                ><span class="batch-panel__stat-label">images</span></span
+              >
+              <span class="batch-panel__stat"
+                ><strong>2</strong
+                ><span class="batch-panel__stat-label">masked</span></span
+              >
+              <span class="batch-panel__stat batch-panel__stat--running"
+                ><strong>1</strong
+                ><span class="batch-panel__stat-label">running</span></span
+              >
+              <span class="batch-panel__stat batch-panel__stat--review"
+                ><strong>1</strong
+                ><span class="batch-panel__stat-label">review</span></span
+              >
+            </div>
+          </div>
+          <div class="batch-panel__groups">
+            <div class="batch-panel__group">
+              <h3 class="batch-panel__group-title">Masking</h3>
+              <div class="batch-panel__row">
+                <button class="button button--primary" type="button">
+                  Auto-mask all
+                </button>
+                <button class="button" type="button">Retry failed</button>
+                <button class="button" type="button">Retry selected</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

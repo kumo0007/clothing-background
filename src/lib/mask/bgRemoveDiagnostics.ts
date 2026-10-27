@@ -107,7 +107,13 @@ export function classifyBgRemoveFailure(message: string): BgRemoveFailureStage {
   if (/timed out.*inference|Local inference timed out/i.test(message)) {
     return 'timeout-process'
   }
-  if (/^Load failed$/i.test(message) || /TypeError:\s*Load failed/i.test(message)) {
+  if (
+    /^Load failed$/i.test(message) ||
+    /TypeError:\s*Load failed/i.test(message) ||
+    /NetworkError when attempting to fetch resource/i.test(message) ||
+    /TypeError:\s*NetworkError/i.test(message) ||
+    /^Failed to fetch$/i.test(message)
+  ) {
     return 'download'
   }
   if (

@@ -43,6 +43,29 @@ export function isSafariFamilyUserAgent(userAgent: string): boolean {
   return true
 }
 
+/** Desktop Firefox or Firefox on iOS (FxiOS). */
+export function isFirefoxUserAgent(userAgent: string): boolean {
+  return /Firefox\//i.test(userAgent) || /FxiOS\//i.test(userAgent)
+}
+
+/**
+ * Firefox + transformers.js workers choke on large Cache API / HTTP-cache
+ * reads of ~44MB+ ONNX (NetworkError / hung progress). Apple mobile WebKit
+ * hits the same class of failure on first-run weight download. Prefer no
+ * browser cache on those UAs.
+ * @see https://github.com/xenova/transformers.js/issues/373
+ */
+export function shouldDisableBgRemoveBrowserCache(
+  userAgent: string = typeof navigator !== 'undefined' ? navigator.userAgent : '',
+  maxTouchPoints: number = typeof navigator !== 'undefined'
+    ? navigator.maxTouchPoints ?? 0
+    : 0,
+): boolean {
+  if (isFirefoxUserAgent(userAgent)) return true
+  if (isAppleMobileUserAgent(userAgent, maxTouchPoints)) return true
+  return false
+}
+
 /**
  * Prefer WASM for the same RMBG-1.4 weights when WebGPU module import is known
  * to fail in blob workers (Apple mobile Safari family).
@@ -111,13 +134,29 @@ export function isSafariNetworkLoadFailure(message: string): boolean {
   return false
 }
 
+/**
+ * Firefox (and some WebKit) fetch failures for model weights / worker assets.
+ * Exact Firefox copy: "NetworkError when attempting to fetch resource."
+ */
+export function isWeightDownloadNetworkFailure(message: string): boolean {
+  if (isSafariNetworkLoadFailure(message)) return true
+  const m = message.trim()
+  if (!m) return false
+  if (/NetworkError when attempting to fetch resource/i.test(m)) return true
+  if (/^NetworkError$/i.test(m)) return true
+  if (/TypeError:\s*NetworkError/i.test(m)) return true
+  if (/^Failed to fetch$/i.test(m)) return true
+  if (/TypeError:\s*Failed to fetch/i.test(m)) return true
+  return false
+}
+
 /** Map opaque Safari/WebKit errors to actionable, privacy-safe copy. */
 export function formatBgRemoveInitFailureMessage(raw: string): string {
   const message = raw.trim() || 'Failed to load the local background-removal model.'
-  if (isSafariNetworkLoadFailure(message)) {
+  if (isWeightDownloadNetworkFailure(message)) {
     return (
-      `Model weight download failed (Safari: Load failed). ` +
-      `Weights should load from this site (/models/…); hard-refresh, stay on Wi‑Fi, then Retry failed. ` +
+      `Model weight download failed (${/NetworkError/i.test(message) ? 'Firefox network fetch' : 'Safari: Load failed'}). ` +
+      `Weights should load from this site (/models/… ~44MB); stay on Wi‑Fi, hard-refresh, then Retry failed. ` +
       `Inference stays on-device.`
     )
   }
@@ -130,7 +169,8 @@ export function formatBgRemoveInitFailureMessage(raw: string): string {
   if (isWasmBackendOutOfMemoryFailure(message)) {
     return (
       `Model init failed (${message}). Out of memory during WASM session init for RMBG-1.4. ` +
-      `Close other Safari tabs, then Retry failed.`
+      `Close other Safari tabs and apps, hard-refresh this page on Wi‑Fi, then Retry failed. ` +
+      `If it still fails, try 1–2 photos at a time.`
     )
   }
   if (isWebGpuBackendInitFailure(message)) {
@@ -185,18 +225,43 @@ export function resolvePreferredBgRemoveDtype(
   return 'fp16'
 }
 
+export type YieldForWasmMemoryOptions = {
+  /**
+   * Extra GC windows for Safari after a failed WASM session (fragmented heap).
+   * Prefer this before a cold q8 retry.
+   */
+  intensive?: boolean
+}
+
 /** Yield so Safari can reclaim memory after worker dispose / before WASM init. */
-export async function yieldForWasmMemoryPressure(): Promise<void> {
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, 0)
-  })
-  await new Promise<void>((resolve) => {
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => resolve())
-    } else {
-      setTimeout(resolve, 16)
+export async function yieldForWasmMemoryPressure(
+  options?: YieldForWasmMemoryOptions,
+): Promise<void> {
+  const intensive = options?.intensive === true
+  const rounds = intensive ? 5 : 1
+  for (let i = 0; i < rounds; i += 1) {
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, intensive ? 40 * (i + 1) : 0)
+    })
+    await new Promise<void>((resolve) => {
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => resolve())
+      } else {
+        setTimeout(resolve, 16)
+      }
+    })
+  }
+  // Optional engine GC (Chrome --js-flags=--expose-gc; no-op elsewhere).
+  const maybeGc = (
+    globalThis as typeof globalThis & { gc?: () => void }
+  ).gc
+  if (intensive && typeof maybeGc === 'function') {
+    try {
+      maybeGc()
+    } catch {
+      // ignore
     }
-  })
+  }
 }
 
 export function describeDevicePreference(

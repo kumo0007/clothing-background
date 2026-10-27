@@ -16,11 +16,17 @@ import {
   type InitState,
 } from 'bg-remove-sdk'
 import type { MaskPixelBuffer } from '../../types/mask'
-import { maskFromTransparentRgba } from './apiTransparentPngMask'
+import {
+  maskFromTransparentRgba,
+  resizeMaskNearest,
+} from './apiTransparentPngMask'
 import { reviewSdkMask } from './sdkMaskReview'
+import { repairSdkUnderRecall } from './sdkUnderRecallRepair'
 import { imageDataFromObjectUrl } from '../image/imageDataFromUrl'
 import { downscaleBlobForInference } from '../image/downscaleBlobForInference'
 import { withTimeout } from '../async/withTimeout'
+import { withActivityTimeout } from '../async/withActivityTimeout'
+import { warmSameOriginQ8Weights } from './warmSameOriginWeights'
 import {
   noteBgRemoveInitProgress,
   noteBgRemoveProcessMs,
@@ -36,11 +42,13 @@ import {
   describeDevicePreference,
   describeWeightDtype,
   formatBgRemoveInitFailureMessage,
-  isSafariNetworkLoadFailure,
   isWasmBackendOutOfMemoryFailure,
+  isAppleMobileUserAgent,
   isWebGpuBackendInitFailure,
+  isWeightDownloadNetworkFailure,
   resolvePreferredBgRemoveDevice,
   resolvePreferredBgRemoveDtype,
+  shouldDisableBgRemoveBrowserCache,
   yieldForWasmMemoryPressure,
   type BgRemoveDevicePreference,
   type BgRemoveWeightDtype,
@@ -69,6 +77,8 @@ export {
   isWasmBackendOutOfMemoryFailure,
   isWasmModuleImportFailure,
   isAppleMobileUserAgent,
+  isWeightDownloadNetworkFailure,
+  shouldDisableBgRemoveBrowserCache,
   isSafariFamilyUserAgent,
   describeDevicePreference,
   describeWeightDtype,
@@ -95,10 +105,21 @@ export const BG_REMOVE_WORKER_URL_PATH = '/bg-remove-worker.js'
  */
 export const DEFAULT_BG_REMOVE_HF_MODEL_ID = 'briaai/RMBG-1.4'
 
-/** First-download of ~88 MB fp16 weights on mobile networks can be slow. */
-export const BG_REMOVE_PRELOAD_TIMEOUT_MS = 180_000
+/**
+ * First download of ~44 MB q8 weights on mobile Safari is often slow
+ * (multi-minute on constrained routes to the deployment edge).
+ * Idle = no init/download progress; max = absolute ceiling.
+ */
+export const BG_REMOVE_PRELOAD_IDLE_MS = 180_000
+export const BG_REMOVE_PRELOAD_MAX_MS = 600_000
+/** @deprecated Use {@link BG_REMOVE_PRELOAD_MAX_MS} — kept for diagnostics copy. */
+export const BG_REMOVE_PRELOAD_TIMEOUT_MS = BG_REMOVE_PRELOAD_MAX_MS
 /** Per-image worker inference (WASM on phones is the slow path). */
 export const BG_REMOVE_PROCESS_TIMEOUT_MS = 120_000
+
+function preloadTimeoutMessage(): string {
+  return `Model download timed out (no progress for ${Math.round(BG_REMOVE_PRELOAD_IDLE_MS / 1000)}s, or over ${Math.round(BG_REMOVE_PRELOAD_MAX_MS / 1000)}s total). Stay on Wi‑Fi, keep this Safari tab open, then tap Auto-mask again.`
+}
 
 /**
  * Allow only RMBG-1.4 weight locations (default HF id or mirrors that still
@@ -223,11 +244,13 @@ function buildRemoverOptions(
     ? 'q8'
     : dtype
   const workerUrl = resolveBgRemoveWorkerUrl()
+  // Firefox workers NetworkError on large Cache API / HTTP-cache ONNX reads.
+  const useBrowserCache = !shouldDisableBgRemoveBrowserCache()
   return {
     device,
     // SDK public types list fp16|fp32; q8 is valid at runtime for transformers.js.
     dtype: effectiveDtype as 'fp16' | 'fp32',
-    useBrowserCache: true,
+    useBrowserCache,
     // Optional self-hosted / mirrored RMBG-1.4 weights only (see allowlist).
     ...(modelId ? { modelId } : {}),
     ...(workerUrl ? { workerUrl } : {}),
@@ -308,16 +331,24 @@ export async function clearBgRemoveModelCache(
 }
 
 let safariLoadFailedCacheRetryUsed = false
+/** One cold q8 retry after Safari WASM session OOM (heap fragmentation). */
+let wasmQ8OomRetryUsed = false
 
 /** Test helper — allow another Cache-API retry after Load failed. */
 export function resetSafariLoadFailedCacheRetryForTests(): void {
   safariLoadFailedCacheRetryUsed = false
 }
 
+/** Test helper — allow another q8 OOM cold retry. */
+export function resetWasmQ8OomRetryForTests(): void {
+  wasmQ8OomRetryUsed = false
+}
+
 /** Test / teardown helper. */
 export function resetSharedBgRemoverForTests(): void {
   recoverSharedBgRemover('test-reset')
   resetSafariLoadFailedCacheRetryForTests()
+  resetWasmQ8OomRetryForTests()
 }
 
 /**
@@ -337,12 +368,24 @@ export async function preloadBgRemoveModel(
       : resolvePreferredBgRemoveDtype(attemptedDevice))
 
   // Let Safari reclaim memory from prior workers / decoded frames before WASM grow.
-  if (attemptedDevice === 'wasm' || attemptedDtype === 'q8') {
-    await yieldForWasmMemoryPressure()
+  // Apple mobile needs a longer window — session OOM is usually heap fragmentation.
+  const appleMobile =
+    typeof navigator !== 'undefined' &&
+    isAppleMobileUserAgent(
+      navigator.userAgent,
+      navigator.maxTouchPoints ?? 0,
+    )
+  if (attemptedDevice === 'wasm' || attemptedDtype === 'q8' || appleMobile) {
+    await yieldForWasmMemoryPressure({ intensive: appleMobile })
   }
 
   const remover = getSharedBgRemover(attemptedDevice, attemptedDtype)
+  /** Extended while bytes/init stages arrive so slow Safari downloads are not cut at 180s. */
+  let bumpPreloadActivity: () => void = () => {}
   const unsub = remover.onInit((state) => {
+    if (state.status === 'loading' || state.status === 'ready') {
+      bumpPreloadActivity()
+    }
     if (state.status === 'loading') {
       const stage = classifyInitProgressStage(state.message)
       noteBgRemoveInitProgress(state.message, state.ratio)
@@ -395,11 +438,40 @@ export async function preloadBgRemoveModel(
 
   const runPreload = async (instance: BgRemover) => {
     if (!preloadPromise) {
-      preloadPromise = withTimeout(
-        instance.preload(),
-        BG_REMOVE_PRELOAD_TIMEOUT_MS,
-        `Model download timed out after ${Math.round(BG_REMOVE_PRELOAD_TIMEOUT_MS / 1000)}s. Check network access for model weights, stay on Wi‑Fi, keep this Safari tab open, then tap Auto-mask again.`,
-      ).catch((err) => {
+      const load = (async () => {
+        // Skip HTTP-cache warm on Firefox — force-cache + worker re-read of
+        // ~44MB ONNX triggers "NetworkError when attempting to fetch resource."
+        if (
+          BG_REMOVE_SAME_ORIGIN_WEIGHTS &&
+          !shouldDisableBgRemoveBrowserCache()
+        ) {
+          try {
+            await warmSameOriginQ8Weights((progress) => {
+              bumpPreloadActivity()
+              onProgress?.({
+                kind: 'sdk-init',
+                status: 'loading',
+                message: `Downloading on-device model… ${Math.round(progress.ratio * 100)}%`,
+                ratio: Math.min(0.9, progress.ratio * 0.9),
+              })
+            })
+            bumpPreloadActivity()
+          } catch (warmErr) {
+            // Still attempt SDK preload — worker fetch may succeed.
+            console.warn('[bgRemoveSdk] same-origin weight warm failed', warmErr)
+          }
+        }
+        return instance.preload()
+      })()
+
+      preloadPromise = withActivityTimeout(load, {
+        idleMs: BG_REMOVE_PRELOAD_IDLE_MS,
+        maxMs: BG_REMOVE_PRELOAD_MAX_MS,
+        message: preloadTimeoutMessage(),
+        onCreate: ({ bump }) => {
+          bumpPreloadActivity = bump
+        },
+      }).catch((err) => {
         preloadPromise = null
         throw err
       })
@@ -547,27 +619,67 @@ export async function preloadBgRemoveModel(
       }
     }
 
-    // Safari "Load failed" after a prior CSP block often means a poisoned
-    // Cache API entry for the HF CDN redirect — clear + one cold retry.
+    // Already on q8 (same-origin mobile path): Safari often OOMs on the first
+    // WASM session grow, then succeeds after dispose + GC + cold reload.
     if (
-      isSafariNetworkLoadFailure(message) &&
+      isWasmBackendOutOfMemoryFailure(message) &&
+      attemptedDtype === 'q8' &&
+      !wasmQ8OomRetryUsed
+    ) {
+      wasmQ8OomRetryUsed = true
+      noteBgRemoveDiagnostic({
+        type: 'backend_fallback',
+        detail: 'wasm-q8-oom-dispose-clear-retry',
+        failureStage: 'session',
+        device: 'wasm',
+      })
+      recoverSharedBgRemover(message)
+      await clearBgRemoveModelCache('wasm-q8-oom')
+      await yieldForWasmMemoryPressure({ intensive: true })
+      try {
+        return await retryWith(
+          'wasm',
+          'q8',
+          'wasm-q8-oom-dispose-clear-retry',
+          'Low memory — restarting quantized model session…',
+        )
+      } catch (retryErr) {
+        const retryMessage =
+          retryErr instanceof Error
+            ? retryErr.message
+            : 'Failed to reload quantized RMBG-1.4 after out-of-memory.'
+        noteBgRemoveDiagnostic({
+          type: 'init_error',
+          detail: retryMessage.slice(0, 160),
+          failureStage: classifyBgRemoveFailure(retryMessage),
+          device: 'wasm',
+        })
+        recoverSharedBgRemover(retryMessage)
+        throw new Error(formatBgRemoveInitFailureMessage(retryMessage))
+      }
+    }
+
+    // Safari "Load failed" / Firefox "NetworkError" after a poisoned Cache API
+    // entry (large ONNX) — clear + one cold retry without relying on cache.
+    if (
+      isWeightDownloadNetworkFailure(message) &&
       !safariLoadFailedCacheRetryUsed
     ) {
       safariLoadFailedCacheRetryUsed = true
       noteBgRemoveDiagnostic({
         type: 'backend_fallback',
-        detail: 'safari-load-failed-clear-cache-retry',
+        detail: 'network-fetch-failed-clear-cache-retry',
         failureStage: 'download',
         device: attemptedDevice === 'auto' ? 'unknown' : attemptedDevice,
       })
       recoverSharedBgRemover(message)
-      await clearBgRemoveModelCache('safari-load-failed')
+      await clearBgRemoveModelCache('network-fetch-failed')
       await yieldForWasmMemoryPressure()
       try {
         return await retryWith(
           attemptedDevice,
           attemptedDtype,
-          'safari-load-failed-clear-cache-retry',
+          'network-fetch-failed-clear-cache-retry',
           'Clearing cached weights — redownloading RMBG-1.4…',
         )
       } catch (retryErr) {
@@ -588,10 +700,10 @@ export async function preloadBgRemoveModel(
 
     // Terminate hung init worker so Retry is not stuck behind it.
     recoverSharedBgRemover(message)
-    if (isSafariNetworkLoadFailure(message)) {
+    if (isWeightDownloadNetworkFailure(message)) {
       noteBgRemoveDiagnostic({
         type: 'init_error',
-        detail: 'safari-load-failed-weight-or-cdn',
+        detail: 'network-fetch-failed-weight-or-cdn',
         failureStage: 'download',
         device: attemptedDevice === 'auto' ? 'unknown' : attemptedDevice,
       })
@@ -713,7 +825,7 @@ export async function segmentWithBgRemoveSdk(
     })
     // Critical: terminate hung worker so later queue items / Retry are not blocked.
     recoverSharedBgRemover(message)
-    if (isSafariNetworkLoadFailure(message)) {
+    if (isWeightDownloadNetworkFailure(message)) {
       void clearBgRemoveModelCache('process-load-failed')
       throw new Error(formatBgRemoveInitFailureMessage(message))
     }
@@ -758,16 +870,83 @@ export async function segmentWithBgRemoveSdk(
   )
 
   // Prefer original upload RGB for review; never invent garment colors from alpha.
-  const sourceImageData =
+  let sourceImageData =
     options.sourceImageData &&
     options.sourceImageData.width === mask.width &&
     options.sourceImageData.height === mask.height
       ? options.sourceImageData
       : undefined
 
-  const review = reviewSdkMask(mask, sourceImageData, {
+  // If full-res RGB was skipped (iPhone memory), decode a capped copy for repair.
+  if (!sourceImageData) {
+    try {
+      const repairEdge = 1280
+      const long = Math.max(sourceWidth, sourceHeight)
+      const scale = long > repairEdge ? repairEdge / long : 1
+      const dw = Math.max(1, Math.round(sourceWidth * scale))
+      const dh = Math.max(1, Math.round(sourceHeight * scale))
+      const url = URL.createObjectURL(imageBlob)
+      try {
+        sourceImageData = await imageDataFromObjectUrl(url, dw, dh)
+      } finally {
+        URL.revokeObjectURL(url)
+      }
+    } catch {
+      sourceImageData = undefined
+    }
+  }
+
+  // White shirt + carpet (+ measuring tape) often under-segments: keep tape,
+  // drop body, or slice along the tape. Reclaim before review scoring.
+  let underRecallRepair: ReturnType<typeof repairSdkUnderRecall> | null = null
+  if (sourceImageData) {
+    if (
+      sourceImageData.width === mask.width &&
+      sourceImageData.height === mask.height
+    ) {
+      underRecallRepair = repairSdkUnderRecall(mask, sourceImageData)
+    } else {
+      const small = resizeMaskNearest(
+        mask,
+        sourceImageData.width,
+        sourceImageData.height,
+      )
+      underRecallRepair = repairSdkUnderRecall(small, sourceImageData)
+      if (underRecallRepair.applied) {
+        const up = resizeMaskNearest(small, mask.width, mask.height)
+        mask.data.set(up.data)
+      }
+    }
+  }
+  if (underRecallRepair?.applied) {
+    noteBgRemoveDiagnostic({
+      type: 'process_progress',
+      detail: `under-recall repair +${underRecallRepair.keepAfter - underRecallRepair.keepBefore}px`,
+      device,
+    })
+  }
+
+  const reviewImage =
+    sourceImageData &&
+    sourceImageData.width === mask.width &&
+    sourceImageData.height === mask.height
+      ? sourceImageData
+      : options.sourceImageData &&
+          options.sourceImageData.width === mask.width &&
+          options.sourceImageData.height === mask.height
+        ? options.sourceImageData
+        : undefined
+
+  const review = reviewSdkMask(mask, reviewImage, {
     resized: resized || prepared.scaled,
   })
+
+  const reviewReasons = [...review.reasons]
+  if (underRecallRepair?.applied) {
+    reviewReasons.push(
+      `under-recall repair applied (${underRecallRepair.reason})`,
+    )
+  }
 
   const t1 =
     typeof performance !== 'undefined' ? performance.now() : Date.now()
@@ -779,8 +958,8 @@ export async function segmentWithBgRemoveSdk(
     methodUsed: BG_REMOVE_SDK_METHOD,
     provider: BG_REMOVE_SDK_PROVIDER,
     confidence: review.score,
-    needsReview: review.needsReview,
-    reviewReasons: review.reasons,
+    needsReview: review.needsReview || !!underRecallRepair?.applied,
+    reviewReasons,
     findings: review.findings,
     diagnostics: review.diagnostics,
     genuineModelInference: true,

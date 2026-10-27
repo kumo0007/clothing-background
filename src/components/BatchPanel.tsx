@@ -1,4 +1,5 @@
 import type { ExportFormat } from '../lib/export/exportImage'
+import type { AutoMaskBackend } from '../lib/batch/autoMaskCorners'
 import './BatchPanel.css'
 
 type BatchPanelProps = {
@@ -13,7 +14,8 @@ type BatchPanelProps = {
   /** Images whose last auto-mask attempt failed. */
   failedCount?: number
   busy: boolean
-  progress: string | null
+  /** Kept for callers; progress text is no longer shown in the Batch UI. */
+  progress?: string | null
   exportFormat: ExportFormat
   onExportFormatChange: (format: ExportFormat) => void
   onApplyBackgroundToAll: () => void
@@ -24,6 +26,9 @@ type BatchPanelProps = {
   onExportZip: (scope: 'all' | 'masked') => void
   canApplyFromSelection: boolean
   canRetrySelected: boolean
+  /** On-device segmentation backend (default BiRefNet). */
+  autoMaskBackend?: AutoMaskBackend
+  onAutoMaskBackendChange?: (backend: AutoMaskBackend) => void
 }
 
 export function BatchPanel({
@@ -34,7 +39,7 @@ export function BatchPanel({
   reviewCount = 0,
   failedCount = 0,
   busy,
-  progress,
+  progress: _progress = null,
   exportFormat,
   onExportFormatChange,
   onApplyBackgroundToAll,
@@ -45,6 +50,8 @@ export function BatchPanel({
   onExportZip,
   canApplyFromSelection,
   canRetrySelected,
+  autoMaskBackend = 'birefnet',
+  onAutoMaskBackendChange,
 }: BatchPanelProps) {
   if (imageCount === 0) {
     return null
@@ -52,6 +59,11 @@ export function BatchPanel({
 
   const needsStart =
     !busy && pendingCount > 0 && maskedCount === 0 && failedCount === 0
+  const canAutoMask = !busy && (pendingCount > 0 || failedCount > 0)
+  const modelHint =
+    autoMaskBackend === 'birefnet'
+      ? 'BiRefNet (~94 MB first download)'
+      : 'RMBG-1.4 (~44 MB first download)'
 
   return (
     <section className="panel batch-panel" data-testid="batch-panel">
@@ -59,25 +71,52 @@ export function BatchPanel({
         <div className="batch-panel__title">
           <h2 id="batch-heading">Batch</h2>
           <p className="batch-panel__hint">
-            On-device RMBG-1.4 q8 from this site (first run ~44&nbsp;MB;
-            inference can take minutes on iPhone). Keep the Safari tab open.
-            JPEG/PNG/WebP only — HEIC must be exported as JPEG (Most
-            Compatible) before upload.
+            Remove backgrounds on this device ({modelHint}). Keep this tab open
+            on Wi‑Fi for the first run.
           </p>
+          {onAutoMaskBackendChange ? (
+            <label className="batch-panel__format batch-panel__model">
+              Masking model
+              <select
+                value={autoMaskBackend}
+                disabled={busy}
+                onChange={(e) =>
+                  onAutoMaskBackendChange(e.target.value as AutoMaskBackend)
+                }
+                data-testid="batch-auto-mask-backend"
+                aria-label="Masking model"
+              >
+                <option value="birefnet">BiRefNet (default)</option>
+                <option value="rmbg1.4">RMBG-1.4 (fallback)</option>
+              </select>
+            </label>
+          ) : null}
+          <details className="batch-panel__details">
+            <summary>Tips for iPhone &amp; file types</summary>
+            <p>
+              Processing can take a few minutes per photo on iPhone. Use
+              JPEG/PNG/WebP. HEIC: export as JPEG (Most Compatible) in Photos
+              before upload if Safari rejects it. If BiRefNet fails to load, the
+              app falls back to RMBG-1.4 and reports that in the status line.
+            </p>
+          </details>
         </div>
         <div className="batch-panel__stats" aria-label="Batch status">
           <span className="batch-panel__stat">
-            <strong>{imageCount}</strong> images
+            <strong>{imageCount}</strong>
+            <span className="batch-panel__stat-label">images</span>
           </span>
           <span className="batch-panel__stat" data-testid="batch-masked-count">
-            <strong>{maskedCount}</strong> masked
+            <strong>{maskedCount}</strong>
+            <span className="batch-panel__stat-label">masked</span>
           </span>
           {runningCount > 0 ? (
             <span
-              className="batch-panel__stat"
+              className="batch-panel__stat batch-panel__stat--running"
               data-testid="batch-running-count"
             >
-              <strong>{runningCount}</strong> running
+              <strong>{runningCount}</strong>
+              <span className="batch-panel__stat-label">running</span>
             </span>
           ) : null}
           {pendingCount > 0 ? (
@@ -85,7 +124,8 @@ export function BatchPanel({
               className="batch-panel__stat batch-panel__stat--pending"
               data-testid="batch-pending-count"
             >
-              <strong>{pendingCount}</strong> pending
+              <strong>{pendingCount}</strong>
+              <span className="batch-panel__stat-label">pending</span>
             </span>
           ) : null}
           {reviewCount > 0 ? (
@@ -93,15 +133,17 @@ export function BatchPanel({
               className="batch-panel__stat batch-panel__stat--review"
               data-testid="batch-review-count"
             >
-              <strong>{reviewCount}</strong> need review
+              <strong>{reviewCount}</strong>
+              <span className="batch-panel__stat-label">review</span>
             </span>
           ) : null}
           {failedCount > 0 ? (
             <span
-              className="batch-panel__stat batch-panel__stat--review"
+              className="batch-panel__stat batch-panel__stat--failed"
               data-testid="batch-failed-count"
             >
-              <strong>{failedCount}</strong> failed
+              <strong>{failedCount}</strong>
+              <span className="batch-panel__stat-label">failed</span>
             </span>
           ) : null}
         </div>
@@ -113,53 +155,44 @@ export function BatchPanel({
           data-testid="batch-start-cta"
           role="status"
         >
-          <p>
-            Images are uploaded but processing has <strong>not</strong> started
-            yet ({pendingCount} pending · {maskedCount} masked).
-          </p>
+          <div className="batch-panel__cta-copy">
+            <p className="batch-panel__cta-title">Ready to mask</p>
+            <p>
+              {pendingCount} photo{pendingCount === 1 ? '' : 's'} uploaded —
+              processing has not started yet.
+            </p>
+          </div>
           <button
             type="button"
-            className="button button--primary"
+            className="button button--primary batch-panel__cta-button"
             disabled={busy}
             onClick={onAutoMaskAll}
-            data-testid="batch-start-auto-mask"
+            data-testid="batch-auto-mask"
           >
             Start Auto-mask all
           </button>
         </div>
       ) : null}
 
-      <div className="batch-panel__groups">
+      <div className="batch-panel__groups" aria-busy={busy}>
         <div className="batch-panel__group">
-          <h3 className="batch-panel__group-title">Actions</h3>
+          <h3 className="batch-panel__group-title">Masking</h3>
           <div className="batch-panel__row">
-            <button
-              type="button"
-              className="button"
-              disabled={busy || !canApplyFromSelection}
-              onClick={onApplyBackgroundToAll}
-              data-testid="batch-apply-bg"
-            >
-              Apply background to all
-            </button>
-            <button
-              type="button"
-              className="button"
-              disabled={busy || !canApplyFromSelection}
-              onClick={onApplyAdjustmentsToAll}
-              data-testid="batch-apply-adjust"
-            >
-              Apply adjustments to all
-            </button>
-            <button
-              type="button"
-              className="button button--primary"
-              disabled={busy || (pendingCount === 0 && failedCount === 0)}
-              onClick={onAutoMaskAll}
-              data-testid="batch-auto-mask"
-            >
-              Auto-mask all
-            </button>
+            {!needsStart ? (
+              <button
+                type="button"
+                className="button button--primary"
+                disabled={!canAutoMask}
+                onClick={onAutoMaskAll}
+                data-testid="batch-auto-mask"
+              >
+                Auto-mask all
+              </button>
+            ) : (
+              <p className="batch-panel__group-hint">
+                Use the green Start button above to begin masking.
+              </p>
+            )}
             <button
               type="button"
               className="button"
@@ -182,6 +215,30 @@ export function BatchPanel({
         </div>
 
         <div className="batch-panel__group">
+          <h3 className="batch-panel__group-title">Apply to all</h3>
+          <div className="batch-panel__row">
+            <button
+              type="button"
+              className="button"
+              disabled={busy || !canApplyFromSelection}
+              onClick={onApplyBackgroundToAll}
+              data-testid="batch-apply-bg"
+            >
+              Apply background
+            </button>
+            <button
+              type="button"
+              className="button"
+              disabled={busy || !canApplyFromSelection}
+              onClick={onApplyAdjustmentsToAll}
+              data-testid="batch-apply-adjust"
+            >
+              Apply adjustments
+            </button>
+          </div>
+        </div>
+
+        <div className="batch-panel__group batch-panel__group--export">
           <h3 className="batch-panel__group-title">Export</h3>
           <div className="batch-panel__export">
             <label className="batch-panel__format">
@@ -214,31 +271,11 @@ export function BatchPanel({
               onClick={() => onExportZip('masked')}
               data-testid="batch-export-masked"
             >
-              Download ZIP (masked only)
+              Download ZIP (masked)
             </button>
           </div>
         </div>
       </div>
-
-      {progress || busy ? (
-        <div
-          className="batch-panel__live"
-          aria-live="polite"
-          aria-atomic="true"
-          aria-busy={busy}
-        >
-          {progress ? (
-            <p className="batch-panel__status" data-testid="batch-progress">
-              {progress}
-            </p>
-          ) : null}
-          {busy ? (
-            <p className="batch-panel__status" data-testid="batch-busy">
-              Working…
-            </p>
-          ) : null}
-        </div>
-      ) : null}
     </section>
   )
 }

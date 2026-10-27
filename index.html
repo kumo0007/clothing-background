@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>Garment Background Studio</title>
   </head>
   <body>
@@ -21,22 +24,22 @@
       >
         <h1>Loading Garment Background Studio…</h1>
         <p>
-          If this message does not go away, the browser blocked the app
-          scripts. Open
-          <code>https://garment-background-studio.vercel.app/</code>
-          in a normal top-level Firefox tab (address bar), not an IDE or
-          mobile-device preview. Use a Private Window with extensions
-          disabled, then hard-refresh (Ctrl+F5).
+          If this message stays, open the published app in Firefox (address
+          bar), not a computer VPN/LAN IP from <code>npm run dev</code>:
+        </p>
+        <p class="app-boot-error__actions">
+          <a
+            href="https://garment-background-studio.vercel.app/"
+            data-testid="boot-open-production"
+            >https://garment-background-studio.vercel.app/</a
+          >
         </p>
         <p>
-          In the Console CSP error, click the source link beside the message
-          and note the <strong>document URL</strong> shown (for example
-          <code>https://garment-background-studio.vercel.app/</code> vs
-          <code>about:srcdoc</code> / a preview origin). Production itself
-          serves <code>script-src 'self'</code>, not
-          <code>script-src 'none'</code> — a
-          <code>'none'</code> block means that browsing context has a
-          different policy (sandbox, extension, or embed).
+          A host like <code>198.18.x.x</code> is a VPN tunnel on the PC — phones
+          often cannot load the Vite module scripts there. Production serves
+          <code>script-src 'self'</code>; a Console
+          <code>script-src 'none'</code> means a sandbox/extension/embed, not
+          the live site.
         </p>
       </div>
     </div>
@@ -49,6 +52,8 @@
         </p>
       </div>
     </noscript>
+    <!-- Classic script: redirects VPN Vite IPs and watches for module failure. -->
+    <script src="/boot-guard.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

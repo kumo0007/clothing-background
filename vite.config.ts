@@ -7,6 +7,12 @@ export default defineConfig({
   // Do not set Cross-Origin-Embedder-Policy: require-corp here — it blocks
   // Hugging Face CDN model fetches used by bg-remove-sdk / transformers.js
   // unless every asset sends Cross-Origin-Resource-Policy.
+  server: {
+    // `npm run dev -- --host` prints VPN/LAN IPs (e.g. Astrill 198.18.x).
+    // Vite 6+ blocks unknown Host headers unless allowedHosts is open.
+    host: true,
+    allowedHosts: true,
+  },
   build: {
     // Explicit modern-evergreen target (includes current Firefox modules).
     // Auto-mask still needs Worker + OffscreenCanvas (SDK); UI must boot without them.

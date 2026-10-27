@@ -177,31 +177,112 @@ describe('segmentWithBgRemoveSdk (mocked SDK)', () => {
       getBgRemoveDiagnosticSnapshot().events.some(
         (e) =>
           e.type === 'backend_fallback' &&
-          e.detail?.includes('safari-load-failed-clear-cache-retry'),
+          e.detail?.includes('network-fetch-failed-clear-cache-retry'),
       ),
     ).toBe(true)
   })
 
-  it('uses same-origin q8 only — WASM OOM does not attempt fp16', async () => {
+  it('clears model cache and retries once after Firefox NetworkError', async () => {
+    preloadMock
+      .mockRejectedValueOnce(
+        new Error('NetworkError when attempting to fetch resource.'),
+      )
+      .mockResolvedValueOnce({ device: 'wasm' })
+    processMock.mockResolvedValue({
+      blob: makeTransparentPngBlob(2, 1, () => 255),
+      width: 2,
+      height: 1,
+    })
+    const {
+      segmentWithBgRemoveSdk,
+      resetSharedBgRemoverForTests,
+      getBgRemoveDiagnosticSnapshot,
+      resetBgRemoveDiagnosticsForTests,
+    } = await import('./bgRemoveSdk')
+    resetSharedBgRemoverForTests()
+    resetBgRemoveDiagnosticsForTests()
+
+    const result = await segmentWithBgRemoveSdk(
+      new Blob([new Uint8Array([1])]),
+      2,
+      1,
+    )
+    expect(result.genuineModelInference).toBe(true)
+    expect(clearModelCacheMock).toHaveBeenCalled()
+    expect(preloadMock).toHaveBeenCalledTimes(2)
+    expect(
+      getBgRemoveDiagnosticSnapshot().events.some(
+        (e) =>
+          e.type === 'backend_fallback' &&
+          e.detail?.includes('network-fetch-failed-clear-cache-retry'),
+      ),
+    ).toBe(true)
+  })
+
+  it('retries q8 once after WASM OOM (dispose + clear cache), never upgrades to fp16', async () => {
     const oom = new Error(
       'no available backend found. ERR: [wasm] RangeError: Out of memory',
     )
     preloadMock.mockRejectedValue(oom)
 
     const { createBgRemover } = await import('bg-remove-sdk')
-    const { segmentWithBgRemoveSdk, resetSharedBgRemoverForTests } =
-      await import('./bgRemoveSdk')
+    const {
+      segmentWithBgRemoveSdk,
+      resetSharedBgRemoverForTests,
+      getBgRemoveDiagnosticSnapshot,
+      resetBgRemoveDiagnosticsForTests,
+    } = await import('./bgRemoveSdk')
     resetSharedBgRemoverForTests()
+    resetBgRemoveDiagnosticsForTests()
     vi.mocked(createBgRemover).mockClear()
+    clearModelCacheMock.mockClear()
 
     await expect(
       segmentWithBgRemoveSdk(new Blob([new Uint8Array([1])]), 2, 1),
     ).rejects.toThrow(/Out of memory/i)
-    expect(preloadMock).toHaveBeenCalledTimes(1)
+    // First attempt + one cold q8 retry after dispose/clear.
+    expect(preloadMock).toHaveBeenCalledTimes(2)
+    expect(disposeMock).toHaveBeenCalled()
+    expect(clearModelCacheMock).toHaveBeenCalled()
     const dtypeCalls = vi.mocked(createBgRemover).mock.calls.map(
       (c) => (c[0] as { dtype?: string } | undefined)?.dtype,
     )
+    expect(dtypeCalls.length).toBeGreaterThanOrEqual(1)
     expect(dtypeCalls.every((d) => d === 'q8')).toBe(true)
+    expect(
+      getBgRemoveDiagnosticSnapshot().events.some(
+        (e) =>
+          e.type === 'backend_fallback' &&
+          e.detail?.includes('wasm-q8-oom-dispose-clear-retry'),
+      ),
+    ).toBe(true)
+  })
+
+  it('recovers from q8 WASM OOM on the cold retry', async () => {
+    const oom = new Error(
+      'no available backend found. ERR: [wasm] RangeError: Out of memory',
+    )
+    preloadMock
+      .mockRejectedValueOnce(oom)
+      .mockResolvedValueOnce({ device: 'wasm' })
+    processMock.mockResolvedValue({
+      blob: makeTransparentPngBlob(2, 1, () => 255),
+      width: 2,
+      height: 1,
+    })
+
+    const { segmentWithBgRemoveSdk, resetSharedBgRemoverForTests } =
+      await import('./bgRemoveSdk')
+    resetSharedBgRemoverForTests()
+
+    const result = await segmentWithBgRemoveSdk(
+      new Blob([new Uint8Array([1])]),
+      2,
+      1,
+    )
+    expect(result.genuineModelInference).toBe(true)
+    expect(result.device).toBe('wasm')
+    expect(preloadMock).toHaveBeenCalledTimes(2)
   })
 
   it('retries WASM after a WebGPU-only backend init failure (same RMBG-1.4)', async () => {

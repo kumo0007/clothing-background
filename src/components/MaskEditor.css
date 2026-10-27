@@ -238,16 +238,23 @@
 }
 
 @media (max-width: 719px) {
+  .mask-editor__header,
+  .adjust-studio__header {
+    gap: 0.55rem;
+    padding-top: 0.35rem;
+  }
+
   .mask-editor__header .button,
   .adjust-studio__header .button {
     flex: 1 1 auto;
     text-align: center;
+    min-height: 2.75rem;
   }
 
   .mask-editor__viewport,
   .adjust-studio__preview {
-    height: min(48vh, 420px);
-    min-height: 240px;
+    height: min(46vh, 400px);
+    min-height: 220px;
   }
 
   .mask-editor__side,
@@ -255,9 +262,25 @@
     max-height: none;
   }
 
+  .mask-toolbar__row,
+  .background-panel__types {
+    gap: 0.45rem;
+  }
+
   .mask-toolbar__row .button {
-    flex: 1 1 calc(33.33% - 0.35rem);
+    flex: 1 1 calc(50% - 0.45rem);
     text-align: center;
-    padding: 0.5rem 0.4rem;
+    min-height: 2.75rem;
+    padding: 0.55rem 0.5rem;
+  }
+
+  .mask-toolbar__slider input[type='range'] {
+    min-height: 2rem;
+  }
+
+  .background-panel__color input[type='text'],
+  .background-panel__fit select {
+    min-height: 2.75rem;
+    font-size: 16px;
   }
 }

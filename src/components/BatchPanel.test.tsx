@@ -6,7 +6,8 @@ import { BatchPanel } from './BatchPanel'
 afterEach(() => cleanup())
 
 describe('BatchPanel — local auto-mask UI', () => {
-  it('has no masking-method selector and describes local processing', () => {
+  it('describes local BiRefNet processing and exposes backend selector', () => {
+    const onBackend = vi.fn()
     render(
       <BatchPanel
         imageCount={2}
@@ -24,6 +25,8 @@ describe('BatchPanel — local auto-mask UI', () => {
         onExportZip={() => undefined}
         canApplyFromSelection
         canRetrySelected={false}
+        autoMaskBackend="birefnet"
+        onAutoMaskBackendChange={onBackend}
       />,
     )
 
@@ -32,18 +35,24 @@ describe('BatchPanel — local auto-mask UI', () => {
     expect(
       screen.queryByTestId('batch-auto-mask-strategy'),
     ).not.toBeInTheDocument()
-    expect(screen.queryByLabelText(/masking method/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/ISNet/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/contour-first/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/GrabCut/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Poof/i)).not.toBeInTheDocument()
-    expect(screen.getByText(/on-device/i)).toBeInTheDocument()
-    expect(screen.getByText(/RMBG/i)).toBeInTheDocument()
-    expect(screen.getByText(/HEIC/i)).toBeInTheDocument()
+    expect(screen.getByText(/on this device/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/BiRefNet/i).length).toBeGreaterThan(0)
+    expect(screen.getByTestId('batch-auto-mask-backend')).toBeInTheDocument()
+    expect(screen.getByTestId('batch-auto-mask-backend')).toHaveValue(
+      'birefnet',
+    )
     expect(screen.getByTestId('batch-start-cta')).toBeInTheDocument()
     expect(screen.getByTestId('batch-pending-count')).toHaveTextContent(
       /2.*pending/,
     )
+    expect(screen.getAllByTestId('batch-auto-mask')).toHaveLength(1)
+    expect(screen.getByText(/Tips for iPhone/i)).toBeInTheDocument()
+    expect(screen.queryByTestId('batch-progress')).toBeNull()
+    expect(screen.queryByText(/Running on-device inference/i)).toBeNull()
   })
 
   it('keeps background, export, and auto-mask actions', async () => {
@@ -75,7 +84,7 @@ describe('BatchPanel — local auto-mask UI', () => {
     )
 
     expect(screen.getByTestId('batch-review-count')).toHaveTextContent(
-      /1.*need review/,
+      /1.*review/,
     )
     expect(screen.getByTestId('batch-failed-count')).toHaveTextContent(
       /2.*failed/,

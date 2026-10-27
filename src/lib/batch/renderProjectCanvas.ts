@@ -5,6 +5,7 @@ import {
 } from '../../types/background'
 import type { UploadedImage } from '../../types'
 import { loadHtmlImage } from '../image/loadHtmlImage'
+import { isUsableKeepMask } from '../mask/maskKeepRatio'
 import { getMask } from '../mask/maskStore'
 import { renderFinal } from '../rendering/renderFinal'
 
@@ -25,12 +26,15 @@ export async function renderProjectCanvas(
   }
 
   const mask = getMask(input.image.id)
-  const useComposite = shouldCompositeResult(
-    input.hasMaskEdits,
-    mask !== undefined,
-    input.background,
-    input.adjustments.shadowOpacity,
-  )
+  const useComposite =
+    shouldCompositeResult(
+      input.hasMaskEdits,
+      mask !== undefined,
+      input.background,
+      input.adjustments.shadowOpacity,
+    ) &&
+    !!mask &&
+    isUsableKeepMask(mask)
 
   return renderFinal({
     original,

@@ -13,7 +13,9 @@ describe('bgRemoveDiagnostics', () => {
       classifyBgRemoveFailure('Local inference timed out after 120s.'),
     ).toBe('timeout-process')
     expect(
-      classifyBgRemoveFailure('Model download timed out after 180s.'),
+      classifyBgRemoveFailure(
+        'Model download timed out (no progress for 180s, or over 600s total).',
+      ),
     ).toBe('timeout-init')
     expect(classifyBgRemoveFailure('Model init failed (network)')).toBe('init')
     expect(
@@ -23,6 +25,11 @@ describe('bgRemoveDiagnostics', () => {
     ).toBe('init-oom')
     expect(classifyBgRemoveFailure('Load failed')).toBe('download')
     expect(classifyBgRemoveFailure('TypeError: Load failed')).toBe('download')
+    expect(
+      classifyBgRemoveFailure(
+        'NetworkError when attempting to fetch resource.',
+      ),
+    ).toBe('download')
   })
 
   it('maps Running model… to operator-facing copy', () => {

@@ -63,12 +63,20 @@
 html,
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 0;
   min-height: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   background:
     radial-gradient(1200px 600px at 10% -10%, var(--bg-accent), transparent 55%),
     var(--bg);
@@ -77,6 +85,10 @@ body {
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 button:focus-visible,
@@ -128,13 +140,22 @@ select:disabled {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  align-items: center;
 }
 
-.app-boot-error__actions button {
+.app-boot-error__actions button,
+.app-boot-error__actions a {
   cursor: pointer;
   border: 1px solid var(--border, #d5dce0);
   border-radius: 8px;
-  padding: 0.45rem 0.85rem;
-  background: var(--button, #eef1f4);
-  color: var(--text, #14181f);
+  padding: 0.55rem 0.9rem;
+  background: var(--accent, #0a6b4a);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.app-boot-error__actions a:visited {
+  color: #fff;
 }

@@ -6,7 +6,10 @@ import { ImageUploader } from './components/ImageUploader'
 import { MaskEditor } from './components/MaskEditor'
 import { ThumbnailGallery } from './components/ThumbnailGallery'
 import { ReviewDiagnosticsPanel } from './components/ReviewDiagnosticsPanel'
-import { autoMaskCornersForImage } from './lib/batch/autoMaskCorners'
+import {
+  autoMaskCornersForImage,
+  type AutoMaskBackend,
+} from './lib/batch/autoMaskCorners'
 import {
   buildAutoMaskQueue,
   countInFlightMasks,
@@ -15,6 +18,10 @@ import {
 import type { MaskDiagnosticSummary } from './types/mask'
 import { buildResultsZip, downloadBlob } from './lib/batch/exportZip'
 import type { ExportFormat } from './lib/export/exportImage'
+import {
+  formatBgRemoveInitFailureMessage,
+  isWeightDownloadNetworkFailure,
+} from './lib/mask/bgRemoveDevice'
 import { clearAllMasks, deleteMask, getMask } from './lib/mask/maskStore'
 import {
   createDefaultAdjustments,
@@ -34,6 +41,7 @@ import {
   filesToAttemptDecode,
   isHeicLikeFile,
   loadImageDimensions,
+  materializePickedFiles,
 } from './utils/imageFiles'
 import './App.css'
 
@@ -79,6 +87,8 @@ function App() {
   const [batchBusy, setBatchBusy] = useState(false)
   const [batchProgress, setBatchProgress] = useState<string | null>(null)
   const [zipFormat, setZipFormat] = useState<ExportFormat>('png')
+  const [autoMaskBackend, setAutoMaskBackend] =
+    useState<AutoMaskBackend>('birefnet')
   const imagesRef = useRef(images)
   imagesRef.current = images
   const sharedBackgroundsRef = useRef(sharedBackgrounds)
@@ -225,24 +235,30 @@ function App() {
 
   const handleFilesSelected = useCallback(async (files: File[]) => {
     setError(null)
-    const attempted = filesToAttemptDecode(files)
-    if (attempted.length === 0) {
-      setError(
-        describeRejectedImageFiles(files) ??
-          'No supported image files were selected.',
-      )
-      return
-    }
-
     setIsLoading(true)
     try {
+      // iOS gallery Files are path-backed; copy bytes before any createObjectURL.
+      const { files: materialized, failures: materializeFailures } =
+        await materializePickedFiles(files)
+      const attempted = filesToAttemptDecode(materialized)
+      if (attempted.length === 0) {
+        setError(
+          materializeFailures[0] ??
+            describeRejectedImageFiles(files) ??
+            'No supported image files were selected.',
+        )
+        return
+      }
+
       const loaded: UploadedImage[] = []
       const decodeFailures: string[] = []
       const heicDecodeFailures: string[] = []
       for (const file of attempted) {
+        // Object URL is built from heap-copied bytes (materializePickedFile),
+        // not the transient iOS Photos sandbox path.
         const objectUrl = URL.createObjectURL(file)
         try {
-          const { width, height } = await loadImageDimensions(objectUrl)
+          const { width, height } = await loadImageDimensions(file)
           if (width < 1 || height < 1) {
             throw new Error('zero dimensions')
           }
@@ -257,28 +273,39 @@ function App() {
         } catch {
           URL.revokeObjectURL(objectUrl)
           if (isHeicLikeFile(file)) {
-            heicDecodeFailures.push(file.name)
+            heicDecodeFailures.push(file.name || 'HEIC photo')
           } else {
-            decodeFailures.push(file.name)
+            decodeFailures.push(file.name || 'photo')
           }
         }
       }
 
       if (heicDecodeFailures.length > 0 && loaded.length === 0) {
-        setError(describeRejectedImageFiles(files))
+        setError(
+          describeRejectedImageFiles(
+            // Prefer originals so empty-type HEIC still gets conversion copy.
+            files.length > 0 ? files : materialized,
+          ) ??
+            `iPhone HEIC/HEIF could not be decoded (${heicDecodeFailures
+              .slice(0, 3)
+              .join(', ')}). Export as JPEG (Most Compatible) and re-upload.`,
+        )
       } else if (heicDecodeFailures.length > 0) {
         setError(
           `Skipped HEIC/HEIF that this browser cannot decode: ${heicDecodeFailures
             .slice(0, 3)
             .join(', ')}${heicDecodeFailures.length > 3 ? '…' : ''}. Export those as JPEG (Most Compatible) and re-upload.`,
         )
-      } else if (decodeFailures.length > 0) {
+      } else if (decodeFailures.length > 0 || materializeFailures.length > 0) {
+        const parts = [
+          ...materializeFailures.slice(0, 2),
+          ...decodeFailures.slice(0, 3).map(
+            (name) => `Could not decode ${name}`,
+          ),
+        ]
         setError(
-          `Could not decode ${decodeFailures.length} file${
-            decodeFailures.length === 1 ? '' : 's'
-          }: ${decodeFailures.slice(0, 3).join(', ')}${
-            decodeFailures.length > 3 ? '…' : ''
-          }.`,
+          parts.slice(0, 3).join(' · ') +
+            (parts.length > 3 ? '…' : ''),
         )
       }
 
@@ -301,44 +328,60 @@ function App() {
         `${loaded.length} image${loaded.length === 1 ? '' : 's'} uploaded · 0 masked. Tap Auto-mask all to start on-device processing.`,
       )
 
-      // Overlap HF weight download with reading the CTA on desktop only.
+      // Overlap weight download with reading the CTA on desktop only.
       // On Apple mobile, defer preload until Auto-mask so WASM init does not
-      // compete with freshly decoded upload buffers (fp16/WASM OOM risk).
-      void import('./lib/mask/bgRemoveSdk')
-        .then(
-          ({
-            preloadBgRemoveModel,
-            formatInitProgressLine,
-            isAppleMobileUserAgent,
-          }) => {
-            if (
-              isAppleMobileUserAgent(
-                typeof navigator !== 'undefined' ? navigator.userAgent : '',
-                typeof navigator !== 'undefined'
-                  ? navigator.maxTouchPoints ?? 0
-                  : 0,
-              )
-            ) {
-              return
-            }
-            return preloadBgRemoveModel((progress) => {
-              if (progress.kind !== 'sdk-init' || progress.status !== 'loading') {
+      // compete with freshly decoded upload buffers (OOM risk).
+      void (async () => {
+        try {
+          const { isAppleMobileUserAgent } = await import(
+            './lib/mask/bgRemoveDevice'
+          )
+          if (
+            isAppleMobileUserAgent(
+              typeof navigator !== 'undefined' ? navigator.userAgent : '',
+              typeof navigator !== 'undefined'
+                ? navigator.maxTouchPoints ?? 0
+                : 0,
+            )
+          ) {
+            return
+          }
+          if (autoMaskBackend === 'birefnet') {
+            const { preloadBirefNetModel } = await import('./lib/mask/birefNet')
+            await preloadBirefNetModel((progress) => {
+              if (
+                progress.kind !== 'birefnet-init' ||
+                progress.status !== 'loading'
+              ) {
                 return
               }
               if (autoMaskInFlightRef.current) return
               setBatchProgress(
-                `${formatInitProgressLine(progress.message, progress.ratio)} · images ready — tap Auto-mask all when you want to process.`,
+                `${progress.message ?? 'Loading BiRefNet…'} · images ready — tap Auto-mask all when you want to process.`,
               )
             })
-          },
-        )
-        .catch(() => {
+            return
+          }
+          const { preloadBgRemoveModel, formatInitProgressLine } = await import(
+            './lib/mask/bgRemoveSdk'
+          )
+          await preloadBgRemoveModel((progress) => {
+            if (progress.kind !== 'sdk-init' || progress.status !== 'loading') {
+              return
+            }
+            if (autoMaskInFlightRef.current) return
+            setBatchProgress(
+              `${formatInitProgressLine(progress.message, progress.ratio)} · images ready — tap Auto-mask all when you want to process.`,
+            )
+          })
+        } catch {
           // Surface failures only when Auto-mask is pressed.
-        })
+        }
+      })()
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [autoMaskBackend])
 
   const handleRemove = useCallback((id: string) => {
     setImages((previous) => {
@@ -564,50 +607,70 @@ function App() {
 
       try {
         markQueuePhase('loading-model')
-        // Warm the shared on-device model once (Web Worker; ~88 MB first download).
-        const { preloadBgRemoveModel, formatInitProgressLine } = await import(
-          './lib/mask/bgRemoveSdk'
-        )
         if (!isCurrent()) return
         setBatchProgress(
-          `Loading local background-removal model for ${queue.length} image${
+          `Loading ${autoMaskBackend === 'birefnet' ? 'BiRefNet' : 'RMBG-1.4'} for ${queue.length} image${
             queue.length === 1 ? '' : 's'
           }…`,
         )
         try {
-          const { device } = await preloadBgRemoveModel((progress) => {
-            if (!isCurrent()) return
-            if (progress.kind !== 'sdk-init') return
-            if (progress.status === 'loading') {
-              setBatchProgress(
-                formatInitProgressLine(progress.message, progress.ratio),
-              )
-            }
-          })
+          let deviceLabel = 'on-device'
+          if (autoMaskBackend === 'birefnet') {
+            const { preloadBirefNetModel } = await import('./lib/mask/birefNet')
+            const handle = await preloadBirefNetModel((progress) => {
+              if (!isCurrent()) return
+              if (progress.kind !== 'birefnet-init') return
+              if (progress.status === 'loading') {
+                setBatchProgress(progress.message ?? 'Loading BiRefNet…')
+              }
+            })
+            deviceLabel = handle.device
+          } else {
+            const { preloadBgRemoveModel, formatInitProgressLine } =
+              await import('./lib/mask/bgRemoveSdk')
+            const { device } = await preloadBgRemoveModel((progress) => {
+              if (!isCurrent()) return
+              if (progress.kind !== 'sdk-init') return
+              if (progress.status === 'loading') {
+                setBatchProgress(
+                  formatInitProgressLine(progress.message, progress.ratio),
+                )
+              }
+            })
+            deviceLabel = device
+          }
           if (!isCurrent()) return
           // Clear loading-model on the whole queue so only the active image shows running.
           markQueuePhase('pending')
           setBatchProgress(
-            `Model ready (${device}). Starting batch… Keep this tab open on iPhone.`,
+            `Model ready (${deviceLabel}). Starting batch… Keep this tab open on iPhone.`,
           )
         } catch (initErr) {
-          const message =
+          const raw =
             initErr instanceof Error
               ? initErr.message
               : 'Failed to load local model.'
+          const message = isWeightDownloadNetworkFailure(raw)
+            ? formatBgRemoveInitFailureMessage(raw)
+            : raw
           if (!isCurrent()) return
-          // Model never became ready — mark every queued image failed so
-          // counters leave "0 masked / 0 failed" limbo and Retry failed works.
-          markQueuePhase('failed', {
-            autoFailed: true,
-            needsReview: true,
-            reviewReason: message,
-            // Drop stale mask findings (e.g. extreme_keep_area from an earlier run).
-            diagnosticSummary: undefined,
-          })
-          setError(message)
-          setBatchProgress(`Auto-mask stopped: ${message}`)
-          return
+          if (autoMaskBackend === 'birefnet') {
+            // Per-image path can still fall back to RMBG-1.4 — do not abort batch.
+            markQueuePhase('pending')
+            setBatchProgress(
+              `BiRefNet unavailable (${message.slice(0, 100)}). Falling back to RMBG-1.4 per image…`,
+            )
+          } else {
+            markQueuePhase('failed', {
+              autoFailed: true,
+              needsReview: true,
+              reviewReason: message,
+              diagnosticSummary: undefined,
+            })
+            setError(message)
+            setBatchProgress(`Auto-mask stopped: ${message}`)
+            return
+          }
         }
 
         let reviewFlagged = 0
@@ -647,7 +710,8 @@ function App() {
               (progress) => {
                 if (!isCurrent()) return
                 if (
-                  progress.kind === 'sdk-init' &&
+                  (progress.kind === 'sdk-init' ||
+                    progress.kind === 'birefnet-init') &&
                   progress.status === 'loading'
                 ) {
                   const pct =
@@ -658,12 +722,18 @@ function App() {
                     `Loading model${pct !== undefined ? ` (${pct}%)` : ''}…`,
                   )
                 }
-                if (progress.kind === 'sdk-process') {
+                if (
+                  progress.kind === 'sdk-process' ||
+                  progress.kind === 'birefnet-process'
+                ) {
                   setBatchProgress(
                     `Auto-masking ${ordinal}/${queue.length}: ${image.name} (${progress.stage})`,
                   )
                 }
               },
+              // Pass File directly — never re-fetch blob: URLs (Firefox/iOS NetworkError).
+              image.file,
+              autoMaskBackend,
             )
             if (!isCurrent()) return
             methodsSeen.add(auto.methodUsed)
@@ -697,10 +767,13 @@ function App() {
           } catch (caught) {
             if (!isCurrent()) return
             failCount += 1
-            const message =
+            const raw =
               caught instanceof Error
                 ? caught.message
                 : 'Local SDK auto-mask failed.'
+            const message = isWeightDownloadNetworkFailure(raw)
+              ? formatBgRemoveInitFailureMessage(raw)
+              : raw
             failures.push(`${image.name}: ${message}`)
             setProjects((previous) => {
               const current = previous[image.id] ?? createProjectFields()
@@ -769,7 +842,7 @@ function App() {
         }
       }
     },
-    [selectedId],
+    [autoMaskBackend, selectedId],
   )
 
   const handleExportZip = useCallback(
@@ -843,25 +916,24 @@ function App() {
       <header className="app__header">
         <h1>Garment Background Studio</h1>
         <p>
-          Upload clothing photos, auto-mask on-device with a local AI model (no
-          API key; images stay in the browser), swap in a shared background, and
-          export a ZIP. Original garment RGB stays untouched — only the alpha
-          mask is derived.
+          Upload clothing photos, remove backgrounds on your device, add a
+          shared background, and export a ZIP. Photos stay in the browser — no
+          API key required.
         </p>
-        <ol className="app__steps" aria-label="Recommended workflow">
-          <li>Upload one or more product photos</li>
-          <li>
-            Batch → <strong>Auto-mask all</strong> (or Edit Mask to refine edges)
-            </li>
+        <details className="app__steps-wrap">
+          <summary className="app__steps-summary">How it works</summary>
+          <ol className="app__steps" aria-label="Recommended workflow">
+            <li>Upload product photos</li>
             <li>
-            In Edit Mask, set your background (color or upload your own image)
+              Tap <strong>Start Auto-mask all</strong> (or Edit Mask to refine)
             </li>
+            <li>Set a background in Edit Mask (color or your own image)</li>
             <li>
-            Batch → <strong>Apply background to all</strong>, then Adjust for
-            crop / frame / rotate / skew / color
-          </li>
-          <li>Batch → Download ZIP</li>
-        </ol>
+              Batch → <strong>Apply background</strong>, then Adjust if needed
+            </li>
+            <li>Download ZIP</li>
+          </ol>
+        </details>
       </header>
 
       {mode === 'mask' && selectedImage ? (
@@ -946,9 +1018,9 @@ function App() {
             />
           </section>
 
-          <section className="panel" aria-labelledby="preview-heading">
+          <section className="panel panel--preview" aria-labelledby="preview-heading">
             <div className="panel__heading">
-              <h2 id="preview-heading">Canvas preview</h2>
+              <h2 id="preview-heading">Preview</h2>
               <div className="panel__heading-actions">
                 <button
                   type="button"
@@ -969,17 +1041,13 @@ function App() {
                   Adjust &amp; Export
                 </button>
               </div>
-        </div>
+            </div>
             <CanvasPreview
               image={selectedImage}
               background={selectedProject?.background ?? null}
               adjustments={selectedProject?.adjustments ?? null}
               maskRevision={selectedProject?.maskMeta.revision ?? 0}
-              showResult={
-                !!selectedProject &&
-                selectedProject.background.type !== 'transparent' &&
-                selectedProject.maskMeta.hasEdits
-              }
+              showResult={!!selectedProject?.maskMeta.hasEdits}
             />
             {selectedImage &&
             selectedProject &&
@@ -1017,7 +1085,7 @@ function App() {
                 {selectedProject.maskMeta.reviewReason
                   ? `: ${selectedProject.maskMeta.reviewReason}`
                   : '.'}{' '}
-                Use Batch → Retry selected / Retry failed.
+                Use Batch → Retry failed.
               </p>
             ) : selectedProject?.maskMeta.hasEdits ? (
               <p
@@ -1040,30 +1108,30 @@ function App() {
                   .filter(Boolean)
                   .join(' · ')}
               >
-                Mask saved for this image
+                Mask saved
                 {selectedProject.maskMeta.autoMethodUsed
-                  ? ` · method ${selectedProject.maskMeta.autoMethodUsed}`
+                  ? ` · ${selectedProject.maskMeta.autoMethodUsed}`
                   : ''}
                 {selectedProject.maskMeta.hasManualEdits
                   ? ' · includes manual edits'
                   : ''}
                 {selectedProject.background.type !== 'transparent'
-                  ? ' · showing composited result'
+                  ? ' · showing result with background'
                   : ''}
                 {selectedProject.maskMeta.needsReview
                   ? selectedProject.maskMeta.reviewReason
                     ? ` · review: ${selectedProject.maskMeta.reviewReason}`
-                    : ' · review recommended (uncertain auto-mask)'
+                    : ' · review recommended'
                   : ''}
                 .
               </p>
             ) : (
               <p className="app__status">
-                Mask individually, or use Batch → Auto-mask all (on-device
-                RMBG via bg-remove-sdk).
+                Tap <strong>Start Auto-mask all</strong> below, or open Edit Mask
+                to refine one photo.
               </p>
             )}
-      </section>
+          </section>
 
           <BatchPanel
             imageCount={images.length}
@@ -1089,6 +1157,8 @@ function App() {
                 (!projects[selectedImage.id]?.maskMeta.hasEdits &&
                   !projects[selectedImage.id]?.maskMeta.hasManualEdits))
             }
+            autoMaskBackend={autoMaskBackend}
+            onAutoMaskBackendChange={setAutoMaskBackend}
           />
         </main>
       ) : null}

@@ -16,7 +16,10 @@
  *   multi-label hosts such as `us.aws.cdn.hf.co`; Safari treats `*.hf.co` as
  *   a single label only, so those redirects become `TypeError: Load failed`
  *   unless `*.cdn.hf.co` / `*.aws.cdn.hf.co` (and xet bridges) are listed.
- * - Keep object-src / frame-ancestors locked down.
+ * - Keep object-src locked down.
+ * - Do NOT set frame-ancestors 'none'. Firefox (mobile / RDM) embeds the page
+ *   and then shows: "does not allow its pages to be displayed inside another
+ *   page: the site cannot be simulated on Firefox".
  *
  * Must never ship `script-src 'none'` or `default-src 'none'` without an
  * overriding script-src that permits `'self'`.
@@ -55,7 +58,7 @@ export const CSP_DIRECTIVES: Readonly<Record<string, readonly string[]>> = {
   'object-src': ["'none'"],
   'base-uri': ["'self'"],
   'form-action': ["'self'"],
-  'frame-ancestors': ["'none'"],
+  // Intentionally omit frame-ancestors — see file header (Firefox framing).
 }
 
 export function buildContentSecurityPolicy(

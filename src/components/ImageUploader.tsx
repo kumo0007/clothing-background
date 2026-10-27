@@ -1,4 +1,10 @@
-import { useCallback, useId, useRef, useState, type DragEvent } from 'react'
+import {
+  useCallback,
+  useId,
+  useRef,
+  useState,
+  type DragEvent,
+} from 'react'
 import { IMAGE_FILE_ACCEPT } from '../utils/imageFiles'
 
 type ImageUploaderProps = {
@@ -7,8 +13,8 @@ type ImageUploaderProps = {
 }
 
 /**
- * iPhone Safari: do not use opacity overlays or programmatic input.click().
- * Style the native `::file-selector-button` — that control opens Photos.
+ * File picker must be a visible native `<input type="file">` for iPhone Safari.
+ * Drag-and-drop is also supported on desktop.
  */
 export function ImageUploader({
   onFilesSelected,
@@ -17,12 +23,17 @@ export function ImageUploader({
   const inputId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [pickerNote, setPickerNote] = useState<string | null>(null)
 
   const handleFiles = useCallback(
     (fileList: FileList | null) => {
       if (!fileList || fileList.length === 0) {
+        setPickerNote(
+          'No photos came back from the picker. Try again, or pick JPEG/PNG.',
+        )
         return
       }
+      setPickerNote(null)
       onFilesSelected(Array.from(fileList))
       if (inputRef.current) {
         inputRef.current.value = ''
@@ -67,10 +78,8 @@ export function ImageUploader({
           Upload garment images
         </p>
         <p className="uploader__hint" id={`${inputId}-hint`}>
-          Tap the green <strong>Choose File</strong> / Browse button below
-          (native iPhone control). JPEG, PNG, WebP, GIF, BMP — Safari often
-          accepts HEIC too; if not, export JPEG (Most Compatible). Upload does
-          not start masking — use Batch → Auto-mask all.
+          Tap <strong>Choose Files</strong> to open Photos or Files. Prefer
+          JPEG/PNG/WebP. Upload alone does not mask — use Batch when ready.
         </p>
       </div>
 
@@ -78,7 +87,7 @@ export function ImageUploader({
         <input
           ref={inputRef}
           id={inputId}
-          className="uploader__native-file"
+          className="uploader__file"
           type="file"
           accept={IMAGE_FILE_ACCEPT}
           multiple
@@ -89,6 +98,16 @@ export function ImageUploader({
           aria-describedby={`${inputId}-hint`}
         />
       </div>
+
+      {pickerNote ? (
+        <p
+          className="uploader__picker-note"
+          role="status"
+          data-testid="upload-picker-note"
+        >
+          {pickerNote}
+        </p>
+      ) : null}
     </div>
   )
 }

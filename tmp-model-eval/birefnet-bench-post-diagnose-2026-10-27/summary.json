@@ -1,0 +1,428 @@
+{
+  "generatedAt": "2026-10-27T02:50:20.672Z",
+  "weights": {
+    "path": "D:\\project\\public\\models\\studioludens\\birefnet-lite-512\\onnx\\model_fp16.onnx",
+    "bytes": 98484532,
+    "sha256": "eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516"
+  },
+  "runtime": {
+    "stack": "onnxruntime-web Node WASM (browser-class; WebGPU not available in this Node harness)",
+    "coldSessionMs": 16089,
+    "firstInferMs": 12151,
+    "meanWarmInferMs": 7425,
+    "sessionReuseConfirmed": true
+  },
+  "rmbgNodeProbe": "loaded D:\\project\\public\\models\\briaai\\RMBG-1.4\\onnx\\model_quantized.onnx inputs=input",
+  "fixtures": [
+    {
+      "fixture": "01_hoodie.jpg",
+      "backend": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "inputName": "input_image",
+      "outputName": "output_image",
+      "logitsLen": 262144,
+      "keepPct": 55.43,
+      "softPct": 5.08,
+      "inferMs": 12151,
+      "reuseInferMs": 7897,
+      "birefVsRefIoU": 0.9063,
+      "birefEdgeAcc": 0.5666,
+      "birefHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "labMethod": "opencv-seed-fallback",
+      "labKeepPct": 46.19,
+      "labVsRefIoU": 0.9886,
+      "labHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "rmbgInferMs": 3921,
+      "rmbgVsRefIoU": 0.9103,
+      "refCov": {
+        "definiteFg": 36210,
+        "definiteBg": 37169,
+        "uncertain": 13637,
+        "uncertainRatio": 0.1567,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "qualitativeFlags": [],
+      "note": "Reference mask is appearance+border heuristic — IoU is comparative, not absolute GT accuracy."
+    },
+    {
+      "fixture": "02_blazer.jpg",
+      "backend": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "inputName": "input_image",
+      "outputName": "output_image",
+      "logitsLen": 262144,
+      "keepPct": 55.84,
+      "softPct": 3.3,
+      "inferMs": 6982,
+      "reuseInferMs": 7209,
+      "birefVsRefIoU": 0.9651,
+      "birefEdgeAcc": 0.699,
+      "birefHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "labMethod": "opencv-seed-fallback",
+      "labKeepPct": 57.88,
+      "labVsRefIoU": 0.9846,
+      "labHoleProxy": {
+        "internalHoleErrorPixels": 4,
+        "internalHoleComponents": 1
+      },
+      "rmbgInferMs": 3982,
+      "rmbgVsRefIoU": 0.9647,
+      "refCov": {
+        "definiteFg": 49568,
+        "definiteBg": 34379,
+        "uncertain": 1901,
+        "uncertainRatio": 0.0221,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "qualitativeFlags": [],
+      "note": "Reference mask is appearance+border heuristic — IoU is comparative, not absolute GT accuracy."
+    },
+    {
+      "fixture": "03_tshirt.jpg",
+      "backend": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "inputName": "input_image",
+      "outputName": "output_image",
+      "logitsLen": 262144,
+      "keepPct": 49.04,
+      "softPct": 3.26,
+      "inferMs": 7415,
+      "reuseInferMs": 6628,
+      "birefVsRefIoU": 0.0496,
+      "birefEdgeAcc": 0.0288,
+      "birefHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "labMethod": "opencv-seed-fallback",
+      "labKeepPct": 62.86,
+      "labVsRefIoU": 0.0307,
+      "labHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "rmbgInferMs": 3666,
+      "rmbgVsRefIoU": 0.1579,
+      "refCov": {
+        "definiteFg": 380,
+        "definiteBg": 43298,
+        "uncertain": 42170,
+        "uncertainRatio": 0.4912,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "qualitativeFlags": [],
+      "note": "Reference mask is appearance+border heuristic — IoU is comparative, not absolute GT accuracy."
+    },
+    {
+      "fixture": "04_jeans.jpg",
+      "backend": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "inputName": "input_image",
+      "outputName": "output_image",
+      "logitsLen": 262144,
+      "keepPct": 36.04,
+      "softPct": 4.79,
+      "inferMs": 6723,
+      "reuseInferMs": 6727,
+      "birefVsRefIoU": 0.9025,
+      "birefEdgeAcc": 0.5517,
+      "birefHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "labMethod": "opencv-seed-fallback",
+      "labKeepPct": 38.07,
+      "labVsRefIoU": 0.941,
+      "labHoleProxy": {
+        "internalHoleErrorPixels": 7,
+        "internalHoleComponents": 1
+      },
+      "rmbgInferMs": 3788,
+      "rmbgVsRefIoU": 0.9266,
+      "refCov": {
+        "definiteFg": 31732,
+        "definiteBg": 53510,
+        "uncertain": 606,
+        "uncertainRatio": 0.0071,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "qualitativeFlags": [],
+      "note": "Reference mask is appearance+border heuristic — IoU is comparative, not absolute GT accuracy."
+    },
+    {
+      "fixture": "05_coat.jpg",
+      "backend": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "inputName": "input_image",
+      "outputName": "output_image",
+      "logitsLen": 262144,
+      "keepPct": 39.25,
+      "softPct": 3.29,
+      "inferMs": 6713,
+      "reuseInferMs": 6742,
+      "birefVsRefIoU": 0.9318,
+      "birefEdgeAcc": 0.7403,
+      "birefHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "labMethod": "opencv-seed-fallback",
+      "labKeepPct": 41.03,
+      "labVsRefIoU": 0.9588,
+      "labHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "rmbgInferMs": 3892,
+      "rmbgVsRefIoU": 0.9307,
+      "refCov": {
+        "definiteFg": 33764,
+        "definiteBg": 51235,
+        "uncertain": 1433,
+        "uncertainRatio": 0.0166,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "qualitativeFlags": [],
+      "note": "Reference mask is appearance+border heuristic — IoU is comparative, not absolute GT accuracy."
+    },
+    {
+      "fixture": "06_sweater.jpg",
+      "backend": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "inputName": "input_image",
+      "outputName": "output_image",
+      "logitsLen": 262144,
+      "keepPct": 46.95,
+      "softPct": 3.52,
+      "inferMs": 7182,
+      "reuseInferMs": 6528,
+      "birefVsRefIoU": 0.8765,
+      "birefEdgeAcc": 0.393,
+      "birefHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "labMethod": "opencv-seed-fallback",
+      "labKeepPct": 48.26,
+      "labVsRefIoU": 0.8942,
+      "labHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "rmbgInferMs": 3884,
+      "rmbgVsRefIoU": 0.8768,
+      "refCov": {
+        "definiteFg": 46421,
+        "definiteBg": 35648,
+        "uncertain": 4649,
+        "uncertainRatio": 0.0536,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "qualitativeFlags": [],
+      "note": "Reference mask is appearance+border heuristic — IoU is comparative, not absolute GT accuracy."
+    },
+    {
+      "fixture": "07_dress.jpg",
+      "backend": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "inputName": "input_image",
+      "outputName": "output_image",
+      "logitsLen": 262144,
+      "keepPct": 19.02,
+      "softPct": 3.11,
+      "inferMs": 6839,
+      "reuseInferMs": 6767,
+      "birefVsRefIoU": 0.8674,
+      "birefEdgeAcc": 0.3024,
+      "birefHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "labMethod": "opencv-seed-fallback",
+      "labKeepPct": 20.16,
+      "labVsRefIoU": 0.9059,
+      "labHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "rmbgInferMs": 3899,
+      "rmbgVsRefIoU": 0.8692,
+      "refCov": {
+        "definiteFg": 18667,
+        "definiteBg": 63519,
+        "uncertain": 3368,
+        "uncertainRatio": 0.0394,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "qualitativeFlags": [],
+      "note": "Reference mask is appearance+border heuristic — IoU is comparative, not absolute GT accuracy."
+    },
+    {
+      "fixture": "08_sneakers.jpg",
+      "backend": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "inputName": "input_image",
+      "outputName": "output_image",
+      "logitsLen": 262144,
+      "keepPct": 34.5,
+      "softPct": 2.62,
+      "inferMs": 6733,
+      "reuseInferMs": 7105,
+      "birefVsRefIoU": 0.2132,
+      "birefEdgeAcc": 0.7668,
+      "birefHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "labMethod": "opencv-seed-fallback",
+      "labKeepPct": 13.39,
+      "labVsRefIoU": 0.4531,
+      "labHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "rmbgInferMs": 4203,
+      "rmbgVsRefIoU": 0.2089,
+      "refCov": {
+        "definiteFg": 6385,
+        "definiteBg": 65915,
+        "uncertain": 13254,
+        "uncertainRatio": 0.1549,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "qualitativeFlags": [],
+      "note": "Reference mask is appearance+border heuristic — IoU is comparative, not absolute GT accuracy."
+    },
+    {
+      "fixture": "09_handbag.jpg",
+      "backend": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "inputName": "input_image",
+      "outputName": "output_image",
+      "logitsLen": 262144,
+      "keepPct": 35.68,
+      "softPct": 5.47,
+      "inferMs": 6823,
+      "reuseInferMs": 6884,
+      "birefVsRefIoU": 0.951,
+      "birefEdgeAcc": 0.4891,
+      "birefHoleProxy": {
+        "internalHoleErrorPixels": 14,
+        "internalHoleComponents": 1
+      },
+      "labMethod": "opencv-seed-fallback",
+      "labKeepPct": 36.21,
+      "labVsRefIoU": 0.9459,
+      "labHoleProxy": {
+        "internalHoleErrorPixels": 15,
+        "internalHoleComponents": 3
+      },
+      "rmbgInferMs": 3917,
+      "rmbgVsRefIoU": 0.9541,
+      "refCov": {
+        "definiteFg": 32021,
+        "definiteBg": 45174,
+        "uncertain": 8359,
+        "uncertainRatio": 0.0977,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "qualitativeFlags": [],
+      "note": "Reference mask is appearance+border heuristic — IoU is comparative, not absolute GT accuracy."
+    },
+    {
+      "fixture": "10_cap.jpg",
+      "backend": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "inputName": "input_image",
+      "outputName": "output_image",
+      "logitsLen": 262144,
+      "keepPct": 25.57,
+      "softPct": 2.49,
+      "inferMs": 6690,
+      "reuseInferMs": 6540,
+      "birefVsRefIoU": 0.8471,
+      "birefEdgeAcc": 0.3894,
+      "birefHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "labMethod": "opencv-seed-fallback",
+      "labKeepPct": 27.69,
+      "labVsRefIoU": 0.9082,
+      "labHoleProxy": {
+        "internalHoleErrorPixels": 0,
+        "internalHoleComponents": 0
+      },
+      "rmbgInferMs": 3838,
+      "rmbgVsRefIoU": 0.8425,
+      "refCov": {
+        "definiteFg": 25999,
+        "definiteBg": 56858,
+        "uncertain": 3279,
+        "uncertainRatio": 0.0381,
+        "notes": [
+          "Reference is appearance+border derived, not manual pixel paint.",
+          "White leather / pale tee vs studio card is UNCERTAIN — binary FG recall on sneakers/tees is not fully reliable.",
+          "Soft contact shadows and thin AA rings are UNCERTAIN.",
+          "Full IoU/Dice over the whole image is not claimed; scores use definite labels only."
+        ]
+      },
+      "qualitativeFlags": [],
+      "note": "Reference mask is appearance+border heuristic — IoU is comparative, not absolute GT accuracy."
+    }
+  ]
+}

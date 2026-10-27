@@ -45,12 +45,24 @@ describe('contentSecurityPolicy', () => {
         headers: Array<{ key: string; value: string }>
       }>
     }
-    const csp = config.headers
-      ?.flatMap((h) => h.headers)
-      ?.find((h) => h.key === 'Content-Security-Policy')
+    const allHeaders = config.headers?.flatMap((h) => h.headers) ?? []
+    const csp = allHeaders.find((h) => h.key === 'Content-Security-Policy')
     expect(csp, 'vercel.json must define Content-Security-Policy').toBeTruthy()
     assertAppCspAllowsBootstrap(csp!.value)
     expect(csp!.value).toBe(buildContentSecurityPolicy())
+    expect(csp!.value).not.toMatch(/frame-ancestors/i)
+    expect(
+      allHeaders.some(
+        (h) =>
+          h.key.toLowerCase() === 'x-frame-options' &&
+          /deny/i.test(h.value),
+      ),
+    ).toBe(false)
+  })
+
+  it('omits frame-ancestors so Firefox can embed / simulate the page', () => {
+    const policy = buildContentSecurityPolicy()
+    expect(policy).not.toMatch(/frame-ancestors/i)
   })
 
   it('index.html must not declare a conflicting CSP meta tag', () => {

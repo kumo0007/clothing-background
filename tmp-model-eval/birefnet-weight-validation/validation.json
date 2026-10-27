@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-10-27T02:25:50.685Z",
+  "diskPath": "D:\\project\\public\\models\\studioludens\\birefnet-lite-512\\onnx\\model_fp16.onnx",
+  "appUrl": "/models/studioludens/birefnet-lite-512/onnx/model_fp16.onnx",
+  "trustedLfs": {
+    "bytes": 98484532,
+    "sha256": "eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516",
+    "source": "https://huggingface.co/studioludens/birefnet-lite-512/raw/main/onnx/model_fp16.onnx"
+  },
+  "note": ".mirror-meta.json is download metadata only; integrity is size+SHA-256+ORT load.",
+  "findings": [
+    {
+      "ok": true,
+      "name": "app_public_url",
+      "detail": "/models/studioludens/birefnet-lite-512/onnx/model_fp16.onnx"
+    },
+    {
+      "ok": true,
+      "name": "disk_path",
+      "detail": "D:\\project\\public\\models\\studioludens\\birefnet-lite-512\\onnx\\model_fp16.onnx"
+    },
+    {
+      "ok": true,
+      "name": "exact_size",
+      "detail": "98484532 (expected 98484532 from HF LFS pointer)"
+    },
+    {
+      "ok": true,
+      "name": "sha256_vs_lfs_pointer",
+      "detail": "got eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516; trusted LFS oid eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516 (huggingface.co/.../raw/main/onnx/model_fp16.onnx)"
+    },
+    {
+      "ok": true,
+      "name": "not_text_stub",
+      "detail": "binary payload present"
+    },
+    {
+      "ok": true,
+      "name": "input_name",
+      "detail": "names=input_image expected=input_image"
+    },
+    {
+      "ok": true,
+      "name": "output_name",
+      "detail": "names=output_image expected=output_image"
+    },
+    {
+      "ok": true,
+      "name": "smoke_infer_cpu",
+      "detail": "len=262144 dims=[1,1,512,512] nonFinite=0 min=-14.155738830566406 max=-9.334159851074219 loadMs=10872 inferMs=8215"
+    }
+  ],
+  "sessionMeta": {
+    "loadMs": 10872,
+    "inferMs": 8215,
+    "inputs": [
+      {
+        "name": "input_image"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "output_image"
+      }
+    ],
+    "dims": [
+      1,
+      1,
+      512,
+      512
+    ]
+  }
+}

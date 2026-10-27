@@ -11,6 +11,7 @@ import {
 } from '../lib/mask/diagnostics'
 import { getMask } from '../lib/mask/maskStore'
 import { cloneMaskBuffer } from '../lib/mask/createMask'
+import { resizeMaskNearest } from '../lib/mask/apiTransparentPngMask'
 import { MaskHistory } from '../lib/mask/maskHistory'
 import {
   previewBorderStudioPeel,
@@ -18,6 +19,7 @@ import {
   type BorderPeelPreview,
 } from '../lib/mask/sdkMaskReview'
 import { imageDataFromObjectUrl } from '../lib/image/imageDataFromUrl'
+import { loadHtmlImage } from '../lib/image/loadHtmlImage'
 import './ReviewDiagnosticsPanel.css'
 
 type ReviewDiagnosticsPanelProps = {
@@ -51,6 +53,32 @@ const OVERLAY_OPTIONS: { id: DiagnosticOverlayKind; label: string }[] = [
 
 /** Cap overlay working resolution for large uploads (display still CSS-scaled). */
 const OVERLAY_MAX_EDGE = 640
+/** Cap decode used for diagnostics / peel preview — full-res iPhone photos OOM Safari. */
+const DIAG_SOURCE_MAX_EDGE = 1280
+
+function scaleFindingsIndices(
+  findings: DiagnosticFinding[],
+  srcW: number,
+  srcH: number,
+  dstW: number,
+  dstH: number,
+): DiagnosticFinding[] {
+  if (srcW === dstW && srcH === dstH) return findings
+  const sx = dstW / srcW
+  const sy = dstH / srcH
+  return findings.map((f) => {
+    if (!f.sampleIndices?.length) return f
+    const mapped = new Set<number>()
+    for (const i of f.sampleIndices) {
+      const x = i % srcW
+      const y = Math.floor(i / srcW)
+      const nx = Math.min(dstW - 1, Math.max(0, Math.round(x * sx)))
+      const ny = Math.min(dstH - 1, Math.max(0, Math.round(y * sy)))
+      mapped.add(ny * dstW + nx)
+    }
+    return { ...f, sampleIndices: [...mapped] }
+  })
+}
 
 function toSummary(
   diagnostics: ReturnType<typeof runMaskDiagnostics>,
@@ -110,12 +138,10 @@ export function ReviewDiagnosticsPanel({
   const peelHistoryRef = useRef(new MaskHistory())
   const sourceImageRef = useRef<ImageData | null>(null)
   const sourceKeyRef = useRef('')
-  /** Full findings (incl. sampleIndices) for overlays — not the compact summary. */
+  const sourceScaleRef = useRef({ dw: 0, dh: 0 })
+  /** Findings (incl. sampleIndices) in sourceScaleRef coordinates. */
   const findingsForOverlayRef = useRef<DiagnosticFinding[]>([])
-  const scratchRef = useRef<{
-    src: HTMLCanvasElement
-    ov: HTMLCanvasElement
-  } | null>(null)
+  const overlayScratchRef = useRef<HTMLCanvasElement | null>(null)
 
   const [overlay, setOverlay] = useState<DiagnosticOverlayKind>(
     needsReview ? 'fragments' : 'none',
@@ -128,6 +154,7 @@ export function ReviewDiagnosticsPanel({
     summary,
   )
   const [overlayBusy, setOverlayBusy] = useState(false)
+  const [overlayError, setOverlayError] = useState<string | null>(null)
 
   const findings = liveSummary?.findings ?? summary?.findings ?? []
   const profile = liveSummary?.reviewProfile ?? summary?.reviewProfile ?? 'neural'
@@ -137,35 +164,49 @@ export function ReviewDiagnosticsPanel({
     summary?.heuristicScore ??
     summary?.score
 
-  const ensureSourceImage = async (): Promise<ImageData> => {
-    const key = `${objectUrl}|${width}x${height}`
-    if (sourceImageRef.current && sourceKeyRef.current === key) {
-      return sourceImageRef.current
+  /** Downscaled RGB for diagnostics/peel — never decode full iPhone megapixels here. */
+  const ensureSourceImage = async (): Promise<{
+    data: ImageData
+    dw: number
+    dh: number
+  }> => {
+    const { dw, dh } = scaleToFit(width, height, DIAG_SOURCE_MAX_EDGE)
+    const key = `${objectUrl}|${dw}x${dh}`
+    if (
+      sourceImageRef.current &&
+      sourceKeyRef.current === key &&
+      sourceScaleRef.current.dw === dw &&
+      sourceScaleRef.current.dh === dh
+    ) {
+      return { data: sourceImageRef.current, dw, dh }
     }
-    const data = await imageDataFromObjectUrl(objectUrl, width, height)
+    const data = await imageDataFromObjectUrl(objectUrl, dw, dh)
     sourceImageRef.current = data
     sourceKeyRef.current = key
-    return data
+    sourceScaleRef.current = { dw, dh }
+    return { data, dw, dh }
   }
 
-  const getScratch = () => {
-    if (!scratchRef.current) {
-      scratchRef.current = {
-        src: document.createElement('canvas'),
-        ov: document.createElement('canvas'),
-      }
+  const getOverlayScratch = (dw: number, dh: number) => {
+    if (!overlayScratchRef.current) {
+      overlayScratchRef.current = document.createElement('canvas')
     }
-    return scratchRef.current
+    const c = overlayScratchRef.current
+    if (c.width !== dw) c.width = dw
+    if (c.height !== dh) c.height = dh
+    return c
   }
 
   // Reset peel/cache only when switching images — never when summary updates.
   useEffect(() => {
     sourceImageRef.current = null
     sourceKeyRef.current = ''
+    sourceScaleRef.current = { dw: 0, dh: 0 }
     findingsForOverlayRef.current = []
     setLiveSummary(summary)
     setPeelPreview(null)
     setPeelError(null)
+    setOverlayError(null)
     peelHistoryRef.current.clear()
     setCanUndoPeel(false)
     setOverlay(needsReview ? 'fragments' : 'none')
@@ -178,12 +219,16 @@ export function ReviewDiagnosticsPanel({
     const expectedImageId = imageId
     ;(async () => {
       try {
-        const imageData = await ensureSourceImage()
+        const { data: imageData, dw, dh } = await ensureSourceImage()
         if (cancelled) return
         const still = getMask(expectedImageId)
         if (!still) return
+        const diagMask =
+          still.width === dw && still.height === dh
+            ? still
+            : resizeMaskNearest(still, dw, dh)
         const diagnostics = runMaskDiagnostics({
-          mask: still,
+          mask: diagMask,
           imageData,
           profile: 'neural',
           method: methodUsed ?? 'bg-remove-sdk-rmbg1.4',
@@ -203,7 +248,8 @@ export function ReviewDiagnosticsPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- ensureSourceImage uses current props
   }, [imageId, objectUrl, width, height, methodUsed, hasManualEdits, maskRevision])
 
-  // Paint diagnostic canvas — cached source decode; downscaled for large images.
+  // Paint diagnostic canvas at display resolution only — never full-res scratch
+  // canvases (iPhone Safari OOMs → black #111 box).
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -212,10 +258,9 @@ export function ReviewDiagnosticsPanel({
 
     let cancelled = false
     setOverlayBusy(true)
+    setOverlayError(null)
     ;(async () => {
       try {
-        const img = await ensureSourceImage()
-        if (cancelled) return
         const mask = getMask(imageId)
         if (!mask) return
 
@@ -224,32 +269,47 @@ export function ReviewDiagnosticsPanel({
         canvas.height = dh
         ctx.imageSmoothingEnabled = true
 
-        const scratch = getScratch()
-        scratch.src.width = width
-        scratch.src.height = height
-        const sctx = scratch.src.getContext('2d')
-        if (!sctx) return
-        sctx.putImageData(img, 0, 0)
+        const htmlImage = await loadHtmlImage(objectUrl)
+        if (cancelled) return
         ctx.clearRect(0, 0, dw, dh)
-        ctx.drawImage(scratch.src, 0, 0, dw, dh)
+        ctx.drawImage(htmlImage, 0, 0, dw, dh)
 
         if (overlay === 'none') {
           return
         }
 
-        const overlayData = buildDiagnosticOverlay(
-          mask,
-          overlay,
+        const scaledMask =
+          mask.width === dw && mask.height === dh
+            ? mask
+            : resizeMaskNearest(mask, dw, dh)
+        const srcDw = sourceScaleRef.current.dw || mask.width
+        const srcDh = sourceScaleRef.current.dh || mask.height
+        const scaledFindings = scaleFindingsIndices(
           findingsForOverlayRef.current,
+          srcDw,
+          srcDh,
+          dw,
+          dh,
         )
-        scratch.ov.width = width
-        scratch.ov.height = height
-        const octx = scratch.ov.getContext('2d')
-        if (!octx) return
+        const overlayData = buildDiagnosticOverlay(
+          scaledMask,
+          overlay,
+          scaledFindings,
+        )
+        const scratch = getOverlayScratch(dw, dh)
+        const octx = scratch.getContext('2d')
+        if (!octx) throw new Error('Could not create overlay canvas')
+        octx.clearRect(0, 0, dw, dh)
         octx.putImageData(overlayData, 0, 0)
-        ctx.drawImage(scratch.ov, 0, 0, dw, dh)
-      } catch {
-        // Overlay is best-effort.
+        ctx.drawImage(scratch, 0, 0)
+      } catch (err) {
+        if (!cancelled) {
+          setOverlayError(
+            err instanceof Error
+              ? err.message
+              : 'Could not render diagnostic preview',
+          )
+        }
       } finally {
         if (!cancelled) setOverlayBusy(false)
       }
@@ -259,14 +319,18 @@ export function ReviewDiagnosticsPanel({
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- paint on overlay/revision only
-  }, [imageId, objectUrl, width, height, overlay, maskRevision])
+  }, [imageId, objectUrl, width, height, overlay, maskRevision, liveSummary])
 
   const refreshAfterMaskChange = async () => {
     const current = getMask(imageId)
     if (!current) return
-    const imageData = await ensureSourceImage()
+    const { data: imageData, dw, dh } = await ensureSourceImage()
+    const diagMask =
+      current.width === dw && current.height === dh
+        ? current
+        : resizeMaskNearest(current, dw, dh)
     const diagnostics = runMaskDiagnostics({
-      mask: current,
+      mask: diagMask,
       imageData,
       profile: 'neural',
       method: methodUsed ?? 'bg-remove-sdk-rmbg1.4',
@@ -291,8 +355,12 @@ export function ReviewDiagnosticsPanel({
     try {
       const current = getMask(imageId)
       if (!current) throw new Error('No mask loaded')
-      const imageData = await ensureSourceImage()
-      const preview = previewBorderStudioPeel(current, imageData)
+      const { data: imageData, dw, dh } = await ensureSourceImage()
+      const peelMask =
+        current.width === dw && current.height === dh
+          ? current
+          : resizeMaskNearest(current, dw, dh)
+      const preview = previewBorderStudioPeel(peelMask, imageData)
       setPeelPreview(preview)
     } catch (err) {
       setPeelError(err instanceof Error ? err.message : 'Peel preview failed')
@@ -308,8 +376,18 @@ export function ReviewDiagnosticsPanel({
     try {
       const current = getMask(imageId)
       if (!current) throw new Error('No mask loaded')
+      const candidate =
+        peelPreview.candidate.width === current.width &&
+        peelPreview.candidate.height === current.height
+          ? peelPreview.candidate
+          : // Avoid full-res RGB decode on iPhone — upsample preview peel.
+            resizeMaskNearest(
+              peelPreview.candidate,
+              current.width,
+              current.height,
+            )
       peelHistoryRef.current.push(cloneMaskBuffer(current))
-      applyBorderStudioPeel(current, peelPreview.candidate)
+      applyBorderStudioPeel(current, candidate)
       setCanUndoPeel(peelHistoryRef.current.canUndo)
       setPeelPreview(null)
       await refreshAfterMaskChange()
@@ -436,6 +514,15 @@ export function ReviewDiagnosticsPanel({
         {overlayBusy ? (
           <p className="review-diagnostics__overlay-status" aria-live="polite">
             Updating overlay…
+          </p>
+        ) : null}
+        {overlayError ? (
+          <p
+            className="review-diagnostics__overlay-error"
+            role="alert"
+            data-testid="review-overlay-error"
+          >
+            {overlayError}
           </p>
         ) : null}
       </div>

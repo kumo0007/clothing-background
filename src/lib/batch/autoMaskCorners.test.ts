@@ -1,18 +1,95 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearAllMasks, getMask } from '../mask/maskStore'
 
-vi.mock('../mask/bgRemoveSdk', () => ({
-  BG_REMOVE_SDK_METHOD: 'bg-remove-sdk-rmbg1.4',
-  BG_REMOVE_SDK_PROVIDER: 'bg-remove-sdk',
-  segmentWithBgRemoveSdk: vi.fn(async () => ({
+const birefMock = vi.fn(
+  async (
+    _blob: Blob,
+    _width: number,
+    _height: number,
+    _opts?: unknown,
+  ) => ({
     mask: {
       width: 2,
       height: 1,
       data: new Uint8ClampedArray([255, 0]),
     },
+    methodUsed: 'birefnet-lite-512',
+    provider: 'birefnet-onnx',
+    confidence: 0.85,
+    needsReview: false,
+    reviewReasons: [],
+    findings: [],
+    diagnostics: {
+      method: 'birefnet-lite-512',
+      reviewProfile: 'neural' as const,
+      needsReview: false,
+      reviewReasons: [],
+      findings: [],
+      metrics: {
+        width: 2,
+        height: 1,
+        pixels: 2,
+        keepCount: 1,
+        bgCount: 1,
+        softCount: 0,
+        keepRatio: 0.5,
+        softRatio: 0,
+        bgRatio: 0.5,
+        borderBandPx: 2,
+        borderKeepCount: 0,
+        borderKeepRatio: 0,
+        borderStudioKeepCount: 0,
+        borderStudioRatio: 0,
+        frameTouchKeepCount: 0,
+        keepComponentCount: 1,
+        largestKeepShare: 1,
+        fragmentation: {
+          totalComponents: 1,
+          noiseComponents: 0,
+          detailComponents: 0,
+          majorComponents: 1,
+          significantComponents: 1,
+          detachedSignificantCount: 0,
+          detachedSignificantAreaShare: 0,
+          largestAreaPx: 1,
+          largestAreaShare: 1,
+          keepPixels: 1,
+          noiseAreaPx: 8,
+          majorShareThr: 0.02,
+        },
+        internalHoleRatio: 0,
+        paleAmongKeep: 0,
+        darkShareAmongKeep: 0,
+        edgeHaloRatio: 0,
+        studioLuma: 220,
+        colorAware: true,
+      },
+      score: 0.85,
+      heuristicScore: 0.85,
+      resized: true,
+    },
+    genuineModelInference: true as const,
+    device: 'wasm' as const,
+    resized: true,
+    elapsedMs: 1,
+  }),
+)
+
+const rmbgMock = vi.fn(
+  async (
+    _blob: Blob,
+    _width: number,
+    _height: number,
+    _opts?: unknown,
+  ) => ({
+    mask: {
+      width: 2,
+      height: 1,
+      data: new Uint8ClampedArray([200, 10]),
+    },
     methodUsed: 'bg-remove-sdk-rmbg1.4',
     provider: 'bg-remove-sdk',
-    confidence: 0.8,
+    confidence: 0.7,
     needsReview: false,
     reviewReasons: [],
     findings: [],
@@ -61,15 +138,37 @@ vi.mock('../mask/bgRemoveSdk', () => ({
         studioLuma: 220,
         colorAware: true,
       },
-      score: 0.8,
-      heuristicScore: 0.8,
+      score: 0.7,
+      heuristicScore: 0.7,
       resized: false,
     },
     genuineModelInference: true as const,
     device: 'wasm' as const,
     resized: false,
-    elapsedMs: 1,
-  })),
+    elapsedMs: 2,
+  }),
+)
+
+vi.mock('../mask/birefNet', () => ({
+  BIREFNET_METHOD: 'birefnet-lite-512',
+  BIREFNET_PROVIDER: 'birefnet-onnx',
+  segmentWithBirefNet: (
+    blob: Blob,
+    width: number,
+    height: number,
+    opts?: unknown,
+  ) => birefMock(blob, width, height, opts),
+}))
+
+vi.mock('../mask/bgRemoveSdk', () => ({
+  BG_REMOVE_SDK_METHOD: 'bg-remove-sdk-rmbg1.4',
+  BG_REMOVE_SDK_PROVIDER: 'bg-remove-sdk',
+  segmentWithBgRemoveSdk: (
+    blob: Blob,
+    width: number,
+    height: number,
+    opts?: unknown,
+  ) => rmbgMock(blob, width, height, opts),
 }))
 
 vi.mock('../image/loadHtmlImage', () => ({
@@ -85,36 +184,65 @@ vi.mock('../image/imageDataFromUrl', () => ({
   })),
 }))
 
-describe('autoMaskCornersForImage — bg-remove-sdk', () => {
+describe('autoMaskCornersForImage — BiRefNet default', () => {
   beforeEach(() => {
     clearAllMasks()
-    vi.unstubAllGlobals()
+    birefMock.mockClear()
+    rmbgMock.mockClear()
   })
 
-  it('commits SDK KEEP mask without calling Poof / remove.bg', async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input)
-      if (url === 'blob:test') {
-        return new Response(new Uint8Array([1, 2, 3]), {
-          status: 200,
-          headers: { 'Content-Type': 'image/jpeg' },
-        })
-      }
-      return new Response('unexpected', { status: 500 })
-    })
-    vi.stubGlobal('fetch', fetchMock)
-
+  it('uses BiRefNet by default and commits the mask', async () => {
     const { autoMaskCornersForImage } = await import('./autoMaskCorners')
-    const result = await autoMaskCornersForImage('img-a', 'blob:test', 2, 1)
+    const result = await autoMaskCornersForImage(
+      'img-a',
+      'blob:test',
+      2,
+      1,
+      40,
+      undefined,
+      new Blob([new Uint8Array([1])], { type: 'image/png' }),
+    )
+    expect(result.methodUsed).toBe('birefnet-lite-512')
+    expect(result.requestedMethod).toBe('birefnet')
+    expect(birefMock).toHaveBeenCalled()
+    expect(rmbgMock).not.toHaveBeenCalled()
+    expect(getMask('img-a')?.data[0]).toBe(255)
+  })
 
-    expect(result.requestedMethod).toBe('sdk')
-    expect(result.genuineModelInference).toBe(true)
+  it('falls back to RMBG when BiRefNet throws, with explicit reason', async () => {
+    birefMock.mockRejectedValueOnce(new Error('weights missing'))
+    const { autoMaskCornersForImage } = await import('./autoMaskCorners')
+    const result = await autoMaskCornersForImage(
+      'img-b',
+      'blob:test',
+      2,
+      1,
+      40,
+      undefined,
+      new Blob([new Uint8Array([1])], { type: 'image/png' }),
+    )
     expect(result.methodUsed).toBe('bg-remove-sdk-rmbg1.4')
-    expect(Array.from(getMask('img-a')!.data)).toEqual([255, 0])
-    expect(
-      fetchMock.mock.calls.some((c) =>
-        /poof|remove\.bg|\/api\/remove-background/i.test(String(c[0])),
-      ),
-    ).toBe(false)
+    expect(result.fallbackFrom).toBe('birefnet-lite-512')
+    expect(result.fallbackReason).toMatch(/weights missing/i)
+    expect(result.reviewReason).toMatch(/fallback from BiRefNet/i)
+    expect(rmbgMock).toHaveBeenCalled()
+  })
+
+  it('can force RMBG without attempting BiRefNet', async () => {
+    const { autoMaskCornersForImage } = await import('./autoMaskCorners')
+    const result = await autoMaskCornersForImage(
+      'img-c',
+      'blob:test',
+      2,
+      1,
+      40,
+      undefined,
+      new Blob([new Uint8Array([1])], { type: 'image/png' }),
+      'rmbg1.4',
+    )
+    expect(result.methodUsed).toBe('bg-remove-sdk-rmbg1.4')
+    expect(result.requestedMethod).toBe('rmbg1.4')
+    expect(birefMock).not.toHaveBeenCalled()
+    expect(rmbgMock).toHaveBeenCalled()
   })
 })

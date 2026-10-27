@@ -1,0 +1,202 @@
+{
+  "generatedAt": "2026-10-27T02:44:24.482Z",
+  "contract": {
+    "checkpoint": {
+      "mean": [
+        0.485,
+        0.456,
+        0.406
+      ],
+      "std": [
+        0.229,
+        0.224,
+        0.225
+      ],
+      "rescale_factor": 0.00392156862745098,
+      "resample": 2,
+      "resampleMeaning": "PIL.BILINEAR",
+      "size": {
+        "height": 512,
+        "width": 512
+      },
+      "do_normalize": true,
+      "do_rescale": true,
+      "do_resize": true
+    },
+    "appConstants": {
+      "mean": [
+        0.485,
+        0.456,
+        0.406
+      ],
+      "std": [
+        0.229,
+        0.224,
+        0.225
+      ],
+      "size": 512,
+      "rescale": "pixel/255",
+      "resize": "bilinear half-pixel",
+      "layout": "NCHW float32 RGB",
+      "output": "sigmoid(logits) → soft alpha → bilinear upscale → 8-bit KEEP=255"
+    },
+    "match": {
+      "meanMatch": true,
+      "stdMatch": true,
+      "rescaleOk": true,
+      "sizeMatch": true,
+      "bilinearResample": true,
+      "referenceRequiresSigmoid": true,
+      "referenceDoc": "studioludens/birefnet-lite-512 README: Apply sigmoid externally to logits"
+    },
+    "verifiedCorrect": true
+  },
+  "performance": [
+    {
+      "label": "wasm-default",
+      "initMs": 9718,
+      "firstInferMs": 7408,
+      "firstPrepMs": 15,
+      "firstPostMs": 26,
+      "firstRepairMs": 82,
+      "meanWarmInferMs": 7091,
+      "meanWarmPrepMs": 20,
+      "meanWarmPostMs": 10,
+      "meanWarmRepairMs": 46,
+      "warmInferMs": [
+        7088,
+        7052,
+        7134
+      ]
+    },
+    {
+      "label": "wasm-numThreads-1",
+      "initMs": 8750,
+      "firstInferMs": 6916,
+      "firstPrepMs": 24,
+      "firstPostMs": 13,
+      "firstRepairMs": 56,
+      "meanWarmInferMs": 6906,
+      "meanWarmPrepMs": 23,
+      "meanWarmPostMs": 13,
+      "meanWarmRepairMs": 48,
+      "warmInferMs": [
+        6729,
+        6883,
+        7106
+      ]
+    }
+  ],
+  "fixtures": [
+    {
+      "fixture": "01_hoodie.jpg",
+      "keepRaw": 55.43,
+      "keepRepaired": 60.38,
+      "binaryDeltaPct": 4.958,
+      "repairApplied": true,
+      "repairReason": "thin-keep-corridor keep 0.554",
+      "rawVsRefIoU": 0.9063,
+      "repairedVsRefIoU": 0.8507,
+      "iouDeltaRepairedMinusRaw": -0.0556,
+      "logitsMin": -16.5383,
+      "logitsMax": 17.6215,
+      "inferMs": 7132,
+      "prepMs": 25,
+      "postMs": 18,
+      "repairMs": 49,
+      "assessment": "under-recall repair changed mask — inspect visuals"
+    },
+    {
+      "fixture": "03_tshirt.jpg",
+      "keepRaw": 49.04,
+      "keepRepaired": 53.31,
+      "binaryDeltaPct": 4.267,
+      "repairApplied": true,
+      "repairReason": "thin-keep-corridor keep 0.490",
+      "rawVsRefIoU": 0.0496,
+      "repairedVsRefIoU": 0.03,
+      "iouDeltaRepairedMinusRaw": -0.0196,
+      "logitsMin": -19.7639,
+      "logitsMax": 16.3326,
+      "inferMs": 6966,
+      "prepMs": 31,
+      "postMs": 13,
+      "repairMs": 42,
+      "assessment": "under-recall repair changed mask — inspect visuals"
+    },
+    {
+      "fixture": "06_sweater.jpg",
+      "keepRaw": 46.95,
+      "keepRepaired": 51.95,
+      "binaryDeltaPct": 5.001,
+      "repairApplied": true,
+      "repairReason": "thin-keep-corridor keep 0.470",
+      "rawVsRefIoU": 0.8765,
+      "repairedVsRefIoU": 0.8419,
+      "iouDeltaRepairedMinusRaw": -0.0346,
+      "logitsMin": -18.403,
+      "logitsMax": 15.5944,
+      "inferMs": 6986,
+      "prepMs": 25,
+      "postMs": 8,
+      "repairMs": 42,
+      "assessment": "under-recall repair changed mask — inspect visuals"
+    },
+    {
+      "fixture": "08_sneakers.jpg",
+      "keepRaw": 34.5,
+      "keepRepaired": 38.99,
+      "binaryDeltaPct": 4.486,
+      "repairApplied": true,
+      "repairReason": "pale-gap keep 0.345 pale 0.911",
+      "rawVsRefIoU": 0.2132,
+      "repairedVsRefIoU": 0.1976,
+      "iouDeltaRepairedMinusRaw": -0.0156,
+      "logitsMin": -19.3558,
+      "logitsMax": 17.8765,
+      "inferMs": 7139,
+      "prepMs": 26,
+      "postMs": 12,
+      "repairMs": 60,
+      "assessment": "under-recall repair changed mask — inspect visuals"
+    },
+    {
+      "fixture": "09_handbag.jpg",
+      "keepRaw": 35.68,
+      "keepRepaired": 47.01,
+      "binaryDeltaPct": 11.331,
+      "repairApplied": true,
+      "repairReason": "pale-gap keep 0.357 pale 0.574",
+      "rawVsRefIoU": 0.951,
+      "repairedVsRefIoU": 0.8734,
+      "iouDeltaRepairedMinusRaw": -0.0776,
+      "logitsMin": -22.1301,
+      "logitsMax": 16.9879,
+      "inferMs": 6992,
+      "prepMs": 27,
+      "postMs": 7,
+      "repairMs": 44,
+      "assessment": "under-recall repair changed mask — inspect visuals"
+    },
+    {
+      "fixture": "10_cap.jpg",
+      "keepRaw": 25.57,
+      "keepRepaired": 28.83,
+      "binaryDeltaPct": 3.256,
+      "repairApplied": true,
+      "repairReason": "pale-gap keep 0.256 pale 0.652",
+      "rawVsRefIoU": 0.8471,
+      "repairedVsRefIoU": 0.7988,
+      "iouDeltaRepairedMinusRaw": -0.0483,
+      "logitsMin": -18.529,
+      "logitsMax": 15.5011,
+      "inferMs": 6900,
+      "prepMs": 20,
+      "postMs": 7,
+      "repairMs": 40,
+      "assessment": "under-recall repair changed mask — inspect visuals"
+    }
+  ],
+  "webgpuConclusion": "Confirmed defect on this Chrome adapter: session creates but emits degenerate all-negative logits + computeSliceOffsets validation errors. Keep disabled for production.",
+  "overall": "Pre/post match checkpoint README + preprocessor_config; remaining IoU gap vs Lab-seed is primarily model/metric limitation, not inverted polarity or missing sigmoid."
+}

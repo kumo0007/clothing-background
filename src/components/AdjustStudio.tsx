@@ -5,6 +5,7 @@ import {
   type ExportFormat,
 } from '../lib/export/exportImage'
 import { loadHtmlImage } from '../lib/image/loadHtmlImage'
+import { isUsableKeepMask } from '../lib/mask/maskKeepRatio'
 import { getMask } from '../lib/mask/maskStore'
 import { renderFinalInto } from '../lib/rendering/renderFinal'
 import {
@@ -56,12 +57,14 @@ export function AdjustStudio({
     height: image.height,
   })
 
-  const useComposite = shouldCompositeResult(
-    hasMaskEdits,
-    getMask(image.id) !== undefined,
-    background,
-    adjustments.shadowOpacity,
-  )
+  const storedMask = getMask(image.id)
+  const useComposite =
+    shouldCompositeResult(
+      hasMaskEdits,
+      storedMask !== undefined,
+      background,
+      adjustments.shadowOpacity,
+    ) && !!storedMask && isUsableKeepMask(storedMask)
 
   const patch = useCallback(
     (partial: Partial<ImageAdjustments>) => {

@@ -1,10 +1,7 @@
 /**
- * Locks the commercial-model milestone outcome: until a cleared alternative
- * passes clothing quality gates, production stays on bg-remove-sdk RMBG-1.4
- * and must not silently route to U²-Netp / BiRefNet / hosted APIs.
- *
- * Licensing readiness is enforced separately via
- * `commercialLicenseStatus.test.ts` + `assertCommercialReleaseGate.mts`.
+ * Production auto-mask default is BiRefNet_lite (browser ONNX, MIT weights).
+ * RMBG-1.4 via bg-remove-sdk remains the explicit fallback / alternate option.
+ * U²-Netp and arbitrary env model swaps stay blocked for the SDK path.
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -16,40 +13,40 @@ import {
   isAllowedBgRemoveModelId,
   resolveBgRemoveModelId,
 } from './bgRemoveSdk'
+import { BIREFNET_METHOD, BIREFNET_PROVIDER } from './birefNet/constants'
 
 const root = process.cwd()
 
-describe('commercial model gate (no unjustified switch)', () => {
-  it('keeps production method id on RMBG-1.4 via bg-remove-sdk', () => {
+describe('commercial model gate (BiRefNet default + RMBG fallback)', () => {
+  it('keeps SDK fallback method id on RMBG-1.4 via bg-remove-sdk', () => {
     expect(BG_REMOVE_SDK_METHOD).toBe('bg-remove-sdk-rmbg1.4')
     expect(BG_REMOVE_SDK_PROVIDER).toBe('bg-remove-sdk')
     expect(DEFAULT_BG_REMOVE_HF_MODEL_ID).toBe('briaai/RMBG-1.4')
   })
 
-  it('does not wire U²-Netp or BiRefNet into the segmentation entrypoints', () => {
-    // App + pipeline must not import/call alternate models. bgRemoveSdk may
-    // mention banned names only inside the env allowlist denylist.
-    for (const rel of ['src/lib/mask/autoMaskPipeline.ts', 'src/App.tsx']) {
-      const src = readFileSync(join(root, rel), 'utf8').toLowerCase()
-      expect(src).not.toMatch(/u2netp|u2-netp|birefnet/)
-    }
-    const sdk = readFileSync(join(root, 'src/lib/mask/bgRemoveSdk.ts'), 'utf8')
-    expect(sdk).toMatch(/BG_REMOVE_SDK_METHOD = 'bg-remove-sdk-rmbg1\.4'/)
-    expect(sdk).not.toMatch(/from ['"][^'"]*(u2netp|birefnet)/i)
-    expect(sdk).not.toMatch(/segmentWithU2|runBiRefNet/i)
-  })
+  it('wires BiRefNet as the default auto-mask backend with RMBG fallback', () => {
+    expect(BIREFNET_METHOD).toBe('birefnet-lite-512')
+    expect(BIREFNET_PROVIDER).toBe('birefnet-onnx')
 
-  it('records license+quality no-switch decision in eval report', () => {
-    const report = readFileSync(
-      join(root, 'tmp-model-eval/COMMERCIAL_MODEL_COMPARISON_REPORT.md'),
+    const corners = readFileSync(
+      join(root, 'src/lib/batch/autoMaskCorners.ts'),
       'utf8',
     )
-    expect(report).toMatch(/Do not switch production default/i)
-    expect(report).toMatch(/BiRefNet-lite[\s\S]*Not downloaded/i)
-    expect(report).toMatch(/Clothing cutout quality[\s\S]*\*\*Fail\*\*/i)
+    expect(corners).toMatch(/preferredBackend: AutoMaskBackend = 'birefnet'/)
+    expect(corners).toMatch(/segmentWithBirefNet/)
+    expect(corners).toMatch(/segmentWithBgRemoveSdk/)
+
+    const app = readFileSync(join(root, 'src/App.tsx'), 'utf8')
+    expect(app).toMatch(/useState<AutoMaskBackend>\('birefnet'\)/)
+    expect(app).toMatch(/preloadBirefNetModel/)
+
+    const sdk = readFileSync(join(root, 'src/lib/mask/bgRemoveSdk.ts'), 'utf8')
+    expect(sdk).toMatch(/BG_REMOVE_SDK_METHOD = 'bg-remove-sdk-rmbg1\.4'/)
+    expect(sdk).not.toMatch(/from ['"][^'"]*u2netp/i)
+    expect(sdk).not.toMatch(/segmentWithU2/i)
   })
 
-  it('rejects env model ids that would switch away from RMBG-1.4', () => {
+  it('rejects env model ids that would switch the SDK path away from RMBG-1.4', () => {
     expect(resolveBgRemoveModelId('')).toBeUndefined()
     expect(resolveBgRemoveModelId('   ')).toBeUndefined()
     expect(resolveBgRemoveModelId(null)).toBeUndefined()
@@ -62,6 +59,7 @@ describe('commercial model gate (no unjustified switch)', () => {
     expect(isAllowedBgRemoveModelId('edgetools/u2netp')).toBe(false)
     expect(resolveBgRemoveModelId('edgetools/u2netp')).toBeUndefined()
     expect(resolveBgRemoveModelId('briaai/RMBG-2.0')).toBeUndefined()
+    // BiRefNet is its own backend — not injectable via the SDK env allowlist.
     expect(resolveBgRemoveModelId('ZhengPeng7/BiRefNet')).toBeUndefined()
   })
 })

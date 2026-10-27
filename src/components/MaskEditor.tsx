@@ -6,7 +6,7 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { createImageId } from '../utils/imageFiles'
+import { createImageId, materializePickedFile } from '../utils/imageFiles'
 import { loadHtmlImage } from '../lib/image/loadHtmlImage'
 import { clearMaskBuffer } from '../lib/mask/createMask'
 import { invertMaskBuffer } from '../lib/mask/invertMask'
@@ -857,19 +857,25 @@ export function MaskEditor({
   }
 
   const handleUploadBackground = (file: File) => {
-    const objectUrl = URL.createObjectURL(file)
-    const asset = {
-      id: createImageId(),
-      objectUrl,
-      name: file.name,
-    }
-    onSharedBackgroundAdded(asset)
-    onBackgroundChange({
-      ...background,
-      type: 'image',
-      imageUrl: objectUrl,
-      imageName: file.name,
-    })
+    void materializePickedFile(file, 0)
+      .then((stable) => {
+        const objectUrl = URL.createObjectURL(stable)
+        const asset = {
+          id: createImageId(),
+          objectUrl,
+          name: stable.name,
+        }
+        onSharedBackgroundAdded(asset)
+        onBackgroundChange({
+          ...background,
+          type: 'image',
+          imageUrl: objectUrl,
+          imageName: stable.name,
+        })
+      })
+      .catch(() => {
+        // Keep prior background; gallery path may already be revoked.
+      })
   }
 
   const brushCursorSize = brushSize * transform.scale

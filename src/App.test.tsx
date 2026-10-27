@@ -29,12 +29,37 @@ vi.mock('./lib/batch/autoMaskCorners', () => ({
     height: number,
     tolerance?: number,
     onProgress?: unknown,
-  ) => autoMaskMock(imageId, objectUrl, width, height, tolerance, onProgress),
+    sourceFile?: Blob | null,
+    preferredBackend?: string,
+  ) =>
+    autoMaskMock(
+      imageId,
+      objectUrl,
+      width,
+      height,
+      tolerance,
+      onProgress,
+      sourceFile,
+      preferredBackend,
+    ),
 }))
 
 const preloadMock = vi.fn(
   async (_onProgress?: unknown) => ({ device: 'wasm' as const }),
 )
+const preloadBirefMock = vi.fn(
+  async (_onProgress?: unknown) => ({
+    session: {},
+    device: 'wasm' as const,
+    inputName: 'input_image',
+    outputName: 'output_image',
+  }),
+)
+vi.mock('./lib/mask/birefNet', () => ({
+  preloadBirefNetModel: (onProgress?: unknown) => preloadBirefMock(onProgress),
+  BIREFNET_METHOD: 'birefnet-lite-512',
+  BIREFNET_PROVIDER: 'birefnet-onnx',
+}))
 vi.mock('./lib/mask/bgRemoveSdk', () => ({
   preloadBgRemoveModel: (onProgress?: unknown) => preloadMock(onProgress),
   formatInitProgressLine: (message?: string, ratio?: number) => {
@@ -112,12 +137,19 @@ describe('App Phase 1', () => {
     cleanup()
     autoMaskMock.mockReset()
     preloadMock.mockReset()
+    preloadBirefMock.mockReset()
     preloadMock.mockResolvedValue({ device: 'wasm' })
+    preloadBirefMock.mockResolvedValue({
+      session: {},
+      device: 'wasm',
+      inputName: 'input_image',
+      outputName: 'output_image',
+    })
     autoMaskMock.mockResolvedValue({
       confidence: 0.9,
       needsReview: false,
-      requestedMethod: 'sdk',
-      methodUsed: 'bg-remove-sdk-rmbg1.4',
+      requestedMethod: 'birefnet',
+      methodUsed: 'birefnet-lite-512',
       genuineModelInference: true,
       device: 'wasm',
     })
@@ -261,9 +293,7 @@ describe('App Phase 1', () => {
 
     await screen.findByTestId('batch-panel')
     expect(screen.getByTestId('batch-auto-mask')).toBeInTheDocument()
-    expect(
-      screen.queryByTestId('batch-auto-mask-strategy'),
-    ).not.toBeInTheDocument()
+    expect(screen.getByTestId('batch-auto-mask-backend')).toBeInTheDocument()
     expect(screen.queryByText(/ISNet/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Poof/i)).not.toBeInTheDocument()
   })
@@ -282,11 +312,15 @@ describe('App Phase 1', () => {
     await user.click(screen.getByTestId('batch-auto-mask'))
 
     await waitFor(() => {
-      expect(screen.getByTestId('batch-progress')).toHaveTextContent(
-        /bg-remove-sdk-rmbg1\.4/i,
+      expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
+        /1.*masked/,
       )
     })
     expect(autoMaskMock).toHaveBeenCalled()
+    expect(autoMaskMock.mock.calls[0]?.[7]).toBe('birefnet')
+    expect(await screen.findByTestId('mask-status')).toHaveTextContent(
+      /birefnet-lite-512/i,
+    )
     expect(
       fetchSpy.mock.calls.some((call) =>
         String(call[0]).includes('/api/remove-background'),
@@ -312,7 +346,9 @@ describe('App Phase 1', () => {
     await user.click(await screen.findByTestId('batch-auto-mask'))
 
     await waitFor(() => {
-      expect(screen.getByTestId('batch-progress')).toHaveTextContent(/failed/i)
+      expect(screen.getByTestId('batch-failed-count')).toHaveTextContent(
+        /1.*failed/,
+      )
     })
     expect(screen.getByTestId('upload-error')).toHaveTextContent(
       /decode failed/i,
@@ -338,9 +374,7 @@ describe('App Phase 1', () => {
     )
     expect(screen.getByTestId('batch-start-cta')).toBeInTheDocument()
     expect(autoMaskMock).not.toHaveBeenCalled()
-    expect(screen.getByTestId('batch-progress')).toHaveTextContent(
-      /Tap Auto-mask all/i,
-    )
+    expect(screen.queryByTestId('batch-progress')).toBeNull()
   })
 
   it('Auto-mask all processes eight pending images exactly once', async () => {
@@ -351,8 +385,8 @@ describe('App Phase 1', () => {
       return {
         confidence: 0.9,
         needsReview: false,
-        requestedMethod: 'sdk',
-        methodUsed: 'bg-remove-sdk-rmbg1.4',
+        requestedMethod: 'birefnet',
+        methodUsed: 'birefnet-lite-512',
         genuineModelInference: true,
         device: 'wasm',
       }
@@ -368,8 +402,8 @@ describe('App Phase 1', () => {
     await user.click(await screen.findByTestId('batch-auto-mask'))
 
     await waitFor(() => {
-      expect(screen.getByTestId('batch-progress')).toHaveTextContent(
-        /Auto-masked 8 images/i,
+      expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
+        /8.*masked/,
       )
     })
     expect(autoMaskMock).toHaveBeenCalledTimes(8)
@@ -385,8 +419,8 @@ describe('App Phase 1', () => {
     autoMaskMock.mockResolvedValue({
       confidence: 0.9,
       needsReview: false,
-      requestedMethod: 'sdk',
-      methodUsed: 'bg-remove-sdk-rmbg1.4',
+      requestedMethod: 'birefnet',
+      methodUsed: 'birefnet-lite-512',
       genuineModelInference: true,
       device: 'wasm',
     })
@@ -404,7 +438,7 @@ describe('App Phase 1', () => {
     })
 
     const status = await screen.findByTestId('mask-status')
-    expect(status).toHaveTextContent(/bg-remove-sdk-rmbg1\.4/i)
+    expect(status).toHaveTextContent(/birefnet-lite-512/i)
     expect(status).not.toHaveTextContent(/includes manual edits/i)
   })
 
@@ -419,8 +453,8 @@ describe('App Phase 1', () => {
       return {
         confidence: 0.85,
         needsReview: false,
-        requestedMethod: 'sdk',
-        methodUsed: 'bg-remove-sdk-rmbg1.4',
+        requestedMethod: 'birefnet',
+        methodUsed: 'birefnet-lite-512',
         genuineModelInference: true,
         device: 'wasm',
       }
@@ -436,8 +470,8 @@ describe('App Phase 1', () => {
     await user.click(await screen.findByTestId('batch-auto-mask'))
 
     await waitFor(() => {
-      expect(screen.getByTestId('batch-progress')).toHaveTextContent(
-        /2 ok, 1 failed/i,
+      expect(screen.getByTestId('batch-failed-count')).toHaveTextContent(
+        /1.*failed/,
       )
     })
     expect(autoMaskMock).toHaveBeenCalledTimes(3)
@@ -450,11 +484,11 @@ describe('App Phase 1', () => {
     expect(screen.getByTestId('upload-error')).toHaveTextContent(/photo-2/i)
   })
 
-  it('marks the queue failed when the model cannot initialize', async () => {
+  it('continues the batch with per-image fallback when BiRefNet init fails', async () => {
     const user = userEvent.setup()
     // Upload also kicks a background preload — keep rejections sticky for this test.
-    preloadMock.mockRejectedValue(
-      new Error('Model init failed (network down).'),
+    preloadBirefMock.mockRejectedValue(
+      new Error('BiRefNet init failed (network down).'),
     )
 
     render(<App />)
@@ -468,14 +502,40 @@ describe('App Phase 1', () => {
     await user.click(await screen.findByTestId('batch-auto-mask'))
 
     await waitFor(() => {
-      expect(screen.getByTestId('batch-progress')).toHaveTextContent(
-        /Auto-mask stopped/i,
+      expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
+        /2.*masked/,
+      )
+    })
+    expect(autoMaskMock).toHaveBeenCalledTimes(2)
+    expect(screen.queryByTestId('batch-failed-count')).not.toBeInTheDocument()
+  })
+
+  it('marks the queue failed when RMBG cannot initialize', async () => {
+    const user = userEvent.setup()
+    preloadMock.mockRejectedValue(
+      new Error('Model init failed (network down).'),
+    )
+
+    render(<App />)
+    await user.upload(
+      screen.getByTestId('image-file-input'),
+      [
+        new File([new Uint8Array([1])], 'a.jpg', { type: 'image/jpeg' }),
+        new File([new Uint8Array([2])], 'b.jpg', { type: 'image/jpeg' }),
+      ],
+    )
+    await user.selectOptions(
+      await screen.findByTestId('batch-auto-mask-backend'),
+      'rmbg1.4',
+    )
+    await user.click(screen.getByTestId('batch-auto-mask'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('batch-failed-count')).toHaveTextContent(
+        /2.*failed/,
       )
     })
     expect(autoMaskMock).not.toHaveBeenCalled()
-    expect(screen.getByTestId('batch-failed-count')).toHaveTextContent(
-      /2.*failed/,
-    )
     expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
       /0.*masked/,
     )

@@ -12,6 +12,42 @@ const vercelJson = {
   $schema: 'https://openapi.vercel.sh/vercel.json',
   headers: [
     {
+      source: '/',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'no-store, must-revalidate',
+        },
+      ],
+    },
+    {
+      source: '/index.html',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'no-store, must-revalidate',
+        },
+      ],
+    },
+    {
+      source: '/models/(.*)',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=31536000, immutable',
+        },
+      ],
+    },
+    {
+      source: '/bg-remove-worker.js',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=86400',
+        },
+      ],
+    },
+    {
       source: '/(.*)',
       headers: [
         {
@@ -26,10 +62,8 @@ const vercelJson = {
           key: 'Referrer-Policy',
           value: 'strict-origin-when-cross-origin',
         },
-        {
-          key: 'X-Frame-Options',
-          value: 'DENY',
-        },
+        // No X-Frame-Options: DENY — Firefox mobile/RDM embeds the page and
+        // otherwise shows "cannot be simulated on Firefox".
         {
           key: 'Permissions-Policy',
           value: 'camera=(), microphone=(), geolocation=()',

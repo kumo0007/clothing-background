@@ -31,20 +31,15 @@ export function createDefaultBackground(): BackgroundState {
 
 /**
  * Whether the final pipeline should composite mask × background.
- * Transparent backgrounds normally show the original; enable compositing when
- * a product shadow is active so the silhouette (and shadow) can render.
+ * When a KEEP mask exists, always composite — including transparent backgrounds
+ * (cutout on checkerboard / PNG alpha). Shadow-only used to force this for
+ * transparent; that is now the default so gallery preview matches export.
  */
 export function shouldCompositeResult(
   hasMaskEdits: boolean,
   hasMask: boolean,
-  background: BackgroundState,
-  shadowOpacity: number,
+  _background: BackgroundState,
+  _shadowOpacity: number,
 ): boolean {
-  if (!hasMaskEdits || !hasMask) {
-    return false
-  }
-  if (background.type !== 'transparent') {
-    return true
-  }
-  return shadowOpacity > 0
+  return hasMaskEdits && hasMask
 }

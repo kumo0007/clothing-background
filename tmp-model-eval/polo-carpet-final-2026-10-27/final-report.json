@@ -1,0 +1,522 @@
+{
+  "generatedAt": "2026-10-27T08:09:09.964Z",
+  "sourceArtifacts": "tmp-model-eval/polo-carpet-cutouts-2026-10-27/",
+  "outputArtifacts": "tmp-model-eval/polo-carpet-final-2026-10-27/",
+  "modelChanged": false,
+  "pipelineRewritten": false,
+  "originalCutoutsMutated": false,
+  "rows": [
+    {
+      "id": "polo-1",
+      "selection": {
+        "backend": "birefnet",
+        "startingMask": "birefnet",
+        "status": "accepted",
+        "reasons": [
+          "Clean full-shirt silhouette; carpet removed.",
+          "Lab-seed KEEP≈96% retains carpet — rejected."
+        ]
+      },
+      "selectedLabel": "birefnet",
+      "source": {
+        "path": "D:\\project\\tmp-model-eval\\polo-carpet-cutouts-2026-10-27\\sources\\polo-1.png",
+        "width": 686,
+        "height": 911
+      },
+      "validation": {
+        "pass": true,
+        "checks": [
+          "BiRefNet decodes as RGBA",
+          "Lab decodes as RGBA",
+          "BiRefNet dimensions match source",
+          "Lab dimensions match source",
+          "Transparent-pixel RGB matches source (carpet not baked as flat RGB bg)",
+          "No dense opaque border frame on BiRefNet cutout"
+        ],
+        "failures": [],
+        "birefAlpha": {
+          "opaquePct": 39.39,
+          "transparentPct": 59.32,
+          "softPct": 1.29,
+          "meanAlpha": 102.09,
+          "borderKeepPx": 0,
+          "borderBandPx": 6
+        },
+        "labAlpha": {
+          "opaquePct": 94.16,
+          "transparentPct": 3.46,
+          "softPct": 2.38,
+          "meanAlpha": 244.42,
+          "borderKeepPx": 13542,
+          "borderBandPx": 6
+        },
+        "selectedAlpha": {
+          "opaquePct": 39.39,
+          "transparentPct": 59.32,
+          "softPct": 1.29,
+          "meanAlpha": 102.09,
+          "borderKeepPx": 0,
+          "borderBandPx": 6
+        },
+        "transparentRgbResidue": {
+          "transparentSamples": 370736,
+          "meanRgbDiffVsSourceWhenTransparent": 0,
+          "note": "Transparent pixels should still carry source RGB (not a baked flat bg). Diff≈0 is expected."
+        }
+      },
+      "files": {
+        "selected": "selected/polo-1-cutout.png",
+        "compare": "comparisons/polo-1-compare.png",
+        "composites": "validation-composites/polo-1/"
+      }
+    },
+    {
+      "id": "polo-2",
+      "selection": {
+        "backend": "birefnet",
+        "startingMask": "birefnet",
+        "status": "accepted",
+        "reasons": [
+          "Clean angled silhouette; edges usable for compositing."
+        ]
+      },
+      "selectedLabel": "birefnet",
+      "source": {
+        "path": "D:\\project\\tmp-model-eval\\polo-carpet-cutouts-2026-10-27\\sources\\polo-2.png",
+        "width": 695,
+        "height": 924
+      },
+      "validation": {
+        "pass": true,
+        "checks": [
+          "BiRefNet decodes as RGBA",
+          "Lab decodes as RGBA",
+          "BiRefNet dimensions match source",
+          "Lab dimensions match source",
+          "Transparent-pixel RGB matches source (carpet not baked as flat RGB bg)",
+          "No dense opaque border frame on BiRefNet cutout"
+        ],
+        "failures": [],
+        "birefAlpha": {
+          "opaquePct": 39.99,
+          "transparentPct": 58.74,
+          "softPct": 1.27,
+          "meanAlpha": 103.59,
+          "borderKeepPx": 0,
+          "borderBandPx": 6
+        },
+        "labAlpha": {
+          "opaquePct": 43.62,
+          "transparentPct": 56.03,
+          "softPct": 0.34,
+          "meanAlpha": 111.94,
+          "borderKeepPx": 3672,
+          "borderBandPx": 6
+        },
+        "selectedAlpha": {
+          "opaquePct": 39.99,
+          "transparentPct": 58.74,
+          "softPct": 1.27,
+          "meanAlpha": 103.59,
+          "borderKeepPx": 0,
+          "borderBandPx": 6
+        },
+        "transparentRgbResidue": {
+          "transparentSamples": 377246,
+          "meanRgbDiffVsSourceWhenTransparent": 0,
+          "note": "Transparent pixels should still carry source RGB (not a baked flat bg). Diff≈0 is expected."
+        }
+      },
+      "files": {
+        "selected": "selected/polo-2-cutout.png",
+        "compare": "comparisons/polo-2-compare.png",
+        "composites": "validation-composites/polo-2/"
+      }
+    },
+    {
+      "id": "polo-3",
+      "selection": {
+        "backend": "birefnet",
+        "startingMask": "birefnet",
+        "status": "accepted-with-notes",
+        "reasons": [
+          "Shirt silhouette good.",
+          "Measuring tape retained as foreground (product intent may want tape removed via brush)."
+        ]
+      },
+      "selectedLabel": "birefnet",
+      "source": {
+        "path": "D:\\project\\tmp-model-eval\\polo-carpet-cutouts-2026-10-27\\sources\\polo-3.jpg",
+        "width": 1024,
+        "height": 765
+      },
+      "validation": {
+        "pass": true,
+        "checks": [
+          "BiRefNet decodes as RGBA",
+          "Lab decodes as RGBA",
+          "BiRefNet dimensions match source",
+          "Lab dimensions match source",
+          "Transparent-pixel RGB matches source (carpet not baked as flat RGB bg)",
+          "No dense opaque border frame on BiRefNet cutout"
+        ],
+        "failures": [],
+        "birefAlpha": {
+          "opaquePct": 65.96,
+          "transparentPct": 30.05,
+          "softPct": 3.99,
+          "meanAlpha": 174.85,
+          "borderKeepPx": 1012,
+          "borderBandPx": 7
+        },
+        "labAlpha": {
+          "opaquePct": 37.56,
+          "transparentPct": 58.31,
+          "softPct": 4.14,
+          "meanAlpha": 103.28,
+          "borderKeepPx": 11759,
+          "borderBandPx": 7
+        },
+        "selectedAlpha": {
+          "opaquePct": 65.96,
+          "transparentPct": 30.05,
+          "softPct": 3.99,
+          "meanAlpha": 174.85,
+          "borderKeepPx": 1012,
+          "borderBandPx": 7
+        },
+        "transparentRgbResidue": {
+          "transparentSamples": 235373,
+          "meanRgbDiffVsSourceWhenTransparent": 0,
+          "note": "Transparent pixels should still carry source RGB (not a baked flat bg). Diff≈0 is expected."
+        }
+      },
+      "files": {
+        "selected": "selected/polo-3-cutout.png",
+        "compare": "comparisons/polo-3-compare.png",
+        "composites": "validation-composites/polo-3/"
+      }
+    },
+    {
+      "id": "polo-4",
+      "selection": {
+        "backend": "birefnet",
+        "startingMask": "birefnet",
+        "status": "accepted-with-notes",
+        "reasons": [
+          "Shirt silhouette good.",
+          "Tape retained; remove with brush/polygon if unwanted."
+        ]
+      },
+      "selectedLabel": "birefnet",
+      "source": {
+        "path": "D:\\project\\tmp-model-eval\\polo-carpet-cutouts-2026-10-27\\sources\\polo-4.jpg",
+        "width": 1024,
+        "height": 766
+      },
+      "validation": {
+        "pass": true,
+        "checks": [
+          "BiRefNet decodes as RGBA",
+          "Lab decodes as RGBA",
+          "BiRefNet dimensions match source",
+          "Lab dimensions match source",
+          "Transparent-pixel RGB matches source (carpet not baked as flat RGB bg)",
+          "No dense opaque border frame on BiRefNet cutout"
+        ],
+        "failures": [],
+        "birefAlpha": {
+          "opaquePct": 49.48,
+          "transparentPct": 48.82,
+          "softPct": 1.7,
+          "meanAlpha": 128.38,
+          "borderKeepPx": 1478,
+          "borderBandPx": 7
+        },
+        "labAlpha": {
+          "opaquePct": 35.26,
+          "transparentPct": 60.39,
+          "softPct": 4.35,
+          "meanAlpha": 97.77,
+          "borderKeepPx": 10414,
+          "borderBandPx": 7
+        },
+        "selectedAlpha": {
+          "opaquePct": 49.48,
+          "transparentPct": 48.82,
+          "softPct": 1.7,
+          "meanAlpha": 128.38,
+          "borderKeepPx": 1478,
+          "borderBandPx": 7
+        },
+        "transparentRgbResidue": {
+          "transparentSamples": 382944,
+          "meanRgbDiffVsSourceWhenTransparent": 0,
+          "note": "Transparent pixels should still carry source RGB (not a baked flat bg). Diff≈0 is expected."
+        }
+      },
+      "files": {
+        "selected": "selected/polo-4-cutout.png",
+        "compare": "comparisons/polo-4-compare.png",
+        "composites": "validation-composites/polo-4/"
+      }
+    },
+    {
+      "id": "polo-5",
+      "selection": {
+        "backend": "birefnet",
+        "startingMask": "birefnet",
+        "status": "accepted",
+        "reasons": [
+          "Collar close-up preserves tags/string; carpet cleared."
+        ]
+      },
+      "selectedLabel": "birefnet",
+      "source": {
+        "path": "D:\\project\\tmp-model-eval\\polo-carpet-cutouts-2026-10-27\\sources\\polo-5.png",
+        "width": 694,
+        "height": 917
+      },
+      "validation": {
+        "pass": true,
+        "checks": [
+          "BiRefNet decodes as RGBA",
+          "Lab decodes as RGBA",
+          "BiRefNet dimensions match source",
+          "Lab dimensions match source",
+          "Transparent-pixel RGB matches source (carpet not baked as flat RGB bg)",
+          "Border KEEP pixels=9575 (review if unwanted opaque frame)"
+        ],
+        "failures": [],
+        "birefAlpha": {
+          "opaquePct": 73.21,
+          "transparentPct": 25.64,
+          "softPct": 1.16,
+          "meanAlpha": 188.39,
+          "borderKeepPx": 9575,
+          "borderBandPx": 6
+        },
+        "labAlpha": {
+          "opaquePct": 27.28,
+          "transparentPct": 65.9,
+          "softPct": 6.83,
+          "meanAlpha": 81.25,
+          "borderKeepPx": 4214,
+          "borderBandPx": 6
+        },
+        "selectedAlpha": {
+          "opaquePct": 73.21,
+          "transparentPct": 25.64,
+          "softPct": 1.16,
+          "meanAlpha": 188.39,
+          "borderKeepPx": 9575,
+          "borderBandPx": 6
+        },
+        "transparentRgbResidue": {
+          "transparentSamples": 163165,
+          "meanRgbDiffVsSourceWhenTransparent": 0,
+          "note": "Transparent pixels should still carry source RGB (not a baked flat bg). Diff≈0 is expected."
+        }
+      },
+      "files": {
+        "selected": "selected/polo-5-cutout.png",
+        "compare": "comparisons/polo-5-compare.png",
+        "composites": "validation-composites/polo-5/"
+      }
+    },
+    {
+      "id": "polo-6",
+      "selection": {
+        "backend": "manual-required",
+        "startingMask": "lab-seed",
+        "status": "manual-required",
+        "reasons": [
+          "BiRefNet mask is essentially the measuring tape only (fabric missing).",
+          "Lab-seed keeps more white fabric but is noisy: carpet bleed left of tape + magenta holes in fabric (mask erosion).",
+          "Neither is product-ready. Starting mask = Lab-seed (more garment pixels); brush-restore fabric holes and erase carpet/tape as needed."
+        ]
+      },
+      "selectedLabel": "manual-required (start=lab-seed)",
+      "source": {
+        "path": "D:\\project\\tmp-model-eval\\polo-carpet-cutouts-2026-10-27\\sources\\polo-6.jpg",
+        "width": 692,
+        "height": 921
+      },
+      "validation": {
+        "pass": true,
+        "checks": [
+          "BiRefNet decodes as RGBA",
+          "Lab decodes as RGBA",
+          "BiRefNet dimensions match source",
+          "Lab dimensions match source",
+          "Transparent-pixel RGB matches source (carpet not baked as flat RGB bg)",
+          "No dense opaque border frame on BiRefNet cutout"
+        ],
+        "failures": [],
+        "birefAlpha": {
+          "opaquePct": 13.67,
+          "transparentPct": 83.95,
+          "softPct": 2.38,
+          "meanAlpha": 38.46,
+          "borderKeepPx": 841,
+          "borderBandPx": 6
+        },
+        "labAlpha": {
+          "opaquePct": 30.03,
+          "transparentPct": 66.27,
+          "softPct": 3.7,
+          "meanAlpha": 83.36,
+          "borderKeepPx": 3213,
+          "borderBandPx": 6
+        },
+        "selectedAlpha": {
+          "opaquePct": 30.03,
+          "transparentPct": 66.27,
+          "softPct": 3.7,
+          "meanAlpha": 83.36,
+          "borderKeepPx": 3213,
+          "borderBandPx": 6
+        },
+        "transparentRgbResidue": {
+          "transparentSamples": 535054,
+          "meanRgbDiffVsSourceWhenTransparent": 0,
+          "note": "Transparent pixels should still carry source RGB (not a baked flat bg). Diff≈0 is expected."
+        }
+      },
+      "files": {
+        "selected": "manual-queue/polo-6-starting-cutout.png",
+        "compare": "comparisons/polo-6-compare.png",
+        "composites": "validation-composites/polo-6/"
+      }
+    },
+    {
+      "id": "polo-7",
+      "selection": {
+        "backend": "birefnet",
+        "startingMask": "birefnet",
+        "status": "accepted-with-notes",
+        "reasons": [
+          "Full shirt usable.",
+          "Tape retained; Lab over-keeps carpet relative to BiRefNet."
+        ]
+      },
+      "selectedLabel": "birefnet",
+      "source": {
+        "path": "D:\\project\\tmp-model-eval\\polo-carpet-cutouts-2026-10-27\\sources\\polo-7.jpg",
+        "width": 1024,
+        "height": 768
+      },
+      "validation": {
+        "pass": true,
+        "checks": [
+          "BiRefNet decodes as RGBA",
+          "Lab decodes as RGBA",
+          "BiRefNet dimensions match source",
+          "Lab dimensions match source",
+          "Transparent-pixel RGB matches source (carpet not baked as flat RGB bg)",
+          "No dense opaque border frame on BiRefNet cutout"
+        ],
+        "failures": [],
+        "birefAlpha": {
+          "opaquePct": 48.97,
+          "transparentPct": 49.31,
+          "softPct": 1.72,
+          "meanAlpha": 127.1,
+          "borderKeepPx": 1270,
+          "borderBandPx": 7
+        },
+        "labAlpha": {
+          "opaquePct": 57.28,
+          "transparentPct": 37.77,
+          "softPct": 4.95,
+          "meanAlpha": 155.13,
+          "borderKeepPx": 17437,
+          "borderBandPx": 7
+        },
+        "selectedAlpha": {
+          "opaquePct": 48.97,
+          "transparentPct": 49.31,
+          "softPct": 1.72,
+          "meanAlpha": 127.1,
+          "borderKeepPx": 1270,
+          "borderBandPx": 7
+        },
+        "transparentRgbResidue": {
+          "transparentSamples": 387816,
+          "meanRgbDiffVsSourceWhenTransparent": 0,
+          "note": "Transparent pixels should still carry source RGB (not a baked flat bg). Diff≈0 is expected."
+        }
+      },
+      "files": {
+        "selected": "selected/polo-7-cutout.png",
+        "compare": "comparisons/polo-7-compare.png",
+        "composites": "validation-composites/polo-7/"
+      }
+    },
+    {
+      "id": "polo-8",
+      "selection": {
+        "backend": "manual-required",
+        "startingMask": "lab-seed",
+        "status": "manual-required",
+        "reasons": [
+          "BiRefNet mask is tape-only (horizontal strip); white fabric incorrectly removed.",
+          "Lab-seed retains more fabric but speckles (erosion) and leaves carpet under the dark tape section.",
+          "Neither is product-ready. Starting mask = Lab-seed; manual brush/polygon required."
+        ]
+      },
+      "selectedLabel": "manual-required (start=lab-seed)",
+      "source": {
+        "path": "D:\\project\\tmp-model-eval\\polo-carpet-cutouts-2026-10-27\\sources\\polo-8.jpg",
+        "width": 1024,
+        "height": 769
+      },
+      "validation": {
+        "pass": true,
+        "checks": [
+          "BiRefNet decodes as RGBA",
+          "Lab decodes as RGBA",
+          "BiRefNet dimensions match source",
+          "Lab dimensions match source",
+          "Transparent-pixel RGB matches source (carpet not baked as flat RGB bg)",
+          "No dense opaque border frame on BiRefNet cutout"
+        ],
+        "failures": [],
+        "birefAlpha": {
+          "opaquePct": 16.58,
+          "transparentPct": 82.22,
+          "softPct": 1.19,
+          "meanAlpha": 43.87,
+          "borderKeepPx": 1336,
+          "borderBandPx": 7
+        },
+        "labAlpha": {
+          "opaquePct": 41.02,
+          "transparentPct": 53.24,
+          "softPct": 5.74,
+          "meanAlpha": 114.28,
+          "borderKeepPx": 7462,
+          "borderBandPx": 7
+        },
+        "selectedAlpha": {
+          "opaquePct": 41.02,
+          "transparentPct": 53.24,
+          "softPct": 5.74,
+          "meanAlpha": 114.28,
+          "borderKeepPx": 7462,
+          "borderBandPx": 7
+        },
+        "transparentRgbResidue": {
+          "transparentSamples": 647476,
+          "meanRgbDiffVsSourceWhenTransparent": 0,
+          "note": "Transparent pixels should still carry source RGB (not a baked flat bg). Diff≈0 is expected."
+        }
+      },
+      "files": {
+        "selected": "manual-queue/polo-8-starting-cutout.png",
+        "compare": "comparisons/polo-8-compare.png",
+        "composites": "validation-composites/polo-8/"
+      }
+    }
+  ]
+}

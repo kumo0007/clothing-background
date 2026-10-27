@@ -61,6 +61,11 @@ describe('bgRemoveDevice', () => {
     expect(isWasmBackendOutOfMemoryFailure('Local inference timed out')).toBe(
       false,
     )
+    expect(
+      formatBgRemoveInitFailureMessage(
+        'no available backend found. ERR: [wasm] RangeError: Out of memory',
+      ),
+    ).toMatch(/hard-refresh|1–2 photos|Retry failed/i)
   })
 
   it('classifies WASM module script import failures (iPhone Safari CSP)', () => {
@@ -81,6 +86,45 @@ describe('bgRemoveDevice', () => {
     expect(formatBgRemoveInitFailureMessage('Load failed')).toMatch(
       /weight download failed|\/models\//i,
     )
+  })
+
+  it('maps Firefox NetworkError and disables browser cache on Firefox + Apple mobile', async () => {
+    const {
+      isWeightDownloadNetworkFailure,
+      shouldDisableBgRemoveBrowserCache,
+      formatBgRemoveInitFailureMessage,
+      isFirefoxUserAgent,
+    } = await import('./bgRemoveDevice')
+    expect(
+      isWeightDownloadNetworkFailure(
+        'NetworkError when attempting to fetch resource.',
+      ),
+    ).toBe(true)
+    expect(
+      formatBgRemoveInitFailureMessage(
+        'NetworkError when attempting to fetch resource.',
+      ),
+    ).toMatch(/Firefox network fetch|\/models\//i)
+    expect(
+      isFirefoxUserAgent(
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/122.0 Mobile/15E148 Safari/605.1.15',
+      ),
+    ).toBe(true)
+    expect(
+      shouldDisableBgRemoveBrowserCache(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
+      ),
+    ).toBe(true)
+    expect(
+      shouldDisableBgRemoveBrowserCache(
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+      ),
+    ).toBe(true)
+    expect(
+      shouldDisableBgRemoveBrowserCache(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+      ),
+    ).toBe(false)
   })
 
   it('prefers q8 weights for Apple-mobile WASM (same RMBG-1.4 repo)', () => {

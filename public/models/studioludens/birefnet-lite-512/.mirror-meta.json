@@ -1,0 +1,16 @@
+{
+  "modelId": "studioludens/birefnet-lite-512",
+  "baseModel": "ZhengPeng7/BiRefNet_lite",
+  "license": "MIT",
+  "inputSize": 512,
+  "hfHost": "https://huggingface.co",
+  "ready": true,
+  "fp16": {
+    "rel": "onnx/model_fp16.onnx",
+    "bytes": 98484532,
+    "sha256": "eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516"
+  },
+  "mirroredAt": "2026-10-27T02:51:05.792Z",
+  "error": null,
+  "notes": "Browser-ready BiRefNet_lite ONNX. DIS5K training-data terms may still apply commercially. ready=false means BiRefNet must not be treated as available."
+}

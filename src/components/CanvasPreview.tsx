@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { loadHtmlImage } from '../lib/image/loadHtmlImage'
 import { getMask } from '../lib/mask/maskStore'
+import { isUsableKeepMask } from '../lib/mask/maskKeepRatio'
 import { renderFinalInto } from '../lib/rendering/renderFinal'
-import { createDefaultAdjustments, type ImageAdjustments } from '../types/adjustments'
+import {
+  createDefaultAdjustments,
+  type ImageAdjustments,
+} from '../types/adjustments'
 import { shouldCompositeResult } from '../types/background'
 import type { BackgroundState, UploadedImage } from '../types'
 
@@ -12,8 +16,27 @@ type CanvasPreviewProps = {
   adjustments?: ImageAdjustments | null
   /** Bumps when the per-image mask changes so the preview can refresh. */
   maskRevision?: number
-  /** When true and a non-transparent background is set, show the composite. */
+  /** When true and a mask exists, show the composited cutout / result. */
   showResult?: boolean
+}
+
+/** Draw the original photo directly — few allocations (Safari-safe after WASM). */
+function drawOriginalInto(
+  canvas: HTMLCanvasElement,
+  original: HTMLImageElement,
+  width: number,
+  height: number,
+): void {
+  const w = Math.max(1, width || original.naturalWidth || 1)
+  const h = Math.max(1, height || original.naturalHeight || 1)
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    throw new Error('Could not create a 2D canvas context for preview.')
+  }
+  ctx.clearRect(0, 0, w, h)
+  ctx.drawImage(original, 0, 0, w, h)
 }
 
 export function CanvasPreview({
@@ -53,51 +76,78 @@ export function CanvasPreview({
         if (cancelled) {
           return
         }
+        if (original.naturalWidth < 1 || original.naturalHeight < 1) {
+          throw new Error('Preview image decoded with zero dimensions.')
+        }
 
         const mask = getMask(image.id)
         const adj = adjustments ?? createDefaultAdjustments()
+        const width = image.width || original.naturalWidth
+        const height = image.height || original.naturalHeight
+
+        // Empty / near-empty KEEP masks would clear the canvas to checkerboard only.
+        const maskOk = !!mask && isUsableKeepMask(mask)
         const canComposite =
           !!showResult &&
           !!background &&
+          maskOk &&
           shouldCompositeResult(
             true,
-            mask !== undefined,
+            true,
             background,
             adj.shadowOpacity,
           )
 
+        if (!canComposite) {
+          drawOriginalInto(canvas, original, width, height)
+          if (cancelled) return
+          setOutputSize((prev) =>
+            prev.width === canvas.width && prev.height === canvas.height
+              ? prev
+              : { width: canvas.width, height: canvas.height },
+          )
+          setStatus((prev) => (prev === 'original' ? prev : 'original'))
+          return
+        }
+
         let backgroundImage: HTMLImageElement | null = null
-        if (
-          canComposite &&
-          background?.type === 'image' &&
-          background.imageUrl
-        ) {
+        if (background.type === 'image' && background.imageUrl) {
           backgroundImage = await loadHtmlImage(background.imageUrl)
         }
         if (cancelled) {
           return
         }
 
-        renderFinalInto(canvas, {
-          original,
-          width: image.width || original.naturalWidth,
-          height: image.height || original.naturalHeight,
-          mask: mask ?? null,
-          background,
-          backgroundImage,
-          adjustments: adj,
-          useComposite: !!canComposite,
-        })
-        const nextStatus = canComposite ? 'result' : 'original'
+        try {
+          renderFinalInto(canvas, {
+            original,
+            width,
+            height,
+            mask: mask ?? null,
+            background,
+            backgroundImage,
+            adjustments: adj,
+            useComposite: true,
+          })
+        } catch {
+          // Composite failed (often Safari memory) — never leave a blank canvas.
+          drawOriginalInto(canvas, original, width, height)
+          if (cancelled) return
+          setOutputSize({ width: canvas.width, height: canvas.height })
+          setStatus('original')
+          return
+        }
+
+        if (cancelled) return
         setOutputSize((prev) =>
           prev.width === canvas.width && prev.height === canvas.height
             ? prev
             : { width: canvas.width, height: canvas.height },
         )
-        setStatus((prev) => (prev === nextStatus ? prev : nextStatus))
+        setStatus((prev) => (prev === 'result' ? prev : 'result'))
       } catch {
         if (!cancelled) {
-          setStatus((prev) => (prev === 'original' ? prev : 'original'))
+          setStatus('original')
         }
       }
     }

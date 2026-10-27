@@ -6,6 +6,30 @@
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 719px) {
+  .review-diagnostics {
+    padding: 0.75rem 0.8rem;
+  }
+
+  .review-diagnostics__meta,
+  .review-diagnostics__reason {
+    font-size: 0.8rem;
+  }
+
+  .review-diagnostics__repair-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .review-diagnostics__repair-actions .button {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .review-diagnostics__header h3 {
@@ -124,6 +148,15 @@
   margin: 0.15rem 0 0;
   font-size: 0.78rem;
   color: var(--text-muted);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.review-diagnostics__overlay-error {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: var(--danger, #b42318);
+  overflow-wrap: anywhere;
 }
 
 .review-diagnostics__overlay-buttons {
@@ -148,7 +181,10 @@
 }
 
 .review-diagnostics__canvas {
+  display: block;
   width: 100%;
+  max-width: 100%;
+  height: auto;
   max-height: 240px;
   object-fit: contain;
   border-radius: 6px;
@@ -161,6 +197,7 @@
   font-size: 0.8rem;
   color: var(--text-muted);
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .review-diagnostics__repair-actions {
@@ -168,6 +205,12 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.45rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.review-diagnostics__repair-actions .button {
+  min-width: 0;
 }
 
 .review-diagnostics__peel-status {

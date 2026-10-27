@@ -36,9 +36,10 @@ function drawBase(
     return canvas
   }
   const ctx = canvas.getContext('2d')
-  if (ctx) {
-    ctx.drawImage(original, 0, 0, width, height)
+  if (!ctx) {
+    throw new Error('Could not create a 2D canvas context for the preview base.')
   }
+  ctx.drawImage(original, 0, 0, width, height)
   return canvas
 }
 
@@ -574,7 +575,7 @@ export function renderFinalInto(
   target.height = result.height
   const ctx = target.getContext('2d')
   if (!ctx) {
-    return
+    throw new Error('Could not create a 2D canvas context for the preview target.')
   }
   ctx.clearRect(0, 0, target.width, target.height)
   ctx.drawImage(result, 0, 0)

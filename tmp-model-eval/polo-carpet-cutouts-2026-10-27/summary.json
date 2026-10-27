@@ -1,0 +1,100 @@
+{
+  "rows": [
+    {
+      "id": "polo-1",
+      "source": "1-c876f59e-7876-4a49-ab7b-c4289895a5e0.png",
+      "width": 686,
+      "height": 911,
+      "birefKeepPct": 40.04,
+      "birefMs": 8422,
+      "labKeepPct": 96.3,
+      "labMethod": "opencv-seed-fallback",
+      "cutout": "transparent/polo-1-biref-cutout.png",
+      "note": "White-on-beige carpet is hard; inspect cutouts before product use."
+    },
+    {
+      "id": "polo-2",
+      "source": "2-eb34fc43-0fdb-4fc6-b13f-75c9b3eb1d67.png",
+      "width": 695,
+      "height": 924,
+      "birefKeepPct": 40.63,
+      "birefMs": 7064,
+      "labKeepPct": 43.97,
+      "labMethod": "opencv-seed-fallback",
+      "cutout": "transparent/polo-2-biref-cutout.png",
+      "note": "White-on-beige carpet is hard; inspect cutouts before product use."
+    },
+    {
+      "id": "polo-3",
+      "source": "3-0a909c79-ad67-4810-9ce3-6b8ded298a60.jpg",
+      "width": 1024,
+      "height": 765,
+      "birefKeepPct": 68.78,
+      "birefMs": 7340,
+      "labKeepPct": 41.26,
+      "labMethod": "opencv-seed-fallback",
+      "cutout": "transparent/polo-3-biref-cutout.png",
+      "note": "White-on-beige carpet is hard; inspect cutouts before product use."
+    },
+    {
+      "id": "polo-4",
+      "source": "4-9dc700c5-3659-41dd-acb0-9cda40f5096d.jpg",
+      "width": 1024,
+      "height": 766,
+      "birefKeepPct": 50.35,
+      "birefMs": 8232,
+      "labKeepPct": 39.21,
+      "labMethod": "opencv-seed-fallback",
+      "cutout": "transparent/polo-4-biref-cutout.png",
+      "note": "White-on-beige carpet is hard; inspect cutouts before product use."
+    },
+    {
+      "id": "polo-5",
+      "source": "5-84036e9c-9110-4258-ad23-aa710c174f0f.png",
+      "width": 694,
+      "height": 917,
+      "birefKeepPct": 73.89,
+      "birefMs": 6249,
+      "labKeepPct": 33.1,
+      "labMethod": "opencv-seed-fallback",
+      "cutout": "transparent/polo-5-biref-cutout.png",
+      "note": "White-on-beige carpet is hard; inspect cutouts before product use."
+    },
+    {
+      "id": "polo-6",
+      "source": "6-ae1df537-23ee-447e-80cf-66691404e533.jpg",
+      "width": 692,
+      "height": 921,
+      "birefKeepPct": 15.15,
+      "birefMs": 6388,
+      "labKeepPct": 33.4,
+      "labMethod": "opencv-seed-fallback",
+      "cutout": "transparent/polo-6-biref-cutout.png",
+      "note": "White-on-beige carpet is hard; inspect cutouts before product use."
+    },
+    {
+      "id": "polo-7",
+      "source": "7-10a39f2d-bb6d-41ea-b82b-e1f6c8451f63.jpg",
+      "width": 1024,
+      "height": 768,
+      "birefKeepPct": 49.84,
+      "birefMs": 6419,
+      "labKeepPct": 61.85,
+      "labMethod": "opencv-seed-fallback",
+      "cutout": "transparent/polo-7-biref-cutout.png",
+      "note": "White-on-beige carpet is hard; inspect cutouts before product use."
+    },
+    {
+      "id": "polo-8",
+      "source": "8-778f6a73-a109-428f-94a5-5bf39aa26b00.jpg",
+      "width": 1024,
+      "height": 769,
+      "birefKeepPct": 17.21,
+      "birefMs": 6372,
+      "labKeepPct": 45.8,
+      "labMethod": "opencv-seed-fallback",
+      "cutout": "transparent/polo-8-biref-cutout.png",
+      "note": "White-on-beige carpet is hard; inspect cutouts before product use."
+    }
+  ]
+}

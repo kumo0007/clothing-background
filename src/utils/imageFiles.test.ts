@@ -4,13 +4,13 @@ import {
   IMAGE_FILE_ACCEPT,
   isAcceptedImageFile,
   isHeicLikeFile,
+  materializePickedFile,
+  sniffImageMime,
 } from './imageFiles'
 
 describe('IMAGE_FILE_ACCEPT', () => {
-  it('stays short with image/* so iPhone Photos can open the picker', () => {
-    expect(IMAGE_FILE_ACCEPT).toMatch(/image\/\*/)
-    expect(IMAGE_FILE_ACCEPT).toMatch(/\.heic/i)
-    expect(IMAGE_FILE_ACCEPT.length).toBeLessThan(40)
+  it('is only image/* so iPhone Safari opens the Photos sheet', () => {
+    expect(IMAGE_FILE_ACCEPT).toBe('image/*')
   })
 })
 
@@ -51,6 +51,17 @@ describe('isAcceptedImageFile', () => {
     )
   })
 
+  it('accepts iOS Photo Library stubs with empty type and no extension', () => {
+    expect(
+      isAcceptedImageFile(new File([new Uint8Array([1, 2, 3])], '', { type: '' })),
+    ).toBe(true)
+    expect(
+      isAcceptedImageFile(
+        new File([new Uint8Array([1, 2, 3])], 'image', { type: '' }),
+      ),
+    ).toBe(true)
+  })
+
   it('detects HEIC-like files for decode attempt / guidance', () => {
     expect(
       isHeicLikeFile(new File([], 'IMG_0001.HEIC', { type: 'image/heic' })),
@@ -58,6 +69,31 @@ describe('isAcceptedImageFile', () => {
     expect(isHeicLikeFile(new File([], 'IMG_0001.HEIC', { type: '' }))).toBe(
       true,
     )
+  })
+})
+
+describe('sniffImageMime', () => {
+  it('detects JPEG magic bytes', () => {
+    expect(sniffImageMime(new Uint8Array([0xff, 0xd8, 0xff, 0xe0]).buffer)).toBe(
+      'image/jpeg',
+    )
+  })
+})
+
+describe('materializePickedFile', () => {
+  it('copies bytes into a heap File with a stable name and sniffed type', async () => {
+    const jpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10])
+    const pathBacked = new File([jpegBytes], '', { type: '' })
+    const materialized = await materializePickedFile(pathBacked, 0)
+    expect(materialized.name).toBe('photo-1.jpg')
+    expect(materialized.type).toBe('image/jpeg')
+    expect(new Uint8Array(await materialized.arrayBuffer())).toEqual(jpegBytes)
+  })
+
+  it('rejects empty gallery payloads', async () => {
+    await expect(
+      materializePickedFile(new File([], 'empty.jpg', { type: 'image/jpeg' })),
+    ).rejects.toThrow(/0 bytes/i)
   })
 })
 
