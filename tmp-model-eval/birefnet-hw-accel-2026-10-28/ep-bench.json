@@ -1,0 +1,434 @@
+{
+  "generatedAt": "2026-10-27T17:18:52.715Z",
+  "experimental": true,
+  "productionPathUnchanged": true,
+  "ortWebVersion": "1.21.0",
+  "model": "studioludens/birefnet-lite-512 FP16 (stock)",
+  "fixtures": [
+    "dark-hoodie",
+    "white-tshirt",
+    "white-sneakers",
+    "open-handbag",
+    "polo-carpet-closeup"
+  ],
+  "wasm": {
+    "report": {
+      "ok": true,
+      "experimental": true,
+      "methodId": "birefnet-lite-512",
+      "requestedEp": "wasm",
+      "device": "wasm",
+      "ortEntry": "/ort-vendor/ort.min.mjs",
+      "hasGpu": true,
+      "createError": null,
+      "coldMs": 14499,
+      "warmReuseMs": 11197,
+      "sequentialBatch": [
+        {
+          "path": "/testdata/clothing/01_hoodie.jpg",
+          "inferMs": 12142,
+          "keepRatio": 0.5543,
+          "softRatio": 0.0226,
+          "degenerate": false,
+          "rawMin": -16.731058,
+          "rawMax": 17.323206,
+          "nonFinite": 0,
+          "centerMean": 1,
+          "borderMean": 0,
+          "fingerprint": 949131375,
+          "dims": [
+            298,
+            292
+          ],
+          "heapUsedMb": 9.62
+        },
+        {
+          "path": "/testdata/clothing/03_tshirt.jpg",
+          "inferMs": 11528,
+          "keepRatio": 0.4901,
+          "softRatio": 0.0143,
+          "degenerate": false,
+          "rawMin": -20.038895,
+          "rawMax": 16.728609,
+          "nonFinite": 0,
+          "centerMean": 1,
+          "borderMean": 0,
+          "fingerprint": 1067404213,
+          "dims": [
+            294,
+            292
+          ],
+          "heapUsedMb": 15.61
+        },
+        {
+          "path": "/testdata/clothing/08_sneakers.jpg",
+          "inferMs": 11231,
+          "keepRatio": 0.345,
+          "softRatio": 0.0109,
+          "degenerate": false,
+          "rawMin": -19.118488,
+          "rawMax": 18.28524,
+          "nonFinite": 0,
+          "centerMean": 1,
+          "borderMean": 0,
+          "fingerprint": 1769276606,
+          "dims": [
+            294,
+            291
+          ],
+          "heapUsedMb": 14.4
+        },
+        {
+          "path": "/testdata/clothing/09_handbag.jpg",
+          "inferMs": 11217,
+          "keepRatio": 0.3565,
+          "softRatio": 0.0214,
+          "degenerate": false,
+          "rawMin": -22.354836,
+          "rawMax": 16.868092,
+          "nonFinite": 0,
+          "centerMean": 1,
+          "borderMean": 0,
+          "fingerprint": -434460131,
+          "dims": [
+            294,
+            291
+          ],
+          "heapUsedMb": 19.75
+        },
+        {
+          "path": "/testdata/clothing/polo-5.png",
+          "inferMs": 11591,
+          "keepRatio": 0.7387,
+          "softRatio": 0.0064,
+          "degenerate": false,
+          "rawMin": -19.136272,
+          "rawMax": 15.650775,
+          "nonFinite": 0,
+          "centerMean": 1,
+          "borderMean": 0.5481,
+          "fingerprint": 1553725573,
+          "dims": [
+            694,
+            917
+          ],
+          "heapUsedMb": 16.57
+        }
+      ],
+      "sequentialBatchTotalMs": 57709,
+      "firstFixtureLogits": {
+        "degenerate": false,
+        "rawMin": -16.73105812072754,
+        "rawMax": 17.323205947875977,
+        "fingerprint": 949131375,
+        "alphaSample": [
+          0.000019423960111453198,
+          0.000006344901976262918,
+          0.00000567793904338032,
+          0.0000045830538510927,
+          0.0000036985554743296234,
+          0.000005083606083644554,
+          0.000007068159902701154,
+          0.000009812270945985802,
+          0.000013634244169224985,
+          0.000012471247828216292,
+          0.000011181898116774391,
+          0.000010041913810709957,
+          0.000009032927664520685,
+          0.000008450017958239187,
+          0.00000790868216427043,
+          0.000007428411208820762
+        ],
+        "keepRatio": 0.5543
+      },
+      "meaningfulKeep": true,
+      "memory": {
+        "available": true,
+        "beforeMb": {
+          "usedJSHeapMb": 1.83,
+          "totalJSHeapMb": 2.69,
+          "jsHeapLimitMb": 4395.63
+        },
+        "afterInitMb": {
+          "usedJSHeapMb": 102.32,
+          "totalJSHeapMb": 105.43,
+          "jsHeapLimitMb": 4395.63
+        },
+        "peakUsedJSHeapMb": 102.32,
+        "endMb": {
+          "usedJSHeapMb": 21.14,
+          "totalJSHeapMb": 23.03,
+          "jsHeapLimitMb": 4395.63
+        }
+      },
+      "notSilentRmbg": true
+    },
+    "logs": [
+      "[error] Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.758659 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.762404 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.782134 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.0/Ceil_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.796125 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.796884 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.816704 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.1/Ceil_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.838004 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.838494 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.866099 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.2/Ceil_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.891989 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.892579 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:55.915169 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.663175 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.663740 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.664135 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.0/Ceil_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.664664 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.665084 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.665449 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.1/Ceil_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.665964 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.666375 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.666774 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.2/Ceil_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.667334 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div_1'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.667740 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "[error] \u001b[0;93m2026-10-28 02:18:56.668104 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m"
+    ]
+  },
+  "webgpu": {
+    "report": {
+      "ok": true,
+      "experimental": true,
+      "methodId": "birefnet-lite-512",
+      "requestedEp": "webgpu",
+      "device": "webgpu",
+      "ortEntry": "/ort-vendor/ort.webgpu.min.mjs",
+      "hasGpu": true,
+      "createError": null,
+      "coldMs": 10912,
+      "warmReuseMs": 6137,
+      "sequentialBatch": [
+        {
+          "path": "/testdata/clothing/01_hoodie.jpg",
+          "inferMs": 9199,
+          "keepRatio": 0,
+          "softRatio": 1,
+          "degenerate": true,
+          "rawMin": -4.351563,
+          "rawMax": -1.999023,
+          "nonFinite": 0,
+          "centerMean": 0.0201,
+          "borderMean": 0.023,
+          "fingerprint": -1821611537,
+          "dims": [
+            298,
+            292
+          ],
+          "heapUsedMb": 12.57
+        },
+        {
+          "path": "/testdata/clothing/03_tshirt.jpg",
+          "inferMs": 5622,
+          "keepRatio": 0,
+          "softRatio": 1,
+          "degenerate": true,
+          "rawMin": -4.238281,
+          "rawMax": -1.929688,
+          "nonFinite": 0,
+          "centerMean": 0.0184,
+          "borderMean": 0.0247,
+          "fingerprint": 273056692,
+          "dims": [
+            294,
+            292
+          ],
+          "heapUsedMb": 19.28
+        },
+        {
+          "path": "/testdata/clothing/08_sneakers.jpg",
+          "inferMs": 5614,
+          "keepRatio": 0,
+          "softRatio": 1,
+          "degenerate": true,
+          "rawMin": -4.277344,
+          "rawMax": -1.830078,
+          "nonFinite": 0,
+          "centerMean": 0.0227,
+          "borderMean": 0.0267,
+          "fingerprint": 543914355,
+          "dims": [
+            294,
+            291
+          ],
+          "heapUsedMb": 23.96
+        },
+        {
+          "path": "/testdata/clothing/09_handbag.jpg",
+          "inferMs": 6262,
+          "keepRatio": 0,
+          "softRatio": 1,
+          "degenerate": true,
+          "rawMin": -4.828125,
+          "rawMax": -1.893555,
+          "nonFinite": 0,
+          "centerMean": 0.0319,
+          "borderMean": 0.0251,
+          "fingerprint": -1649318565,
+          "dims": [
+            294,
+            291
+          ],
+          "heapUsedMb": 28.02
+        },
+        {
+          "path": "/testdata/clothing/polo-5.png",
+          "inferMs": 5952,
+          "keepRatio": 0,
+          "softRatio": 1,
+          "degenerate": true,
+          "rawMin": -4.390625,
+          "rawMax": -1.604492,
+          "nonFinite": 0,
+          "centerMean": 0.0244,
+          "borderMean": 0.0343,
+          "fingerprint": 1878775337,
+          "dims": [
+            694,
+            917
+          ],
+          "heapUsedMb": 35.26
+        }
+      ],
+      "sequentialBatchTotalMs": 32649,
+      "firstFixtureLogits": {
+        "degenerate": true,
+        "rawMin": -4.3515625,
+        "rawMax": -1.9990234375,
+        "fingerprint": -1821611537,
+        "alphaSample": [
+          0.11797800660133362,
+          0.05061143636703491,
+          0.05490385368466377,
+          0.05399883911013603,
+          0.05320620909333229,
+          0.05330468341708183,
+          0.05320620909333229,
+          0.05320620909333229,
+          0.05320620909333229,
+          0.05310790240764618,
+          0.05310790240764618,
+          0.05320620909333229,
+          0.05330468341708183,
+          0.05310790240764618,
+          0.05291181057691574,
+          0.05310790240764618
+        ],
+        "keepRatio": 0
+      },
+      "meaningfulKeep": false,
+      "memory": {
+        "available": true,
+        "beforeMb": {
+          "usedJSHeapMb": 1.85,
+          "totalJSHeapMb": 2.69,
+          "jsHeapLimitMb": 4395.63
+        },
+        "afterInitMb": {
+          "usedJSHeapMb": 103.08,
+          "totalJSHeapMb": 104.47,
+          "jsHeapLimitMb": 4395.63
+        },
+        "peakUsedJSHeapMb": 103.08,
+        "endMb": {
+          "usedJSHeapMb": 39.33,
+          "totalJSHeapMb": 47.41,
+          "jsHeapLimitMb": 4395.63
+        }
+      },
+      "notSilentRmbg": true
+    },
+    "logs": [
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While Validating GetBindGroupLayout (0) on [Invalid ComputePipeline \"computeSliceOffsets\"]\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid BindGroupLayout (unlabeled)] is invalid due to a previous error.\n - While validating [BindGroupDescriptor \"\"computeSliceOffsets\"\"] against [Invalid BindGroupLayout (unlabeled)]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"computeSliceOffsets\"\"]).\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid ComputePipeline \"computeSliceOffsets\"] is invalid due to a previous error.\n - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline \"computeSliceOffsets\"]).\n - While finishing [CommandEncoder (unlabeled)].\n",
+      "[error] An uncaught WebGPU validation error was raised: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n"
+    ]
+  },
+  "webgl": {
+    "report": {
+      "ok": false,
+      "phase": "session-create",
+      "requestedEp": "webgl",
+      "device": "webgl",
+      "hasGpu": true,
+      "createError": "unsupported data type: FLOAT16",
+      "memory": {
+        "before": {
+          "usedJSHeapMb": 2.55,
+          "totalJSHeapMb": 3.32,
+          "jsHeapLimitMb": 4395.63
+        },
+        "after": {
+          "usedJSHeapMb": 124.23,
+          "totalJSHeapMb": 149.26,
+          "jsHeapLimitMb": 4395.63
+        }
+      }
+    },
+    "logs": [
+      "[error] Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  }
+}

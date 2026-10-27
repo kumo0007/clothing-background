@@ -1,0 +1,679 @@
+{
+  "stock": {
+    "path": "D:\\project\\public\\models\\studioludens\\birefnet-lite-512\\onnx\\model_fp16.onnx",
+    "bytes": 98484532,
+    "sha256": "eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516",
+    "verified": true
+  },
+  "graph": {
+    "nodeCount": 17490,
+    "opCountsTop": [
+      [
+        "Constant",
+        7111
+      ],
+      [
+        "Shape",
+        1196
+      ],
+      [
+        "Unsqueeze",
+        1110
+      ],
+      [
+        "Reshape",
+        1080
+      ],
+      [
+        "Cast",
+        715
+      ],
+      [
+        "Slice",
+        670
+      ],
+      [
+        "Gather",
+        666
+      ],
+      [
+        "Concat",
+        659
+      ],
+      [
+        "Mul",
+        594
+      ],
+      [
+        "Add",
+        509
+      ],
+      [
+        "ConstantOfShape",
+        392
+      ],
+      [
+        "Expand",
+        360
+      ],
+      [
+        "Transpose",
+        351
+      ],
+      [
+        "Equal",
+        304
+      ],
+      [
+        "Where",
+        304
+      ],
+      [
+        "Range",
+        288
+      ],
+      [
+        "Div",
+        178
+      ],
+      [
+        "MatMul",
+        150
+      ],
+      [
+        "Sub",
+        108
+      ],
+      [
+        "Conv",
+        102
+      ],
+      [
+        "Clip",
+        80
+      ],
+      [
+        "GatherND",
+        80
+      ],
+      [
+        "ScatterND",
+        72
+      ],
+      [
+        "LayerNormalization",
+        64
+      ],
+      [
+        "Identity",
+        51
+      ],
+      [
+        "Pad",
+        44
+      ],
+      [
+        "Relu",
+        38
+      ],
+      [
+        "Mod",
+        32
+      ],
+      [
+        "Softmax",
+        24
+      ],
+      [
+        "Erf",
+        24
+      ],
+      [
+        "Sigmoid",
+        23
+      ],
+      [
+        "Resize",
+        22
+      ],
+      [
+        "Floor",
+        20
+      ],
+      [
+        "Sum",
+        20
+      ],
+      [
+        "BatchNormalization",
+        20
+      ],
+      [
+        "Ceil",
+        16
+      ],
+      [
+        "Not",
+        8
+      ],
+      [
+        "GlobalAveragePool",
+        5
+      ]
+    ],
+    "gatherNdCount": 80,
+    "scatterNdCount": 72,
+    "splitCount": 0,
+    "concatCount": 659,
+    "sumCount": 20
+  },
+  "gatherNdPatterns": {
+    "('data_shape=[1, 1, 18, 18, 64]', 'idx_shape=[1, 1, 256, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 16,
+    "('data_shape=[1, 1, 18, 18, 64]', 'idx_shape=[1, 1, 2304, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 8,
+    "('data_shape=[1, 1, 22, 22, 64]', 'idx_shape=[1, 1, 12544, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 8,
+    "('data_shape=[1, 1, 34, 34, 64]', 'idx_shape=[1, 1, 1024, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 8,
+    "('data_shape=[1, 1, 66, 66, 64]', 'idx_shape=[1, 1, 4096, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 8,
+    "('data_shape=[1, 1, 130, 130, 64]', 'idx_shape=[1, 1, 16384, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 8,
+    "('data_shape=[1, 1, 34, 34, 64]', 'idx_shape=[1, 1, 9216, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 4,
+    "('data_shape=[1, 1, 38, 38, 64]', 'idx_shape=[1, 1, 50176, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 4,
+    "('data_shape=[1, 1, 66, 66, 64]', 'idx_shape=[1, 1, 36864, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 4,
+    "('data_shape=[1, 1, 70, 70, 64]', 'idx_shape=[1, 1, 200704, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 4,
+    "('data_shape=[1, 1, 130, 130, 64]', 'idx_shape=[1, 1, 147456, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 4,
+    "('data_shape=[1, 1, 134, 134, 64]', 'idx_shape=[1, 1, 802816, 2]', 'batch_dims=2', 'data_dtype=FLOAT16', 'idx_dtype=INT64')": 4
+  },
+  "gatherNdSample": [
+    {
+      "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND",
+      "op": "GatherND",
+      "attrs": {
+        "batch_dims": 2
+      },
+      "inputs": [
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/Transpose_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            1,
+            1,
+            18,
+            18,
+            64
+          ]
+        },
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/Concat_output_0",
+          "kind": "value",
+          "dtype": "INT64",
+          "shape": [
+            1,
+            1,
+            256,
+            2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND_output_0",
+          "dtype": "FLOAT16",
+          "shape": [
+            1,
+            1,
+            256,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND_1",
+      "op": "GatherND",
+      "attrs": {
+        "batch_dims": 2
+      },
+      "inputs": [
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/Transpose_2_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            1,
+            1,
+            18,
+            18,
+            64
+          ]
+        },
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/Concat_1_output_0",
+          "kind": "value",
+          "dtype": "INT64",
+          "shape": [
+            1,
+            1,
+            256,
+            2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND_1_output_0",
+          "dtype": "FLOAT16",
+          "shape": [
+            1,
+            1,
+            256,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND_2",
+      "op": "GatherND",
+      "attrs": {
+        "batch_dims": 2
+      },
+      "inputs": [
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/Transpose_4_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            1,
+            1,
+            18,
+            18,
+            64
+          ]
+        },
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/Concat_2_output_0",
+          "kind": "value",
+          "dtype": "INT64",
+          "shape": [
+            1,
+            1,
+            256,
+            2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND_2_output_0",
+          "dtype": "FLOAT16",
+          "shape": [
+            1,
+            1,
+            256,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND_3",
+      "op": "GatherND",
+      "attrs": {
+        "batch_dims": 2
+      },
+      "inputs": [
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/Transpose_6_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            1,
+            1,
+            18,
+            18,
+            64
+          ]
+        },
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/Concat_3_output_0",
+          "kind": "value",
+          "dtype": "INT64",
+          "shape": [
+            1,
+            1,
+            256,
+            2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND_3_output_0",
+          "dtype": "FLOAT16",
+          "shape": [
+            1,
+            1,
+            256,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/squeeze_module/squeeze_module.0/dec_att/aspp_deforms.0/atrous_conv/GatherND",
+      "op": "GatherND",
+      "attrs": {
+        "batch_dims": 2
+      },
+      "inputs": [
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp_deforms.0/atrous_conv/Transpose_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            1,
+            1,
+            18,
+            18,
+            64
+          ]
+        },
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp_deforms.0/atrous_conv/Concat_output_0",
+          "kind": "value",
+          "dtype": "INT64",
+          "shape": [
+            1,
+            1,
+            256,
+            2
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "/squeeze_module/squeeze_module.0/dec_att/aspp_deforms.0/atrous_conv/GatherND_output_0",
+          "dtype": "FLOAT16",
+          "shape": [
+            1,
+            1,
+            256,
+            64
+          ]
+        }
+      ]
+    }
+  ],
+  "scatterNdSample": [
+    {
+      "name": "/bb/layers.0/ScatterND",
+      "op": "ScatterND",
+      "attrs": {},
+      "inputs": [
+        {
+          "name": "/bb/layers.0/ConstantOfShape_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__7",
+            "unk__8",
+            "unk__9",
+            "unk__10"
+          ]
+        },
+        {
+          "name": "/bb/layers.0/Concat_1_output_0",
+          "kind": "value",
+          "dtype": "INT64",
+          "shape": [
+            "unk__31",
+            "unk__32",
+            "unk__33",
+            "unk__34",
+            4
+          ]
+        },
+        {
+          "name": "/bb/layers.0/Reshape_3_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__50",
+            "unk__51",
+            "unk__52",
+            "unk__53"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "/bb/layers.0/ScatterND_output_0",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__7",
+            "unk__8",
+            "unk__9",
+            "unk__10"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/bb/layers.0/ScatterND_1",
+      "op": "ScatterND",
+      "attrs": {},
+      "inputs": [
+        {
+          "name": "/bb/layers.0/ScatterND_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__7",
+            "unk__8",
+            "unk__9",
+            "unk__10"
+          ]
+        },
+        {
+          "name": "/bb/layers.0/Concat_3_output_0",
+          "kind": "value",
+          "dtype": "INT64",
+          "shape": [
+            "unk__74",
+            "unk__75",
+            "unk__76",
+            "unk__77",
+            4
+          ]
+        },
+        {
+          "name": "/bb/layers.0/Reshape_7_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__93",
+            "unk__94",
+            "unk__95",
+            "unk__96"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "/bb/layers.0/ScatterND_1_output_0",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__7",
+            "unk__8",
+            "unk__9",
+            "unk__10"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/bb/layers.0/ScatterND_2",
+      "op": "ScatterND",
+      "attrs": {},
+      "inputs": [
+        {
+          "name": "/bb/layers.0/ScatterND_1_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__7",
+            "unk__8",
+            "unk__9",
+            "unk__10"
+          ]
+        },
+        {
+          "name": "/bb/layers.0/Concat_5_output_0",
+          "kind": "value",
+          "dtype": "INT64",
+          "shape": [
+            "unk__117",
+            "unk__118",
+            "unk__119",
+            "unk__120",
+            4
+          ]
+        },
+        {
+          "name": "/bb/layers.0/Reshape_11_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__136",
+            "unk__137",
+            "unk__138",
+            "unk__139"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "/bb/layers.0/ScatterND_2_output_0",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__7",
+            "unk__8",
+            "unk__9",
+            "unk__10"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/bb/layers.0/ScatterND_3",
+      "op": "ScatterND",
+      "attrs": {},
+      "inputs": [
+        {
+          "name": "/bb/layers.0/ScatterND_2_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__7",
+            "unk__8",
+            "unk__9",
+            "unk__10"
+          ]
+        },
+        {
+          "name": "/bb/layers.0/Concat_7_output_0",
+          "kind": "value",
+          "dtype": "INT64",
+          "shape": [
+            "unk__160",
+            "unk__161",
+            "unk__162",
+            "unk__163",
+            4
+          ]
+        },
+        {
+          "name": "/bb/layers.0/Reshape_15_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__179",
+            "unk__180",
+            "unk__181",
+            "unk__182"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "/bb/layers.0/ScatterND_3_output_0",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__7",
+            "unk__8",
+            "unk__9",
+            "unk__10"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "/bb/layers.0/ScatterND_4",
+      "op": "ScatterND",
+      "attrs": {},
+      "inputs": [
+        {
+          "name": "/bb/layers.0/ScatterND_3_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__7",
+            "unk__8",
+            "unk__9",
+            "unk__10"
+          ]
+        },
+        {
+          "name": "/bb/layers.0/Concat_9_output_0",
+          "kind": "value",
+          "dtype": "INT64",
+          "shape": [
+            "unk__203",
+            "unk__204",
+            "unk__205",
+            "unk__206",
+            4
+          ]
+        },
+        {
+          "name": "/bb/layers.0/Reshape_19_output_0",
+          "kind": "value",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__222",
+            "unk__223",
+            "unk__224",
+            "unk__225"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "/bb/layers.0/ScatterND_4_output_0",
+          "dtype": "FLOAT16",
+          "shape": [
+            "unk__7",
+            "unk__8",
+            "unk__9",
+            "unk__10"
+          ]
+        }
+      ]
+    }
+  ],
+  "webgpuNotes": {
+    "ortIssue": "https://github.com/microsoft/onnxruntime/issues/32731",
+    "fixPr": "https://github.com/microsoft/onnxruntime/pull/32733 (draft, not merged as of investigation)",
+    "failureMode": "rank>=5 GatherND computeSliceOffsets Tint rejection \u2192 degenerate logits",
+    "rewriteCandidate": "Reshape data spatial dims + linearize indices + Gather (claimed bit-identical on CPU in ORT issue)"
+  }
+}

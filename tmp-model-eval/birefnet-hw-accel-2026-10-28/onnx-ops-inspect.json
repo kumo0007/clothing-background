@@ -1,0 +1,79 @@
+{
+  "generatedAt": "2026-10-27T17:10:03.021Z",
+  "weights": {
+    "path": "D:\\project\\public\\models\\studioludens\\birefnet-lite-512\\onnx\\model_fp16.onnx",
+    "bytes": 98484532,
+    "sha256": "eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516",
+    "verified": true
+  },
+  "note": "ASCII marker counts in the ONNX protobuf (approximate op-type frequency; not a full graph parse).",
+  "opMarkerCounts": {
+    "GatherND": 400,
+    "ScatterND": 776,
+    "Gather": 4040,
+    "Split": 0,
+    "Concat": 3381,
+    "Sum": 100,
+    "DeformConv": 0,
+    "GridSample": 0,
+    "NonMaxSuppression": 0,
+    "TopK": 0,
+    "Einsum": 0,
+    "LayerNormalization": 320,
+    "InstanceNormalization": 0,
+    "GroupNormalization": 0,
+    "Resize": 112,
+    "Conv": 607,
+    "ConvTranspose": 0,
+    "MatMul": 1068,
+    "Gemm": 0,
+    "Softmax": 120,
+    "Sigmoid": 115,
+    "Relu": 255,
+    "Gelu": 0,
+    "Mul": 4049,
+    "Add": 2699,
+    "Sub": 616,
+    "Div": 890,
+    "Cast": 3709,
+    "Reshape": 5783,
+    "Transpose": 1811,
+    "Squeeze": 0,
+    "Unsqueeze": 7852,
+    "Expand": 1800,
+    "Where": 1520,
+    "ConstantOfShape": 2296,
+    "Shape": 9140,
+    "Slice": 3554,
+    "Pad": 304,
+    "ReduceMean": 0,
+    "ReduceSum": 0,
+    "ReduceMax": 0
+  },
+  "dtypeHints": {
+    "FLOAT16": 0,
+    "FLOAT": 0
+  },
+  "webgpuRiskFlags": {
+    "gatherNdCount": 400,
+    "scatterNdCount": 776,
+    "highAritySplitHint": 0,
+    "knownIssue": "BiRefNet lite FP16 uses many rank-5 GatherND nodes (deformable attention). ORT WebGPU GatherND computeSliceOffsets fails Tint validation (ORT #32731); stock checkpoint yields degenerate logits on WebGPU under onnxruntime-web 1.21."
+  },
+  "candidates": {
+    "wasm": {
+      "supportedInOrtWeb121": true,
+      "stockModelCompatible": true,
+      "productionDefault": true
+    },
+    "webgpu": {
+      "supportedInOrtWeb121": true,
+      "stockModelCompatible": "session may create; inference quality broken on this checkpoint (GatherND)",
+      "requiresGraphRewriteOrOrtFix": true
+    },
+    "webgl": {
+      "supportedInOrtWeb121": true,
+      "stockModelCompatible": "measure in isolated harness — often incomplete op coverage"
+    }
+  }
+}

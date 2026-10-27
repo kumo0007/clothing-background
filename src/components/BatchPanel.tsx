@@ -1,5 +1,4 @@
 import type { ExportFormat } from '../lib/export/exportImage'
-import type { AutoMaskBackend } from '../lib/batch/autoMaskCorners'
 import './BatchPanel.css'
 
 type BatchPanelProps = {
@@ -26,9 +25,6 @@ type BatchPanelProps = {
   onExportZip: (scope: 'all' | 'masked') => void
   canApplyFromSelection: boolean
   canRetrySelected: boolean
-  /** On-device segmentation backend (default BiRefNet). */
-  autoMaskBackend?: AutoMaskBackend
-  onAutoMaskBackendChange?: (backend: AutoMaskBackend) => void
 }
 
 export function BatchPanel({
@@ -50,8 +46,6 @@ export function BatchPanel({
   onExportZip,
   canApplyFromSelection,
   canRetrySelected,
-  autoMaskBackend = 'birefnet',
-  onAutoMaskBackendChange,
 }: BatchPanelProps) {
   if (imageCount === 0) {
     return null
@@ -60,10 +54,6 @@ export function BatchPanel({
   const needsStart =
     !busy && pendingCount > 0 && maskedCount === 0 && failedCount === 0
   const canAutoMask = !busy && (pendingCount > 0 || failedCount > 0)
-  const modelHint =
-    autoMaskBackend === 'birefnet'
-      ? 'BiRefNet (~94 MB first download)'
-      : 'RMBG-1.4 (~44 MB first download)'
 
   return (
     <section className="panel batch-panel" data-testid="batch-panel">
@@ -71,35 +61,11 @@ export function BatchPanel({
         <div className="batch-panel__title">
           <h2 id="batch-heading">Batch</h2>
           <p className="batch-panel__hint">
-            Remove backgrounds on this device ({modelHint}). Keep this tab open
-            on Wi‑Fi for the first run.
+            Remove backgrounds on this device with{' '}
+            <strong data-testid="batch-auto-mask-backend">BiRefNet</strong>{' '}
+            (~94&nbsp;MB first download). Keep this tab open on Wi‑Fi for the
+            first run.
           </p>
-          {onAutoMaskBackendChange ? (
-            <label className="batch-panel__format batch-panel__model">
-              Masking model
-              <select
-                value={autoMaskBackend}
-                disabled={busy}
-                onChange={(e) =>
-                  onAutoMaskBackendChange(e.target.value as AutoMaskBackend)
-                }
-                data-testid="batch-auto-mask-backend"
-                aria-label="Masking model"
-              >
-                <option value="birefnet">BiRefNet (default)</option>
-                <option value="rmbg1.4">RMBG-1.4 (fallback)</option>
-              </select>
-            </label>
-          ) : null}
-          <details className="batch-panel__details">
-            <summary>Tips for iPhone &amp; file types</summary>
-            <p>
-              Processing can take a few minutes per photo on iPhone. Use
-              JPEG/PNG/WebP. HEIC: export as JPEG (Most Compatible) in Photos
-              before upload if Safari rejects it. If BiRefNet fails to load, the
-              app falls back to RMBG-1.4 and reports that in the status line.
-            </p>
-          </details>
         </div>
         <div className="batch-panel__stats" aria-label="Batch status">
           <span className="batch-panel__stat">

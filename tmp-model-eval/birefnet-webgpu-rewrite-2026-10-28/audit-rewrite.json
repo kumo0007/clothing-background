@@ -1,0 +1,107 @@
+{
+  "ok": true,
+  "stockSha256": "eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516",
+  "rewriteSha256": "7f0dfdabbb7a0c588bd4a1e155bb291b470cbd2030af7779fb47ec8514499f8e",
+  "gatherNdPatterns": {
+    "('[1, 1, 18, 18, 64]', '[1, 1, 256, 2]', 2)": 16,
+    "('[1, 1, 18, 18, 64]', '[1, 1, 2304, 2]', 2)": 8,
+    "('[1, 1, 22, 22, 64]', '[1, 1, 12544, 2]', 2)": 8,
+    "('[1, 1, 34, 34, 64]', '[1, 1, 1024, 2]', 2)": 8,
+    "('[1, 1, 66, 66, 64]', '[1, 1, 4096, 2]', 2)": 8,
+    "('[1, 1, 130, 130, 64]', '[1, 1, 16384, 2]', 2)": 8,
+    "('[1, 1, 34, 34, 64]', '[1, 1, 9216, 2]', 2)": 4,
+    "('[1, 1, 38, 38, 64]', '[1, 1, 50176, 2]', 2)": 4,
+    "('[1, 1, 66, 66, 64]', '[1, 1, 36864, 2]', 2)": 4,
+    "('[1, 1, 70, 70, 64]', '[1, 1, 200704, 2]', 2)": 4,
+    "('[1, 1, 130, 130, 64]', '[1, 1, 147456, 2]', 2)": 4,
+    "('[1, 1, 134, 134, 64]', '[1, 1, 802816, 2]', 2)": 4
+  },
+  "gatherNdConcreteOk": 80,
+  "gatherNdRemainingInRewrite": 0,
+  "scatterNdUntouched": 72,
+  "rewriteHelperNodesNamedGndrw": 560,
+  "numericLinearization": [
+    {
+      "H": 18,
+      "W": 18,
+      "N": 256,
+      "maxAbsDiff": 0.0,
+      "exact": true
+    },
+    {
+      "H": 66,
+      "W": 66,
+      "N": 4096,
+      "maxAbsDiff": 0.0,
+      "exact": true
+    },
+    {
+      "H": 134,
+      "W": 134,
+      "N": 1000,
+      "maxAbsDiff": 0.0,
+      "exact": true
+    },
+    {
+      "case": "boundary-corners",
+      "maxAbsDiff": 0.0,
+      "exact": true
+    }
+  ],
+  "oobRiskSample": [
+    {
+      "node": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND",
+      "H": 18,
+      "W": 18,
+      "C": 64,
+      "N": 256,
+      "note": "Rewrite inherits GatherND OOB semantics; no added Clamp"
+    },
+    {
+      "node": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND_1",
+      "H": 18,
+      "W": 18,
+      "C": 64,
+      "N": 256,
+      "note": "Rewrite inherits GatherND OOB semantics; no added Clamp"
+    },
+    {
+      "node": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND_2",
+      "H": 18,
+      "W": 18,
+      "C": 64,
+      "N": 256,
+      "note": "Rewrite inherits GatherND OOB semantics; no added Clamp"
+    },
+    {
+      "node": "/squeeze_module/squeeze_module.0/dec_att/aspp1/atrous_conv/GatherND_3",
+      "H": 18,
+      "W": 18,
+      "C": 64,
+      "N": 256,
+      "note": "Rewrite inherits GatherND OOB semantics; no added Clamp"
+    },
+    {
+      "node": "/squeeze_module/squeeze_module.0/dec_att/aspp_deforms.0/atrous_conv/GatherND",
+      "H": 18,
+      "W": 18,
+      "C": 64,
+      "N": 256,
+      "note": "Rewrite inherits GatherND OOB semantics; no added Clamp"
+    }
+  ],
+  "oobRiskCount": 80,
+  "findings": [
+    {
+      "severity": "info",
+      "id": "batch-assumption",
+      "detail": "Rewrite embeds H*W and assumes leading batch dims are 1,1 (matches BiRefNet single-image NCHW)."
+    },
+    {
+      "severity": "info",
+      "id": "oob-semantics",
+      "detail": "No Clamp added; out-of-range deformable indices share Gather/GatherND EP undefined behavior. In-bounds deform sampling verified bit-exact on synthetic cases."
+    }
+  ],
+  "coordinateOrder": "indices[...,0]=y (row), indices[...,1]=x (col); lin=y*W+x matches row-major flatten of [H,W]"
+}

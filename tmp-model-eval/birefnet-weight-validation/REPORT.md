@@ -9,4 +9,4 @@
 | not_text_stub | yes | binary payload present |
 | input_name | yes | names=input_image expected=input_image |
 | output_name | yes | names=output_image expected=output_image |
-| smoke_infer_cpu | yes | len=262144 dims=[1,1,512,512] nonFinite=0 min=-14.155738830566406 max=-9.334159851074219 loadMs=10872 inferMs=8215 |
+| smoke_infer_cpu | yes | len=262144 dims=[1,1,512,512] nonFinite=0 min=-14.155738830566406 max=-9.334159851074219 loadMs=24005 inferMs=7558 |

@@ -1,0 +1,305 @@
+{
+  "generatedAt": "2026-10-27T17:18:37.420Z",
+  "method": "birefnet-lite-512",
+  "ep": "wasm",
+  "initMs": 9627.5,
+  "goldenOk": true,
+  "golden": [
+    {
+      "id": "dark-hoodie",
+      "keepPct": 55.43,
+      "expectedKeepPct": 55.43,
+      "keepOk": true,
+      "maskSha256": "7302ea6c017014c17d975f99d7326d64d27b2fd72bb35b28bcea10d33012ce39",
+      "shaOk": true,
+      "rgbOk": true,
+      "inferMs": 12091.1,
+      "method": "birefnet-lite-512"
+    },
+    {
+      "id": "white-tshirt",
+      "keepPct": 49.04,
+      "expectedKeepPct": 49.04,
+      "keepOk": true,
+      "maskSha256": "89c9860ea482347ac0b472adfd35d29a294e66f62d7b274ca170de2384fbdb3c",
+      "shaOk": true,
+      "rgbOk": true,
+      "inferMs": 11571,
+      "method": "birefnet-lite-512"
+    },
+    {
+      "id": "white-sneakers",
+      "keepPct": 34.5,
+      "expectedKeepPct": 34.5,
+      "keepOk": true,
+      "maskSha256": "28792c68be62aad538bee071abc8fb91f44275dc787148dd8caeb75af212d23e",
+      "shaOk": true,
+      "rgbOk": true,
+      "inferMs": 11450.4,
+      "method": "birefnet-lite-512"
+    },
+    {
+      "id": "open-handbag",
+      "keepPct": 35.68,
+      "expectedKeepPct": 35.68,
+      "keepOk": true,
+      "maskSha256": "11ce582d45154d33811ed030d72e8aa28d20f4492aa417065126f5e59916bfd5",
+      "shaOk": true,
+      "rgbOk": true,
+      "inferMs": 11156,
+      "method": "birefnet-lite-512"
+    },
+    {
+      "id": "polo-carpet-closeup",
+      "keepPct": 73.89,
+      "expectedKeepPct": 73.89,
+      "keepOk": true,
+      "maskSha256": "c8b12ac90fd177f27ea412013aa666caa99bb6db9112eb7c368a587ba9304361",
+      "shaOk": true,
+      "rgbOk": true,
+      "inferMs": 11201.4,
+      "method": "birefnet-lite-512"
+    }
+  ],
+  "clothing": [
+    {
+      "id": "01_hoodie",
+      "keepPct": 55.43,
+      "maskSha256": "7302ea6c017014c17d975f99d7326d64d27b2fd72bb35b28bcea10d33012ce39",
+      "rgbOk": true,
+      "dims": [
+        298,
+        292
+      ],
+      "inferMs": 11549.1,
+      "dimsMatch": true
+    },
+    {
+      "id": "02_blazer",
+      "keepPct": 55.84,
+      "maskSha256": "81571b61bbcaf19b624b225fa2cf9b030feb67fe0ca671b1ba32ce1452e72b0a",
+      "rgbOk": true,
+      "dims": [
+        294,
+        292
+      ],
+      "inferMs": 11559.6,
+      "dimsMatch": true
+    },
+    {
+      "id": "03_tshirt",
+      "keepPct": 49.04,
+      "maskSha256": "89c9860ea482347ac0b472adfd35d29a294e66f62d7b274ca170de2384fbdb3c",
+      "rgbOk": true,
+      "dims": [
+        294,
+        292
+      ],
+      "inferMs": 11446.7,
+      "dimsMatch": true
+    },
+    {
+      "id": "04_jeans",
+      "keepPct": 36.04,
+      "maskSha256": "7b90e8f3a2fe6cca002046e0b344cdc310316d009120f7234dc125d1837b10e3",
+      "rgbOk": true,
+      "dims": [
+        294,
+        292
+      ],
+      "inferMs": 11258.7,
+      "dimsMatch": true
+    },
+    {
+      "id": "05_coat",
+      "keepPct": 39.25,
+      "maskSha256": "d51f4aad72ea3506cb846d391397d05836a1b4e28f0d92f1a63cdd24db3e6886",
+      "rgbOk": true,
+      "dims": [
+        296,
+        292
+      ],
+      "inferMs": 11402.6,
+      "dimsMatch": true
+    },
+    {
+      "id": "06_sweater",
+      "keepPct": 46.95,
+      "maskSha256": "ed9099da3d1a6d3c7fa4bb49a6c13e7172ffa9975c19fc7891bc73ecb23e11be",
+      "rgbOk": true,
+      "dims": [
+        298,
+        291
+      ],
+      "inferMs": 11445.4,
+      "dimsMatch": true
+    },
+    {
+      "id": "07_dress",
+      "keepPct": 19.02,
+      "maskSha256": "c92b4c532ba985efea6f7ab4c48f59b5b11b2ae5323674fc1d5255a6b50d4378",
+      "rgbOk": true,
+      "dims": [
+        294,
+        291
+      ],
+      "inferMs": 11387.5,
+      "dimsMatch": true
+    },
+    {
+      "id": "07_slip_dress",
+      "keepPct": 24.49,
+      "maskSha256": "b153a71746ddaa886d8ca037533bc8af784db93b7d5bf84797e5de81f45225a3",
+      "rgbOk": true,
+      "dims": [
+        374,
+        527
+      ],
+      "inferMs": 11734.1,
+      "dimsMatch": true
+    },
+    {
+      "id": "08_sneakers",
+      "keepPct": 34.5,
+      "maskSha256": "28792c68be62aad538bee071abc8fb91f44275dc787148dd8caeb75af212d23e",
+      "rgbOk": true,
+      "dims": [
+        294,
+        291
+      ],
+      "inferMs": 11417.2,
+      "dimsMatch": true
+    },
+    {
+      "id": "09_handbag",
+      "keepPct": 35.68,
+      "maskSha256": "11ce582d45154d33811ed030d72e8aa28d20f4492aa417065126f5e59916bfd5",
+      "rgbOk": true,
+      "dims": [
+        294,
+        291
+      ],
+      "inferMs": 11472.7,
+      "dimsMatch": true
+    },
+    {
+      "id": "10_cap",
+      "keepPct": 25.57,
+      "maskSha256": "b678d32097caea526ce8cc3501de9f1b49d6aa42de8386e2d30c9e471c8e5a3f",
+      "rgbOk": true,
+      "dims": [
+        296,
+        291
+      ],
+      "inferMs": 11333.5,
+      "dimsMatch": true
+    }
+  ],
+  "polo": [
+    {
+      "id": "polo-1",
+      "keepPct": 40.04,
+      "maskSha256": "48bead2baa52ec2e3312bb4188fdf1c0f794f550772d259b479499136db0d15d",
+      "rgbOk": true,
+      "dims": [
+        686,
+        911
+      ],
+      "inferMs": 11284.9,
+      "dimsMatch": true,
+      "notes": "product-on-carpet"
+    },
+    {
+      "id": "polo-2",
+      "keepPct": 40.63,
+      "maskSha256": "27288fce954e2d803d9e7855b762aecd3c0e0d6b4923078db69e4ee9a0bc3229",
+      "rgbOk": true,
+      "dims": [
+        695,
+        924
+      ],
+      "inferMs": 11580.1,
+      "dimsMatch": true,
+      "notes": "product-on-carpet"
+    },
+    {
+      "id": "polo-3",
+      "keepPct": 68.78,
+      "maskSha256": "411f328784cf9b6cd5b6bc11a88e2cfa771b8bc3eab72cbe3ff70a694194da77",
+      "rgbOk": true,
+      "dims": [
+        1024,
+        765
+      ],
+      "inferMs": 11385.1,
+      "dimsMatch": true,
+      "notes": "may include measuring tape as KEEP"
+    },
+    {
+      "id": "polo-4",
+      "keepPct": 50.35,
+      "maskSha256": "f123efe2107df40a0f3d2efb151fb82fdfaff6178576ff913d173f2c3d191e80",
+      "rgbOk": true,
+      "dims": [
+        1024,
+        766
+      ],
+      "inferMs": 11412.2,
+      "dimsMatch": true,
+      "notes": "may include measuring tape as KEEP"
+    },
+    {
+      "id": "polo-5",
+      "keepPct": 73.89,
+      "maskSha256": "c8b12ac90fd177f27ea412013aa666caa99bb6db9112eb7c368a587ba9304361",
+      "rgbOk": true,
+      "dims": [
+        694,
+        917
+      ],
+      "inferMs": 11426.6,
+      "dimsMatch": true,
+      "notes": "product-on-carpet"
+    },
+    {
+      "id": "polo-6",
+      "keepPct": 15.15,
+      "maskSha256": "03c04f101acb9778cd0f1da15cf11075113d09b099951756c7b34aa75bac4054",
+      "rgbOk": true,
+      "dims": [
+        692,
+        921
+      ],
+      "inferMs": 11424.4,
+      "dimsMatch": true,
+      "notes": "may include measuring tape as KEEP"
+    },
+    {
+      "id": "polo-7",
+      "keepPct": 49.84,
+      "maskSha256": "54f725af48b9fbc35b704d503026fcdd0d2e0fa62d9b2bec14f0f137e490ec83",
+      "rgbOk": true,
+      "dims": [
+        1024,
+        768
+      ],
+      "inferMs": 11665.8,
+      "dimsMatch": true,
+      "notes": "may include measuring tape as KEEP"
+    },
+    {
+      "id": "polo-8",
+      "keepPct": 17.21,
+      "maskSha256": "79c0265ca4ff07e08788761c66068535074858bf9def4830b8c5923428d5e44c",
+      "rgbOk": true,
+      "dims": [
+        1024,
+        769
+      ],
+      "inferMs": 11410.7,
+      "dimsMatch": true,
+      "notes": "may include measuring tape as KEEP"
+    }
+  ],
+  "productionPathUnchanged": true
+}

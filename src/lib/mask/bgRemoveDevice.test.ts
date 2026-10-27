@@ -101,6 +101,11 @@ describe('bgRemoveDevice', () => {
       ),
     ).toBe(true)
     expect(
+      isWeightDownloadNetworkFailure(
+        'Content-Length header of network response exceeds response Body.',
+      ),
+    ).toBe(true)
+    expect(
       formatBgRemoveInitFailureMessage(
         'NetworkError when attempting to fetch resource.',
       ),

@@ -49,12 +49,38 @@ describe('reviewSdkMask', () => {
     expect(review.reasons.join(' ')).not.toMatch(/weak dark structure/i)
   })
 
-  it('flags resized masks for alignment inspection', () => {
+  it('expected model upsample is informational and does not force review alone', () => {
     const img = makeImage(8, 8, [240, 240, 240])
-    const mask = createMaskBuffer(8, 8, 255)
+    const mask = createMaskBuffer(8, 8, 0)
+    for (let y = 2; y < 6; y += 1) {
+      for (let x = 2; x < 6; x += 1) {
+        setRgb(img, x, y, [30, 30, 35])
+        mask.data[y * 8 + x] = 255
+      }
+    }
     const review = reviewSdkMask(mask, img, { resized: true })
+    expect(review.findings.some((f) => f.ruleId === 'mask_resized')).toBe(true)
+    expect(
+      review.findings.find((f) => f.ruleId === 'mask_resized')?.forcesReview,
+    ).toBe(false)
+    expect(review.needsReview).toBe(false)
+  })
+
+  it('suspicious resize forces alignment review', () => {
+    const img = makeImage(8, 8, [240, 240, 240])
+    const mask = createMaskBuffer(8, 8, 0)
+    for (let y = 2; y < 6; y += 1) {
+      for (let x = 2; x < 6; x += 1) {
+        setRgb(img, x, y, [30, 30, 35])
+        mask.data[y * 8 + x] = 255
+      }
+    }
+    const review = reviewSdkMask(mask, img, {
+      resized: true,
+      resizedSuspicious: true,
+    })
     expect(review.needsReview).toBe(true)
-    expect(review.reasons.join(' ')).toMatch(/resized/i)
+    expect(review.reasons.join(' ')).toMatch(/unexpected remap|resized/i)
   })
 
   it('manual edits remain authoritative in maskStore after review', () => {

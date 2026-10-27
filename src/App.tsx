@@ -6,10 +6,7 @@ import { ImageUploader } from './components/ImageUploader'
 import { MaskEditor } from './components/MaskEditor'
 import { ThumbnailGallery } from './components/ThumbnailGallery'
 import { ReviewDiagnosticsPanel } from './components/ReviewDiagnosticsPanel'
-import {
-  autoMaskCornersForImage,
-  type AutoMaskBackend,
-} from './lib/batch/autoMaskCorners'
+import { autoMaskCornersForImage } from './lib/batch/autoMaskCorners'
 import {
   buildAutoMaskQueue,
   countInFlightMasks,
@@ -18,10 +15,8 @@ import {
 import type { MaskDiagnosticSummary } from './types/mask'
 import { buildResultsZip, downloadBlob } from './lib/batch/exportZip'
 import type { ExportFormat } from './lib/export/exportImage'
-import {
-  formatBgRemoveInitFailureMessage,
-  isWeightDownloadNetworkFailure,
-} from './lib/mask/bgRemoveDevice'
+import { isAppleMobileUserAgent } from './lib/mask/bgRemoveDevice'
+import { formatBirefNetInitFailureMessage } from './lib/mask/birefNet/errors'
 import { clearAllMasks, deleteMask, getMask } from './lib/mask/maskStore'
 import {
   createDefaultAdjustments,
@@ -87,8 +82,8 @@ function App() {
   const [batchBusy, setBatchBusy] = useState(false)
   const [batchProgress, setBatchProgress] = useState<string | null>(null)
   const [zipFormat, setZipFormat] = useState<ExportFormat>('png')
-  const [autoMaskBackend, setAutoMaskBackend] =
-    useState<AutoMaskBackend>('birefnet')
+  /** Keeps diagnostics panel mounted so Undo peel remains available after apply. */
+  const [peelUndoAvailable, setPeelUndoAvailable] = useState(false)
   const imagesRef = useRef(images)
   imagesRef.current = images
   const sharedBackgroundsRef = useRef(sharedBackgrounds)
@@ -104,6 +99,10 @@ function App() {
     () => images.find((image) => image.id === selectedId) ?? null,
     [images, selectedId],
   )
+
+  useEffect(() => {
+    setPeelUndoAvailable(false)
+  }, [selectedId])
 
   const selectedProject = selectedId ? projects[selectedId] : undefined
 
@@ -206,12 +205,16 @@ function App() {
           objectUrl: image.objectUrl,
         })),
       getMaskMeta: (id) => projectsRef.current[id]?.maskMeta,
-      getTiming: async () => {
-        const { getBgRemoveTimingSnapshot } = await import(
-          './lib/mask/bgRemoveSdk'
-        )
-        return getBgRemoveTimingSnapshot()
-      },
+      getTiming: async () => ({
+        initStartedAt: null,
+        readyAt: null,
+        lastProcessMs: null,
+        totalProcessMs: 0,
+        processCount: 0,
+        lastInitMessage: null,
+        lastInitRatio: null,
+        backend: 'birefnet-lite-512',
+      }),
     }
     ;(window as unknown as { __garmentAudit?: GarmentAuditApi }).__garmentAudit =
       api
@@ -333,9 +336,6 @@ function App() {
       // compete with freshly decoded upload buffers (OOM risk).
       void (async () => {
         try {
-          const { isAppleMobileUserAgent } = await import(
-            './lib/mask/bgRemoveDevice'
-          )
           if (
             isAppleMobileUserAgent(
               typeof navigator !== 'undefined' ? navigator.userAgent : '',
@@ -346,32 +346,17 @@ function App() {
           ) {
             return
           }
-          if (autoMaskBackend === 'birefnet') {
-            const { preloadBirefNetModel } = await import('./lib/mask/birefNet')
-            await preloadBirefNetModel((progress) => {
-              if (
-                progress.kind !== 'birefnet-init' ||
-                progress.status !== 'loading'
-              ) {
-                return
-              }
-              if (autoMaskInFlightRef.current) return
-              setBatchProgress(
-                `${progress.message ?? 'Loading BiRefNet…'} · images ready — tap Auto-mask all when you want to process.`,
-              )
-            })
-            return
-          }
-          const { preloadBgRemoveModel, formatInitProgressLine } = await import(
-            './lib/mask/bgRemoveSdk'
-          )
-          await preloadBgRemoveModel((progress) => {
-            if (progress.kind !== 'sdk-init' || progress.status !== 'loading') {
+          const { preloadBirefNetModel } = await import('./lib/mask/birefNet')
+          await preloadBirefNetModel((progress) => {
+            if (
+              progress.kind !== 'birefnet-init' ||
+              progress.status !== 'loading'
+            ) {
               return
             }
             if (autoMaskInFlightRef.current) return
             setBatchProgress(
-              `${formatInitProgressLine(progress.message, progress.ratio)} · images ready — tap Auto-mask all when you want to process.`,
+              `${progress.message ?? 'Loading BiRefNet…'} · images ready — tap Auto-mask all when you want to process.`,
             )
           })
         } catch {
@@ -381,7 +366,7 @@ function App() {
     } finally {
       setIsLoading(false)
     }
-  }, [autoMaskBackend])
+  }, [])
 
   const handleRemove = useCallback((id: string) => {
     setImages((previous) => {
@@ -609,68 +594,41 @@ function App() {
         markQueuePhase('loading-model')
         if (!isCurrent()) return
         setBatchProgress(
-          `Loading ${autoMaskBackend === 'birefnet' ? 'BiRefNet' : 'RMBG-1.4'} for ${queue.length} image${
+          `Loading BiRefNet for ${queue.length} image${
             queue.length === 1 ? '' : 's'
           }…`,
         )
         try {
-          let deviceLabel = 'on-device'
-          if (autoMaskBackend === 'birefnet') {
-            const { preloadBirefNetModel } = await import('./lib/mask/birefNet')
-            const handle = await preloadBirefNetModel((progress) => {
-              if (!isCurrent()) return
-              if (progress.kind !== 'birefnet-init') return
-              if (progress.status === 'loading') {
-                setBatchProgress(progress.message ?? 'Loading BiRefNet…')
-              }
-            })
-            deviceLabel = handle.device
-          } else {
-            const { preloadBgRemoveModel, formatInitProgressLine } =
-              await import('./lib/mask/bgRemoveSdk')
-            const { device } = await preloadBgRemoveModel((progress) => {
-              if (!isCurrent()) return
-              if (progress.kind !== 'sdk-init') return
-              if (progress.status === 'loading') {
-                setBatchProgress(
-                  formatInitProgressLine(progress.message, progress.ratio),
-                )
-              }
-            })
-            deviceLabel = device
-          }
+          const { preloadBirefNetModel } = await import('./lib/mask/birefNet')
+          const handle = await preloadBirefNetModel((progress) => {
+            if (!isCurrent()) return
+            if (progress.kind !== 'birefnet-init') return
+            if (progress.status === 'loading') {
+              setBatchProgress(progress.message ?? 'Loading BiRefNet…')
+            }
+          })
           if (!isCurrent()) return
           // Clear loading-model on the whole queue so only the active image shows running.
           markQueuePhase('pending')
           setBatchProgress(
-            `Model ready (${deviceLabel}). Starting batch… Keep this tab open on iPhone.`,
+            `BiRefNet ready (${handle.device}). Starting batch… Keep this tab open on iPhone.`,
           )
         } catch (initErr) {
           const raw =
             initErr instanceof Error
               ? initErr.message
-              : 'Failed to load local model.'
-          const message = isWeightDownloadNetworkFailure(raw)
-            ? formatBgRemoveInitFailureMessage(raw)
-            : raw
+              : 'Failed to load BiRefNet.'
+          const message = formatBirefNetInitFailureMessage(raw)
           if (!isCurrent()) return
-          if (autoMaskBackend === 'birefnet') {
-            // Per-image path can still fall back to RMBG-1.4 — do not abort batch.
-            markQueuePhase('pending')
-            setBatchProgress(
-              `BiRefNet unavailable (${message.slice(0, 100)}). Falling back to RMBG-1.4 per image…`,
-            )
-          } else {
-            markQueuePhase('failed', {
-              autoFailed: true,
-              needsReview: true,
-              reviewReason: message,
-              diagnosticSummary: undefined,
-            })
-            setError(message)
-            setBatchProgress(`Auto-mask stopped: ${message}`)
-            return
-          }
+          markQueuePhase('failed', {
+            autoFailed: true,
+            needsReview: true,
+            reviewReason: message,
+            diagnosticSummary: undefined,
+          })
+          setError(message)
+          setBatchProgress(`Auto-mask stopped: ${message}`)
+          return
         }
 
         let reviewFlagged = 0
@@ -678,7 +636,7 @@ function App() {
         let failCount = 0
         const methodsSeen = new Set<string>()
         const failures: string[] = []
-        // One at a time — SDK also serializes; keep app concurrency 1 for mobile RAM.
+        // One at a time — keep app concurrency 1 for mobile RAM.
         const concurrency = 1
         let nextIndex = 0
 
@@ -710,8 +668,7 @@ function App() {
               (progress) => {
                 if (!isCurrent()) return
                 if (
-                  (progress.kind === 'sdk-init' ||
-                    progress.kind === 'birefnet-init') &&
+                  progress.kind === 'birefnet-init' &&
                   progress.status === 'loading'
                 ) {
                   const pct =
@@ -719,13 +676,10 @@ function App() {
                       ? Math.round(progress.ratio * 100)
                       : undefined
                   setBatchProgress(
-                    `Loading model${pct !== undefined ? ` (${pct}%)` : ''}…`,
+                    `Loading BiRefNet${pct !== undefined ? ` (${pct}%)` : ''}…`,
                   )
                 }
-                if (
-                  progress.kind === 'sdk-process' ||
-                  progress.kind === 'birefnet-process'
-                ) {
+                if (progress.kind === 'birefnet-process') {
                   setBatchProgress(
                     `Auto-masking ${ordinal}/${queue.length}: ${image.name} (${progress.stage})`,
                   )
@@ -733,7 +687,6 @@ function App() {
               },
               // Pass File directly — never re-fetch blob: URLs (Firefox/iOS NetworkError).
               image.file,
-              autoMaskBackend,
             )
             if (!isCurrent()) return
             methodsSeen.add(auto.methodUsed)
@@ -770,10 +723,8 @@ function App() {
             const raw =
               caught instanceof Error
                 ? caught.message
-                : 'Local SDK auto-mask failed.'
-            const message = isWeightDownloadNetworkFailure(raw)
-              ? formatBgRemoveInitFailureMessage(raw)
-              : raw
+                : 'BiRefNet auto-mask failed.'
+            const message = formatBirefNetInitFailureMessage(raw)
             failures.push(`${image.name}: ${message}`)
             setProjects((previous) => {
               const current = previous[image.id] ?? createProjectFields()
@@ -810,7 +761,7 @@ function App() {
         await Promise.all(workers)
         if (!isCurrent()) return
 
-        const used = [...methodsSeen].join(', ') || 'bg-remove-sdk-rmbg1.4'
+        const used = [...methodsSeen].join(', ') || 'birefnet-lite-512'
         if (failCount > 0) {
           setError(failures.slice(0, 3).join(' · '))
           setBatchProgress(
@@ -842,7 +793,7 @@ function App() {
         }
       }
     },
-    [autoMaskBackend, selectedId],
+    [selectedId],
   )
 
   const handleExportZip = useCallback(
@@ -1052,6 +1003,7 @@ function App() {
             {selectedImage &&
             selectedProject &&
             (selectedProject.maskMeta.needsReview ||
+              peelUndoAvailable ||
               (selectedProject.maskMeta.diagnosticSummary?.findings.some(
                 (f) => f.severity !== 'info',
               ) ??
@@ -1069,6 +1021,7 @@ function App() {
                 maskRevision={selectedProject.maskMeta.revision}
                 summary={selectedProject.maskMeta.diagnosticSummary}
                 onMaskRepaired={handleDiagnosticRepair}
+                onPeelUndoAvailabilityChange={setPeelUndoAvailable}
               />
             ) : null}
             {selectedProject?.maskMeta.autoFailed ? (
@@ -1131,7 +1084,7 @@ function App() {
                 to refine one photo.
               </p>
             )}
-          </section>
+      </section>
 
           <BatchPanel
             imageCount={images.length}
@@ -1157,8 +1110,6 @@ function App() {
                 (!projects[selectedImage.id]?.maskMeta.hasEdits &&
                   !projects[selectedImage.id]?.maskMeta.hasManualEdits))
             }
-            autoMaskBackend={autoMaskBackend}
-            onAutoMaskBackendChange={setAutoMaskBackend}
           />
         </main>
       ) : null}

@@ -23,7 +23,16 @@ export type RunMaskDiagnosticsInput = {
   imageData?: ImageData
   profile?: MaskConfidenceProfile
   method?: string
+  /**
+   * True when the mask was resampled from model resolution to source size.
+   * Expected BiRefNet 512→source upsampling is informational only.
+   */
   resized?: boolean
+  /**
+   * True when dimensions/alignment look suspicious (unexpected remap),
+   * not routine model-output resampling.
+   */
+  resizedSuspicious?: boolean
   maskRevision?: number
   hasManualEdits?: boolean
 }
@@ -59,7 +68,7 @@ function scoreFromFindings(
       score -= 0.1
     } else if (f.ruleId === 'internal_holes') {
       score -= 0.06
-    } else if (f.ruleId === 'mask_resized') {
+    } else if (f.ruleId === 'mask_resized' && f.forcesReview) {
       score -= 0.05
     }
   }
@@ -74,6 +83,7 @@ export function evaluateDiagnosticRules(
   profile: MaskConfidenceProfile,
   extras: {
     resized: boolean
+    resizedSuspicious?: boolean
     leakSamples?: number[]
     fragmentSamples?: number[]
   },
@@ -81,20 +91,49 @@ export function evaluateDiagnosticRules(
   const findings: DiagnosticFinding[] = []
   const fringeThr = profile === 'neural' ? 0.035 : 0.02
   const borderLeakThr = 0.08
+  // Fill-frame collar/garment crops often keep fabric on the frame — that is
+  // not the same as a leftover studio card ring.
+  const fillFrameGarment =
+    metrics.keepRatio > 0.55 &&
+    metrics.borderKeepRatio > 0.4 &&
+    (metrics.largestKeepShare > 0.75 || metrics.keepComponentCount <= 2)
 
-  if (metrics.colorAware && metrics.borderStudioRatio > borderLeakThr) {
+  if (
+    metrics.colorAware &&
+    metrics.borderStudioRatio > borderLeakThr &&
+    !fillFrameGarment
+  ) {
     findings.push({
       ruleId: 'border_studio_leak',
       severity: 'defect',
       forcesReview: true,
       message:
-        'Border-band KEEP matches studio card — likely leftover backdrop at frame',
+        'Border-band KEEP matches flat studio card — likely leftover backdrop at frame',
       measuredValue: metrics.borderStudioRatio,
       threshold: borderLeakThr,
-      unit: 'border_studio_keep / border_band_pixels (ratio)',
+      unit: 'flat_border_studio_keep / border_band_pixels (ratio)',
       affectedRegion: 'frame-border',
       suggestedAction:
-        'Inspect frame edges; use Preview border peel or brush-remove studio',
+        'Inspect frame edges; use Preview border peel or brush-remove studio. Do not peel if KEEP is real garment on the frame.',
+      sampleIndices: extras.leakSamples,
+    })
+  } else if (
+    metrics.colorAware &&
+    metrics.borderStudioRatio > borderLeakThr &&
+    fillFrameGarment
+  ) {
+    findings.push({
+      ruleId: 'border_studio_leak',
+      severity: 'uncertain',
+      forcesReview: false,
+      message:
+        'Border KEEP is high but silhouette fills the frame — verify collar/garment vs studio before peeling',
+      measuredValue: metrics.borderStudioRatio,
+      threshold: borderLeakThr,
+      unit: 'flat_border_studio_keep / border_band_pixels (ratio)',
+      affectedRegion: 'frame-border',
+      suggestedAction:
+        'Compare original; skip peel if frame pixels are garment/labels/tags',
       sampleIndices: extras.leakSamples,
     })
   } else if (
@@ -256,17 +295,32 @@ export function evaluateDiagnosticRules(
     })
   }
 
-  if (extras.resized) {
+  if (extras.resizedSuspicious) {
     findings.push({
       ruleId: 'mask_resized',
       severity: 'uncertain',
       forcesReview: true,
-      message: 'Mask was resized to source dimensions — verify soft-edge alignment',
+      message:
+        'Mask dimensions required an unexpected remap — verify soft-edge alignment',
       measuredValue: 1,
       threshold: 0,
-      unit: 'boolean (1 = resized)',
+      unit: 'boolean (1 = suspicious resize)',
       affectedRegion: 'global',
-      suggestedAction: 'Compare mask overlay to original edges',
+      suggestedAction: 'Compare mask overlay to original edges at 100% zoom',
+    })
+  } else if (extras.resized) {
+    findings.push({
+      ruleId: 'mask_resized',
+      severity: 'info',
+      forcesReview: false,
+      message:
+        'Mask was resampled from model resolution to source size (expected for BiRefNet 512→source)',
+      measuredValue: 1,
+      threshold: 0,
+      unit: 'boolean (1 = expected model upsample)',
+      affectedRegion: 'global',
+      suggestedAction:
+        'Informational only — confirm edges look aligned; not an automatic defect',
     })
   }
 
@@ -293,6 +347,7 @@ export function runMaskDiagnostics(
   const profile = input.profile ?? 'classical'
   const method = input.method ?? 'unknown'
   const resized = input.resized ?? false
+  const resizedSuspicious = input.resizedSuspicious ?? false
 
   const metrics = computeMaskMetrics(input.mask, input.imageData, {
     neuralFringeBorderOnly: profile === 'neural',
@@ -307,6 +362,7 @@ export function runMaskDiagnostics(
 
   const findings = evaluateDiagnosticRules(metrics, profile, {
     resized,
+    resizedSuspicious,
     leakSamples,
     fragmentSamples: fragAnalysis.detachedSampleIndices,
   })
@@ -472,5 +528,6 @@ export function buildDiagnosticOverlay(
     }
   }
 
-  return { width, height, data: out, colorSpace: 'srgb' } as ImageData
+  // Must be a real ImageData instance — putImageData rejects plain objects.
+  return new ImageData(out, width, height)
 }

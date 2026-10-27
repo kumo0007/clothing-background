@@ -30,7 +30,6 @@ vi.mock('./lib/batch/autoMaskCorners', () => ({
     tolerance?: number,
     onProgress?: unknown,
     sourceFile?: Blob | null,
-    preferredBackend?: string,
   ) =>
     autoMaskMock(
       imageId,
@@ -40,13 +39,9 @@ vi.mock('./lib/batch/autoMaskCorners', () => ({
       tolerance,
       onProgress,
       sourceFile,
-      preferredBackend,
     ),
 }))
 
-const preloadMock = vi.fn(
-  async (_onProgress?: unknown) => ({ device: 'wasm' as const }),
-)
 const preloadBirefMock = vi.fn(
   async (_onProgress?: unknown) => ({
     session: {},
@@ -59,23 +54,6 @@ vi.mock('./lib/mask/birefNet', () => ({
   preloadBirefNetModel: (onProgress?: unknown) => preloadBirefMock(onProgress),
   BIREFNET_METHOD: 'birefnet-lite-512',
   BIREFNET_PROVIDER: 'birefnet-onnx',
-}))
-vi.mock('./lib/mask/bgRemoveSdk', () => ({
-  preloadBgRemoveModel: (onProgress?: unknown) => preloadMock(onProgress),
-  formatInitProgressLine: (message?: string, ratio?: number) => {
-    const pct =
-      typeof ratio === 'number' ? ` (${Math.round(ratio * 100)}%)` : ''
-    return `Loading model${message ? `: ${message}` : ''}${pct}`
-  },
-  getBgRemoveTimingSnapshot: () => ({
-    initStartedAt: null,
-    readyAt: null,
-    lastProcessMs: null,
-    totalProcessMs: 0,
-    processCount: 0,
-    lastInitMessage: null,
-    lastInitRatio: null,
-  }),
 }))
 
 function mockCanvasContext() {
@@ -136,9 +114,7 @@ describe('App Phase 1', () => {
   beforeEach(() => {
     cleanup()
     autoMaskMock.mockReset()
-    preloadMock.mockReset()
     preloadBirefMock.mockReset()
-    preloadMock.mockResolvedValue({ device: 'wasm' })
     preloadBirefMock.mockResolvedValue({
       session: {},
       device: 'wasm',
@@ -293,12 +269,18 @@ describe('App Phase 1', () => {
 
     await screen.findByTestId('batch-panel')
     expect(screen.getByTestId('batch-auto-mask')).toBeInTheDocument()
-    expect(screen.getByTestId('batch-auto-mask-backend')).toBeInTheDocument()
+    expect(screen.getByTestId('batch-auto-mask-backend')).toHaveTextContent(
+      /BiRefNet/i,
+    )
+    expect(screen.getByTestId('batch-auto-mask-backend').tagName).not.toBe(
+      'SELECT',
+    )
     expect(screen.queryByText(/ISNet/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Poof/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/RMBG/i)).not.toBeInTheDocument()
   })
 
-  it('Auto-mask all uses on-device SDK (no Poof / hosted API)', async () => {
+  it('Auto-mask all uses on-device BiRefNet (no Poof / hosted API)', async () => {
     const user = userEvent.setup()
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
 
@@ -317,7 +299,6 @@ describe('App Phase 1', () => {
       )
     })
     expect(autoMaskMock).toHaveBeenCalled()
-    expect(autoMaskMock.mock.calls[0]?.[7]).toBe('birefnet')
     expect(await screen.findByTestId('mask-status')).toHaveTextContent(
       /birefnet-lite-512/i,
     )
@@ -484,35 +465,9 @@ describe('App Phase 1', () => {
     expect(screen.getByTestId('upload-error')).toHaveTextContent(/photo-2/i)
   })
 
-  it('continues the batch with per-image fallback when BiRefNet init fails', async () => {
+  it('marks the queue failed when BiRefNet cannot initialize', async () => {
     const user = userEvent.setup()
-    // Upload also kicks a background preload — keep rejections sticky for this test.
     preloadBirefMock.mockRejectedValue(
-      new Error('BiRefNet init failed (network down).'),
-    )
-
-    render(<App />)
-    await user.upload(
-      screen.getByTestId('image-file-input'),
-      [
-        new File([new Uint8Array([1])], 'a.jpg', { type: 'image/jpeg' }),
-        new File([new Uint8Array([2])], 'b.jpg', { type: 'image/jpeg' }),
-      ],
-    )
-    await user.click(await screen.findByTestId('batch-auto-mask'))
-
-    await waitFor(() => {
-      expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
-        /2.*masked/,
-      )
-    })
-    expect(autoMaskMock).toHaveBeenCalledTimes(2)
-    expect(screen.queryByTestId('batch-failed-count')).not.toBeInTheDocument()
-  })
-
-  it('marks the queue failed when RMBG cannot initialize', async () => {
-    const user = userEvent.setup()
-    preloadMock.mockRejectedValue(
       new Error('Model init failed (network down).'),
     )
 
@@ -524,11 +479,7 @@ describe('App Phase 1', () => {
         new File([new Uint8Array([2])], 'b.jpg', { type: 'image/jpeg' }),
       ],
     )
-    await user.selectOptions(
-      await screen.findByTestId('batch-auto-mask-backend'),
-      'rmbg1.4',
-    )
-    await user.click(screen.getByTestId('batch-auto-mask'))
+    await user.click(await screen.findByTestId('batch-auto-mask'))
 
     await waitFor(() => {
       expect(screen.getByTestId('batch-failed-count')).toHaveTextContent(

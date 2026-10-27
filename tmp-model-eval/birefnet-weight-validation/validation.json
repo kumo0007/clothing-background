@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T02:25:50.685Z",
+  "generatedAt": "2026-10-27T19:23:39.824Z",
   "diskPath": "D:\\project\\public\\models\\studioludens\\birefnet-lite-512\\onnx\\model_fp16.onnx",
   "appUrl": "/models/studioludens/birefnet-lite-512/onnx/model_fp16.onnx",
   "trustedLfs": {
@@ -47,12 +47,12 @@
     {
       "ok": true,
       "name": "smoke_infer_cpu",
-      "detail": "len=262144 dims=[1,1,512,512] nonFinite=0 min=-14.155738830566406 max=-9.334159851074219 loadMs=10872 inferMs=8215"
+      "detail": "len=262144 dims=[1,1,512,512] nonFinite=0 min=-14.155738830566406 max=-9.334159851074219 loadMs=24005 inferMs=7558"
     }
   ],
   "sessionMeta": {
-    "loadMs": 10872,
-    "inferMs": 8215,
+    "loadMs": 24005,
+    "inferMs": 7558,
     "inputs": [
       {
         "name": "input_image"

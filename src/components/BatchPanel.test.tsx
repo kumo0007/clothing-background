@@ -6,8 +6,7 @@ import { BatchPanel } from './BatchPanel'
 afterEach(() => cleanup())
 
 describe('BatchPanel — local auto-mask UI', () => {
-  it('describes local BiRefNet processing and exposes backend selector', () => {
-    const onBackend = vi.fn()
+  it('describes BiRefNet-only processing without a model selector', () => {
     render(
       <BatchPanel
         imageCount={2}
@@ -25,8 +24,6 @@ describe('BatchPanel — local auto-mask UI', () => {
         onExportZip={() => undefined}
         canApplyFromSelection
         canRetrySelected={false}
-        autoMaskBackend="birefnet"
-        onAutoMaskBackendChange={onBackend}
       />,
     )
 
@@ -39,20 +36,23 @@ describe('BatchPanel — local auto-mask UI', () => {
     expect(screen.queryByText(/contour-first/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/GrabCut/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Poof/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/RMBG/i)).not.toBeInTheDocument()
     expect(screen.getByText(/on this device/i)).toBeInTheDocument()
-    expect(screen.getAllByText(/BiRefNet/i).length).toBeGreaterThan(0)
-    expect(screen.getByTestId('batch-auto-mask-backend')).toBeInTheDocument()
-    expect(screen.getByTestId('batch-auto-mask-backend')).toHaveValue(
-      'birefnet',
+    expect(screen.getByTestId('batch-auto-mask-backend')).toHaveTextContent(
+      /BiRefNet/i,
+    )
+    expect(screen.getByTestId('batch-auto-mask-backend').tagName).not.toBe(
+      'SELECT',
     )
     expect(screen.getByTestId('batch-start-cta')).toBeInTheDocument()
     expect(screen.getByTestId('batch-pending-count')).toHaveTextContent(
       /2.*pending/,
     )
     expect(screen.getAllByTestId('batch-auto-mask')).toHaveLength(1)
-    expect(screen.getByText(/Tips for iPhone/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Masking model/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Tips for iPhone/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/Masking model/i)).not.toBeInTheDocument()
     expect(screen.queryByTestId('batch-progress')).toBeNull()
-    expect(screen.queryByText(/Running on-device inference/i)).toBeNull()
   })
 
   it('keeps background, export, and auto-mask actions', async () => {

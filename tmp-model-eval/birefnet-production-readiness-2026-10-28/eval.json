@@ -1,0 +1,774 @@
+{
+  "generatedAt": "2026-10-27T15:23:53.399Z",
+  "baseline": {
+    "path": "D:\\project\\tmp-model-eval\\birefnet-sole-final-verify-2026-10-27\\verify.json",
+    "present": true,
+    "keepPctById": {
+      "dark-hoodie": 55.43,
+      "white-tshirt": 49.04,
+      "white-sneakers": 34.5,
+      "open-handbag": 35.68,
+      "polo-carpet-closeup": 73.89
+    }
+  },
+  "weights": {
+    "path": "D:\\project\\public\\models\\studioludens\\birefnet-lite-512\\onnx\\model_fp16.onnx",
+    "bytes": 98484532,
+    "sha256": "eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516",
+    "verified": true
+  },
+  "runtime": {
+    "method": "birefnet-lite-512",
+    "ep": "wasm",
+    "initMs": 9595,
+    "firstInferMs": 11679,
+    "warmReuseMs": 10945,
+    "sequentialInferMs": [
+      11679,
+      11182,
+      11139,
+      11157,
+      10778
+    ],
+    "sequentialBatchTotalMs": 55935,
+    "sessionReused": true,
+    "memory": {
+      "note": "Node process.memoryUsage() — not browser heap; browser figures in browser-bench.json",
+      "rssBeforeMb": 177.7,
+      "rssAfterInitMb": 481.7,
+      "rssPeakMb": 2364.7,
+      "rssEndMb": 2580.4,
+      "heapUsedEndMb": 48.1
+    }
+  },
+  "fixtures": [
+    {
+      "id": "dark-hoodie",
+      "note": "dark/beige garment (01_hoodie)",
+      "methodUsed": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "width": 298,
+      "height": 292,
+      "dimsMatch": true,
+      "keepPct": 55.43,
+      "baselineKeepPct": 55.43,
+      "keepDeltaVsBaseline": 0,
+      "degenerate": false,
+      "inferMs": 11679,
+      "garmentRgbUnchanged": true,
+      "polarity": {
+        "convention": "255=KEEP 0=BG",
+        "centerMeanAlpha": 255,
+        "borderMeanAlpha": 0
+      },
+      "failureRegions": {
+        "keepRatio": 0.5543,
+        "softAlphaPct": 0.0508,
+        "borderKeepRatio": 0,
+        "internalHoleRatio": 0,
+        "keepComponents": 1,
+        "missingGarmentProxy": {
+          "description": "Pale REMOVE pixels within 3px of KEEP — possible bitten edges on white garments (NOT ground truth)",
+          "paleRemoveNearKeepCount": 1781,
+          "paleRemoveNearKeepRatioOfRemove": 0.0459
+        },
+        "retainedBackgroundProxy": {
+          "description": "Border KEEP ratio + textured border KEEP — possible carpet/studio retention (NOT ground truth)",
+          "borderKeepRatio": 0,
+          "texturedBorderKeepRatio": 0,
+          "texturedBorderKeepCount": 0
+        },
+        "observedNotes": []
+      },
+      "cutout": "transparent/dark-hoodie-cutout.png"
+    },
+    {
+      "id": "white-tshirt",
+      "note": "white on light",
+      "methodUsed": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "width": 294,
+      "height": 292,
+      "dimsMatch": true,
+      "keepPct": 49.04,
+      "baselineKeepPct": 49.04,
+      "keepDeltaVsBaseline": 0,
+      "degenerate": false,
+      "inferMs": 11182,
+      "garmentRgbUnchanged": true,
+      "polarity": {
+        "convention": "255=KEEP 0=BG",
+        "centerMeanAlpha": 255,
+        "borderMeanAlpha": 0
+      },
+      "failureRegions": {
+        "keepRatio": 0.4904,
+        "softAlphaPct": 0.0326,
+        "borderKeepRatio": 0,
+        "internalHoleRatio": 0,
+        "keepComponents": 1,
+        "missingGarmentProxy": {
+          "description": "Pale REMOVE pixels within 3px of KEEP — possible bitten edges on white garments (NOT ground truth)",
+          "paleRemoveNearKeepCount": 2204,
+          "paleRemoveNearKeepRatioOfRemove": 0.0504
+        },
+        "retainedBackgroundProxy": {
+          "description": "Border KEEP ratio + textured border KEEP — possible carpet/studio retention (NOT ground truth)",
+          "borderKeepRatio": 0,
+          "texturedBorderKeepRatio": 0,
+          "texturedBorderKeepCount": 0
+        },
+        "observedNotes": [
+          "Elevated pale REMOVE near KEEP — soft/missing fringe risk on white garment",
+          "Soft alpha ring 3.26% of pixels"
+        ]
+      },
+      "cutout": "transparent/white-tshirt-cutout.png"
+    },
+    {
+      "id": "white-sneakers",
+      "note": "white sneakers",
+      "methodUsed": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "width": 294,
+      "height": 291,
+      "dimsMatch": true,
+      "keepPct": 34.5,
+      "baselineKeepPct": 34.5,
+      "keepDeltaVsBaseline": 0,
+      "degenerate": false,
+      "inferMs": 11139,
+      "garmentRgbUnchanged": true,
+      "polarity": {
+        "convention": "255=KEEP 0=BG",
+        "centerMeanAlpha": 255,
+        "borderMeanAlpha": 0
+      },
+      "failureRegions": {
+        "keepRatio": 0.345,
+        "softAlphaPct": 0.0262,
+        "borderKeepRatio": 0,
+        "internalHoleRatio": 0,
+        "keepComponents": 1,
+        "missingGarmentProxy": {
+          "description": "Pale REMOVE pixels within 3px of KEEP — possible bitten edges on white garments (NOT ground truth)",
+          "paleRemoveNearKeepCount": 2067,
+          "paleRemoveNearKeepRatioOfRemove": 0.0369
+        },
+        "retainedBackgroundProxy": {
+          "description": "Border KEEP ratio + textured border KEEP — possible carpet/studio retention (NOT ground truth)",
+          "borderKeepRatio": 0,
+          "texturedBorderKeepRatio": 0,
+          "texturedBorderKeepCount": 0
+        },
+        "observedNotes": [
+          "Elevated pale REMOVE near KEEP — soft/missing fringe risk on white garment",
+          "Soft alpha ring 2.62% of pixels"
+        ]
+      },
+      "cutout": "transparent/white-sneakers-cutout.png"
+    },
+    {
+      "id": "open-handbag",
+      "note": "open handbag",
+      "methodUsed": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "width": 294,
+      "height": 291,
+      "dimsMatch": true,
+      "keepPct": 35.68,
+      "baselineKeepPct": 35.68,
+      "keepDeltaVsBaseline": 0,
+      "degenerate": false,
+      "inferMs": 11157,
+      "garmentRgbUnchanged": true,
+      "polarity": {
+        "convention": "255=KEEP 0=BG",
+        "centerMeanAlpha": 255,
+        "borderMeanAlpha": 0
+      },
+      "failureRegions": {
+        "keepRatio": 0.3568,
+        "softAlphaPct": 0.0547,
+        "borderKeepRatio": 0,
+        "internalHoleRatio": 0.0615,
+        "keepComponents": 1,
+        "missingGarmentProxy": {
+          "description": "Pale REMOVE pixels within 3px of KEEP — possible bitten edges on white garments (NOT ground truth)",
+          "paleRemoveNearKeepCount": 4162,
+          "paleRemoveNearKeepRatioOfRemove": 0.0756
+        },
+        "retainedBackgroundProxy": {
+          "description": "Border KEEP ratio + textured border KEEP — possible carpet/studio retention (NOT ground truth)",
+          "borderKeepRatio": 0,
+          "texturedBorderKeepRatio": 0,
+          "texturedBorderKeepCount": 0
+        },
+        "observedNotes": [
+          "Internal holes present (expected for handles) — verify not garment bites"
+        ]
+      },
+      "cutout": "transparent/open-handbag-cutout.png"
+    },
+    {
+      "id": "polo-carpet-closeup",
+      "note": "polo carpet close-up (collar)",
+      "methodUsed": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "width": 694,
+      "height": 917,
+      "dimsMatch": true,
+      "keepPct": 73.89,
+      "baselineKeepPct": 73.89,
+      "keepDeltaVsBaseline": 0,
+      "degenerate": false,
+      "inferMs": 10778,
+      "garmentRgbUnchanged": true,
+      "polarity": {
+        "convention": "255=KEEP 0=BG",
+        "centerMeanAlpha": 255,
+        "borderMeanAlpha": 100.5
+      },
+      "failureRegions": {
+        "keepRatio": 0.7389,
+        "softAlphaPct": 0.018,
+        "borderKeepRatio": 0.5904,
+        "internalHoleRatio": 0,
+        "keepComponents": 1,
+        "missingGarmentProxy": {
+          "description": "Pale REMOVE pixels within 3px of KEEP — possible bitten edges on white garments (NOT ground truth)",
+          "paleRemoveNearKeepCount": 0,
+          "paleRemoveNearKeepRatioOfRemove": 0
+        },
+        "retainedBackgroundProxy": {
+          "description": "Border KEEP ratio + textured border KEEP — possible carpet/studio retention (NOT ground truth)",
+          "borderKeepRatio": 0.5904,
+          "texturedBorderKeepRatio": 0.0726,
+          "texturedBorderKeepCount": 4563
+        },
+        "observedNotes": [
+          "High border KEEP — garment may touch frame; inspect carpet retention visually",
+          "Textured KEEP on border band — carpet texture may remain"
+        ]
+      },
+      "cutout": "transparent/polo-carpet-closeup-cutout.png"
+    }
+  ],
+  "cleanupEvaluation": {
+    "criteria": {
+      "minIouVsRaw": 0.985,
+      "maxAbsKeepDelta": 0.015,
+      "maxBorderKeepIncrease": 0.02,
+      "note": "No ground-truth masks; reject on material regression or unproven gain"
+    },
+    "candidates": [
+      {
+        "name": "morphOpen-r1",
+        "perFixture": [
+          {
+            "id": "dark-hoodie",
+            "iou": 1,
+            "keepDelta": 0,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "morphOpen-r1"
+            }
+          },
+          {
+            "id": "white-tshirt",
+            "iou": 0.99998,
+            "keepDelta": -0.00001,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "morphOpen-r1"
+            }
+          },
+          {
+            "id": "white-sneakers",
+            "iou": 0.9999,
+            "keepDelta": -0.00004,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "morphOpen-r1"
+            }
+          },
+          {
+            "id": "open-handbag",
+            "iou": 0.99915,
+            "keepDelta": -0.0003,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "morphOpen-r1"
+            }
+          },
+          {
+            "id": "polo-carpet-closeup",
+            "iou": 0.99999,
+            "keepDelta": 0,
+            "borderKeepDelta": -0.00005,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "morphOpen-r1"
+            }
+          }
+        ],
+        "materialRegressions": 0,
+        "meanIou": 0.9998,
+        "recommendApply": false,
+        "rejectReason": "No objective quality gain vs raw BiRefNet across fixtures; leave production unchanged"
+      },
+      {
+        "name": "morphClose-r1",
+        "perFixture": [
+          {
+            "id": "dark-hoodie",
+            "iou": 0.99994,
+            "keepDelta": 0.00003,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "morphClose-r1"
+            }
+          },
+          {
+            "id": "white-tshirt",
+            "iou": 0.99998,
+            "keepDelta": 0.00001,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "morphClose-r1"
+            }
+          },
+          {
+            "id": "white-sneakers",
+            "iou": 0.9999,
+            "keepDelta": 0.00004,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "morphClose-r1"
+            }
+          },
+          {
+            "id": "open-handbag",
+            "iou": 0.99765,
+            "keepDelta": 0.00084,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "morphClose-r1"
+            }
+          },
+          {
+            "id": "polo-carpet-closeup",
+            "iou": 0.99715,
+            "keepDelta": -0.0021,
+            "borderKeepDelta": -0.02129,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "morphClose-r1"
+            }
+          }
+        ],
+        "materialRegressions": 0,
+        "meanIou": 0.99892,
+        "recommendApply": false,
+        "rejectReason": "Conservative default: gains not proven across hard cases without human GT; leave unchanged"
+      },
+      {
+        "name": "fillMaskHoles",
+        "perFixture": [
+          {
+            "id": "dark-hoodie",
+            "iou": 1,
+            "keepDelta": 0,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0508,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "fillMaskHoles",
+              "filled": 0
+            }
+          },
+          {
+            "id": "white-tshirt",
+            "iou": 1,
+            "keepDelta": 0,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0326,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "fillMaskHoles",
+              "filled": 0
+            }
+          },
+          {
+            "id": "white-sneakers",
+            "iou": 1,
+            "keepDelta": 0,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0262,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "fillMaskHoles",
+              "filled": 0
+            }
+          },
+          {
+            "id": "open-handbag",
+            "iou": 0.8529,
+            "keepDelta": 0.06154,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0443,
+            "rgbUnchanged": true,
+            "materialRegression": true,
+            "meta": {
+              "name": "fillMaskHoles",
+              "filled": 5265
+            }
+          },
+          {
+            "id": "polo-carpet-closeup",
+            "iou": 1,
+            "keepDelta": 0,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.018,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "fillMaskHoles",
+              "filled": 0
+            }
+          }
+        ],
+        "materialRegressions": 1,
+        "meanIou": 0.97058,
+        "recommendApply": false,
+        "rejectReason": "material regression on 1/5 fixtures (IoU<0.985 or |Δkeep|>0.015 or border KEEP↑>0.02 or RGB mutated)"
+      },
+      {
+        "name": "feather-r1",
+        "perFixture": [
+          {
+            "id": "dark-hoodie",
+            "iou": 1,
+            "keepDelta": 0,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0106,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "feather-r1"
+            }
+          },
+          {
+            "id": "white-tshirt",
+            "iou": 1,
+            "keepDelta": 0,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0093,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "feather-r1"
+            }
+          },
+          {
+            "id": "white-sneakers",
+            "iou": 1,
+            "keepDelta": 0,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0077,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "feather-r1"
+            }
+          },
+          {
+            "id": "open-handbag",
+            "iou": 1,
+            "keepDelta": 0,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0178,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "feather-r1"
+            }
+          },
+          {
+            "id": "polo-carpet-closeup",
+            "iou": 1,
+            "keepDelta": 0,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0021,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "feather-r1"
+            }
+          }
+        ],
+        "materialRegressions": 0,
+        "meanIou": 1,
+        "recommendApply": false,
+        "rejectReason": "No objective quality gain vs raw BiRefNet across fixtures; leave production unchanged"
+      },
+      {
+        "name": "refineSilhouetteBoundary",
+        "perFixture": [
+          {
+            "id": "dark-hoodie",
+            "iou": 0.98541,
+            "keepDelta": 0.00626,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0294,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "refineSilhouetteBoundary"
+            }
+          },
+          {
+            "id": "white-tshirt",
+            "iou": 0.99068,
+            "keepDelta": 0.00459,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0219,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "refineSilhouetteBoundary"
+            }
+          },
+          {
+            "id": "white-sneakers",
+            "iou": 0.97334,
+            "keepDelta": -0.00472,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0132,
+            "rgbUnchanged": true,
+            "materialRegression": true,
+            "meta": {
+              "name": "refineSilhouetteBoundary"
+            }
+          },
+          {
+            "id": "open-handbag",
+            "iou": 0.99074,
+            "keepDelta": -0.00009,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.012,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "refineSilhouetteBoundary"
+            }
+          },
+          {
+            "id": "polo-carpet-closeup",
+            "iou": 0.98931,
+            "keepDelta": 0.00342,
+            "borderKeepDelta": 0.00785,
+            "softAlphaPct": 0.0094,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "refineSilhouetteBoundary"
+            }
+          }
+        ],
+        "materialRegressions": 1,
+        "meanIou": 0.9859,
+        "recommendApply": false,
+        "rejectReason": "material regression on 1/5 fixtures (IoU<0.985 or |Δkeep|>0.015 or border KEEP↑>0.02 or RGB mutated)"
+      },
+      {
+        "name": "refineBoundaryAlpha",
+        "perFixture": [
+          {
+            "id": "dark-hoodie",
+            "iou": 0.97831,
+            "keepDelta": 0.00071,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0347,
+            "rgbUnchanged": true,
+            "materialRegression": true,
+            "meta": {
+              "name": "refineBoundaryAlpha"
+            }
+          },
+          {
+            "id": "white-tshirt",
+            "iou": 0.99274,
+            "keepDelta": -0.00219,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0114,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "refineBoundaryAlpha"
+            }
+          },
+          {
+            "id": "white-sneakers",
+            "iou": 0.96445,
+            "keepDelta": -0.0054,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0155,
+            "rgbUnchanged": true,
+            "materialRegression": true,
+            "meta": {
+              "name": "refineBoundaryAlpha"
+            }
+          },
+          {
+            "id": "open-handbag",
+            "iou": 0.99109,
+            "keepDelta": -0.00027,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.0133,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "refineBoundaryAlpha"
+            }
+          },
+          {
+            "id": "polo-carpet-closeup",
+            "iou": 0.99563,
+            "keepDelta": 0.00247,
+            "borderKeepDelta": 0.02699,
+            "softAlphaPct": 0.0147,
+            "rgbUnchanged": true,
+            "materialRegression": true,
+            "meta": {
+              "name": "refineBoundaryAlpha"
+            }
+          }
+        ],
+        "materialRegressions": 3,
+        "meanIou": 0.98445,
+        "recommendApply": false,
+        "rejectReason": "material regression on 3/5 fixtures (IoU<0.985 or |Δkeep|>0.015 or border KEEP↑>0.02 or RGB mutated)"
+      },
+      {
+        "name": "repairSdkUnderRecall",
+        "perFixture": [
+          {
+            "id": "dark-hoodie",
+            "iou": 0.9179,
+            "keepDelta": 0.04958,
+            "borderKeepDelta": 0.00708,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": true,
+            "meta": {
+              "name": "repairSdkUnderRecall",
+              "applied": true,
+              "reason": "thin-keep-corridor keep 0.554"
+            }
+          },
+          {
+            "id": "white-tshirt",
+            "iou": 0.91996,
+            "keepDelta": 0.04267,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": true,
+            "meta": {
+              "name": "repairSdkUnderRecall",
+              "applied": true,
+              "reason": "thin-keep-corridor keep 0.490"
+            }
+          },
+          {
+            "id": "white-sneakers",
+            "iou": 0.88494,
+            "keepDelta": 0.04486,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": true,
+            "meta": {
+              "name": "repairSdkUnderRecall",
+              "applied": true,
+              "reason": "pale-gap keep 0.345 pale 0.911"
+            }
+          },
+          {
+            "id": "open-handbag",
+            "iou": 0.75898,
+            "keepDelta": 0.11331,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0,
+            "rgbUnchanged": true,
+            "materialRegression": true,
+            "meta": {
+              "name": "repairSdkUnderRecall",
+              "applied": true,
+              "reason": "pale-gap keep 0.357 pale 0.574"
+            }
+          },
+          {
+            "id": "polo-carpet-closeup",
+            "iou": 1,
+            "keepDelta": 0,
+            "borderKeepDelta": 0,
+            "softAlphaPct": 0.018,
+            "rgbUnchanged": true,
+            "materialRegression": false,
+            "meta": {
+              "name": "repairSdkUnderRecall",
+              "applied": false,
+              "reason": "ok"
+            }
+          }
+        ],
+        "materialRegressions": 4,
+        "meanIou": 0.89635,
+        "recommendApply": false,
+        "rejectReason": "material regression on 4/5 fixtures (IoU<0.985 or |Δkeep|>0.015 or border KEEP↑>0.02 or RGB mutated)"
+      }
+    ],
+    "productionDecision": "Leave BiRefNet segment path unchanged — no cleanup candidate demonstrated objective improvement without material risk"
+  },
+  "failureProbes": {
+    "allNegativeLogitsFlaggedDegenerate": true,
+    "assertUsableMaskRejectsDegenerate": true,
+    "assertUsableMaskMessage": "BiRefNet produced an empty KEEP mask (no garment pixels). Treating as inference failure.",
+    "competingModelInvoked": false,
+    "note": "App cancel uses batchGenerationRef; covered by App/batch tests — see report"
+  },
+  "productionPathUnchanged": true
+}

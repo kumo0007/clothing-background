@@ -161,9 +161,89 @@ export async function resolveBirefNetModelUrl(): Promise<{
   )
 }
 
+type FetchBirefNetModelBytesFn = (
+  url: string,
+  expectedBytes: number | undefined,
+  onProgress?: (event: BirefNetProgress) => void,
+) => Promise<Uint8Array>
+
+let fetchBirefNetModelBytesOverride: FetchBirefNetModelBytesFn | null = null
+
+/** Test seam — avoid allocating the real ~94MB weight buffer in unit tests. */
+export function setFetchBirefNetModelBytesForTests(
+  fn: FetchBirefNetModelBytesFn | null,
+): void {
+  fetchBirefNetModelBytesOverride = fn
+}
+
+/**
+ * Fetch ONNX bytes ourselves and validate length before handing them to ORT.
+ * Passing a URL into InferenceSession.create lets ORT fetch again; Firefox then
+ * often fails with "Content-Length header of network response exceeds response Body"
+ * on large same-origin weights (compression / proxy / truncated body).
+ */
+export async function fetchBirefNetModelBytes(
+  url: string,
+  expectedBytes: number | undefined,
+  onProgress?: (event: BirefNetProgress) => void,
+): Promise<Uint8Array> {
+  if (fetchBirefNetModelBytesOverride) {
+    return fetchBirefNetModelBytesOverride(url, expectedBytes, onProgress)
+  }
+  onProgress?.({
+    kind: 'birefnet-init',
+    status: 'loading',
+    message: 'Downloading BiRefNet weights…',
+    ratio: 0.05,
+  })
+  const res = await fetch(url, { cache: 'force-cache' })
+  if (!res.ok) {
+    throw new Error(
+      `BiRefNet weight download failed (HTTP ${res.status}) for ${url}`,
+    )
+  }
+
+  // Prefer streaming read so we can detect early truncation vs Content-Length.
+  const declared = Number.parseInt(
+    res.headers.get('content-length') || res.headers.get('Content-Length') || '',
+    10,
+  )
+  if (
+    expectedBytes !== undefined &&
+    Number.isFinite(declared) &&
+    declared > 0 &&
+    declared !== expectedBytes
+  ) {
+    throw new Error(
+      `BiRefNet weight Content-Length is ${declared} bytes; expected ${expectedBytes}. Re-run npm run fetch:birefnet-weights.`,
+    )
+  }
+
+  const buffer = await res.arrayBuffer()
+  const bytes = new Uint8Array(buffer)
+  if (expectedBytes !== undefined && bytes.byteLength !== expectedBytes) {
+    throw new Error(
+      `BiRefNet weight body is ${bytes.byteLength} bytes; expected ${expectedBytes}. ` +
+        `Clear cache, hard-refresh, and re-run npm run fetch:birefnet-weights.`,
+    )
+  }
+  if (bytes.byteLength < 1_000_000) {
+    throw new Error(
+      `BiRefNet weight body too small (${bytes.byteLength} bytes) at ${url}`,
+    )
+  }
+  onProgress?.({
+    kind: 'birefnet-init',
+    status: 'loading',
+    message: `BiRefNet weights ready (${Math.round(bytes.byteLength / (1024 * 1024))} MB)`,
+    ratio: 0.35,
+  })
+  return bytes
+}
+
 async function createSession(
   ort: OrtModule,
-  modelUrl: string,
+  modelBytes: Uint8Array,
   preferWebGpu: boolean,
   onProgress?: (event: BirefNetProgress) => void,
 ): Promise<BirefNetSessionHandle> {
@@ -174,7 +254,9 @@ async function createSession(
       message: `Loading BiRefNet (${device})…`,
       device,
     })
-    const session = await ort.InferenceSession.create(modelUrl, {
+    // Pass bytes — never a URL — so ORT does not re-fetch and trip Firefox
+    // Content-Length / truncated-body errors on the ~94MB ONNX.
+    const session = await ort.InferenceSession.create(modelBytes, {
       executionProviders: device === 'webgpu' ? ['webgpu', 'wasm'] : ['wasm'],
       graphOptimizationLevel: 'all',
     })
@@ -231,6 +313,14 @@ export async function preloadBirefNetModel(
       ratio: 0.05,
     })
 
+    const expectedBytes =
+      precision === 'fp16' ? BIREFNET_ONNX_FP16_BYTES : undefined
+    const modelBytes = await fetchBirefNetModelBytes(
+      url,
+      expectedBytes,
+      onProgress,
+    )
+
     // Prefer WASM by default: several Chrome WebGPU adapters load this ONNX
     // successfully but emit degenerate all-negative logits. WebGPU can still
     // be forced with VITE_BIREFNET_WEBGPU=1; runBirefNetInference also falls
@@ -241,7 +331,7 @@ export async function preloadBirefNetModel(
       'gpu' in navigator
 
     const handle = await withTimeout(
-      createSession(ort, url, preferWebGpu, onProgress),
+      createSession(ort, modelBytes, preferWebGpu, onProgress),
       BIREFNET_PRELOAD_MAX_MS,
       `BiRefNet load timed out after ${Math.round(BIREFNET_PRELOAD_MAX_MS / 1000)}s. Stay on Wi‑Fi and keep this tab open.`,
     )
@@ -330,14 +420,21 @@ export async function rebuildBirefNetSessionWasmOnly(
 ): Promise<BirefNetSessionHandle> {
   await disposeBirefNetSession()
   const ort = await loadOrt()
-  const { url } = await resolveBirefNetModelUrl()
+  const { url, precision } = await resolveBirefNetModelUrl()
   onProgress?.({
     kind: 'birefnet-init',
     status: 'loading',
     message: 'WebGPU BiRefNet output looked broken — reloading WASM…',
     device: 'wasm',
   })
-  const handle = await createSession(ort, url, false, onProgress)
+  const expectedBytes =
+    precision === 'fp16' ? BIREFNET_ONNX_FP16_BYTES : undefined
+  const modelBytes = await fetchBirefNetModelBytes(
+    url,
+    expectedBytes,
+    onProgress,
+  )
+  const handle = await createSession(ort, modelBytes, false, onProgress)
   shared = handle
   preloadPromise = Promise.resolve(handle)
   onProgress?.({

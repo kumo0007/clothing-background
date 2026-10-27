@@ -187,7 +187,15 @@ export function computeMaskMetrics(
       if (L < 100) darkKeep += 1
       if (L >= studioLuma - 4 && c <= 24) paleKeepNearCard += 1
 
-      if (onBorder && L >= studioLuma - 6 && c <= 28) {
+      // Flat studio/card leftovers only — textured carpet or fabric weave must
+      // not inflate border_studio_leak (fill-frame collars / beige carpet).
+      if (
+        onBorder &&
+        L >= studioLuma - 6 &&
+        L <= studioLuma + 10 &&
+        c <= 28 &&
+        localLumaVariance(imageData!, x, y, 1) <= 14
+      ) {
         borderStudioKeepCount += 1
       }
 
@@ -264,7 +272,14 @@ export function sampleBorderStudioIndices(
       if (mask.data[i]! < 128) continue
       const L = lumaAt(imageData, x, y)
       const c = chromaAt(imageData, x, y)
-      if (L >= studioLuma - 6 && c <= 28) out.push(i)
+      if (
+        L >= studioLuma - 6 &&
+        L <= studioLuma + 10 &&
+        c <= 28 &&
+        localLumaVariance(imageData, x, y, 1) <= 14
+      ) {
+        out.push(i)
+      }
     }
   }
   return out

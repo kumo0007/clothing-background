@@ -1,21 +1,20 @@
 import { loadHtmlImage } from '../image/loadHtmlImage'
 import { imageDataFromObjectUrl } from '../image/imageDataFromUrl'
 import { getOrCreateMask, setMask } from '../mask/maskStore'
-import type { BgRemoveSdkProgress } from '../mask/bgRemoveSdk'
 import type { BirefNetProgress } from '../mask/birefNet'
 import type { MaskDiagnosticSummary } from '../../types/mask'
 
-/** Preferred on-device segmentation backend for Batch auto-mask. */
-export type AutoMaskBackend = 'birefnet' | 'rmbg1.4'
+/** Sole automatic segmentation backend for Batch auto-mask. */
+export type AutoMaskBackend = 'birefnet'
 
-export type AutoMaskProgress = BgRemoveSdkProgress | BirefNetProgress
+export type AutoMaskProgress = BirefNetProgress
 
 /**
- * Auto-mask one image with a browser-local neural backend and commit the KEEP
+ * Auto-mask one image with browser-local BiRefNet_lite 512 and commit the KEEP
  * alpha mask to `maskStore`. Original upload RGB is left untouched.
  *
- * Default backend: BiRefNet_lite 512 (MIT ONNX). Falls back to RMBG-1.4 via
- * bg-remove-sdk when BiRefNet fails to load or infer — never silently.
+ * BiRefNet is the only automatic backend. Failures surface as thrown errors —
+ * there is no silent fallback to RMBG, ISNet, Lab-seed, or other engines.
  */
 export type AutoMaskCornersResult = {
   confidence: number
@@ -26,9 +25,6 @@ export type AutoMaskCornersResult = {
   reviewReason?: string
   diagnosticSummary?: MaskDiagnosticSummary
   device?: 'webgpu' | 'wasm' | 'unknown'
-  /** Present when BiRefNet failed and RMBG was used instead. */
-  fallbackFrom?: string
-  fallbackReason?: string
 }
 
 function toSummary(
@@ -122,7 +118,8 @@ export async function autoMaskCornersForImage(
   _tolerance = 40,
   onProgress?: (event: AutoMaskProgress) => void,
   sourceFile?: Blob | null,
-  preferredBackend: AutoMaskBackend = 'birefnet',
+  /** @deprecated Ignored — BiRefNet is the only automatic backend. */
+  _preferredBackend: AutoMaskBackend = 'birefnet',
 ): Promise<AutoMaskCornersResult> {
   getOrCreateMask(imageId, width, height)
 
@@ -136,90 +133,32 @@ export async function autoMaskCornersForImage(
   )
   const sourceImageData = await decodeSourceImageData(objectUrl, width, height)
 
-  let fallbackFrom: string | undefined
-  let fallbackReason: string | undefined
-
-  if (preferredBackend === 'birefnet') {
-    try {
-      const { segmentWithBirefNet, BIREFNET_METHOD } = await import(
-        '../mask/birefNet'
-      )
-      const result = await segmentWithBirefNet(imageBlob, width, height, {
-        onProgress,
-        sourceImageData,
-      })
-      setMask(imageId, result.mask)
-      const diagnosticSummary = toSummary({
-        ...result.diagnostics,
-        findings: result.diagnostics.findings.filter(
-          (f) => f.severity !== 'info' || f.forcesReview,
-        ),
-      })
-      return {
-        confidence: result.confidence,
-        needsReview: result.needsReview,
-        requestedMethod: 'birefnet',
-        methodUsed: result.methodUsed || BIREFNET_METHOD,
-        genuineModelInference: true,
-        device: result.device,
-        diagnosticSummary,
-        reviewReason: result.needsReview
-          ? result.reviewReasons.length > 0
-            ? result.reviewReasons.join(' · ')
-            : 'uncertain auto-mask — inspect edges and openings'
-          : undefined,
-      }
-    } catch (err) {
-      fallbackFrom = 'birefnet-lite-512'
-      fallbackReason =
-        err instanceof Error ? err.message : 'BiRefNet inference failed'
-      onProgress?.({
-        kind: 'sdk-process',
-        stage: `BiRefNet failed — falling back to RMBG-1.4 (${fallbackReason.slice(0, 80)})`,
-      })
-    }
-  }
-
-  const { segmentWithBgRemoveSdk, BG_REMOVE_SDK_METHOD } = await import(
-    '../mask/bgRemoveSdk'
+  const { segmentWithBirefNet, BIREFNET_METHOD } = await import(
+    '../mask/birefNet'
   )
-
-  const result = await segmentWithBgRemoveSdk(imageBlob, width, height, {
-    onProgress: onProgress as
-      | ((event: BgRemoveSdkProgress) => void)
-      | undefined,
+  const result = await segmentWithBirefNet(imageBlob, width, height, {
+    onProgress,
     sourceImageData,
   })
-
   setMask(imageId, result.mask)
-
-  const reviewReasons = [...result.reviewReasons]
-  if (fallbackReason) {
-    reviewReasons.unshift(`fallback from BiRefNet: ${fallbackReason}`)
-  }
-
   const diagnosticSummary = toSummary({
     ...result.diagnostics,
     findings: result.diagnostics.findings.filter(
       (f) => f.severity !== 'info' || f.forcesReview,
     ),
   })
-
   return {
     confidence: result.confidence,
-    needsReview: result.needsReview || Boolean(fallbackReason),
-    requestedMethod: preferredBackend,
-    methodUsed: result.methodUsed || BG_REMOVE_SDK_METHOD,
+    needsReview: result.needsReview,
+    requestedMethod: 'birefnet',
+    methodUsed: result.methodUsed || BIREFNET_METHOD,
     genuineModelInference: true,
     device: result.device,
     diagnosticSummary,
-    fallbackFrom,
-    fallbackReason,
-    reviewReason:
-      result.needsReview || fallbackReason
-        ? reviewReasons.length > 0
-          ? reviewReasons.join(' · ')
-          : 'uncertain auto-mask — inspect edges and openings'
-        : undefined,
+    reviewReason: result.needsReview
+      ? result.reviewReasons.length > 0
+        ? result.reviewReasons.join(' · ')
+        : 'uncertain auto-mask — inspect edges and openings'
+      : undefined,
   }
 }

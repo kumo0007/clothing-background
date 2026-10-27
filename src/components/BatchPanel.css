@@ -45,50 +45,6 @@
   overflow-wrap: anywhere;
 }
 
-.batch-panel__details {
-  margin: 0.15rem 0 0;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1.4;
-  max-width: 100%;
-}
-
-.batch-panel__details summary {
-  cursor: pointer;
-  color: var(--text);
-  font-weight: 600;
-  list-style: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 2.25rem;
-  padding: 0.15rem 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.batch-panel__details summary::-webkit-details-marker {
-  display: none;
-}
-
-.batch-panel__details summary::before {
-  content: '';
-  width: 0.4rem;
-  height: 0.4rem;
-  border-right: 2px solid var(--text-muted);
-  border-bottom: 2px solid var(--text-muted);
-  transform: rotate(-45deg);
-  transition: transform 120ms ease;
-}
-
-.batch-panel__details[open] summary::before {
-  transform: rotate(45deg);
-}
-
-.batch-panel__details p {
-  margin: 0.35rem 0 0;
-  overflow-wrap: anywhere;
-}
-
 /* 2-col on phones so chips never clip the right edge; denser grids up from there */
 .batch-panel__stats {
   display: grid;

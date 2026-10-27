@@ -39,6 +39,8 @@ type ReviewDiagnosticsPanelProps = {
     needsReview: boolean,
     reviewReason?: string,
   ) => void
+  /** Keep parent mount while peel undo history exists. */
+  onPeelUndoAvailabilityChange?: (canUndo: boolean) => void
 }
 
 const OVERLAY_OPTIONS: { id: DiagnosticOverlayKind; label: string }[] = [
@@ -50,6 +52,32 @@ const OVERLAY_OPTIONS: { id: DiagnosticOverlayKind; label: string }[] = [
   { id: 'suspected-leak', label: 'Suspected leak' },
   { id: 'fragments', label: 'Fragments' },
 ]
+
+/**
+ * Put RGBA pixels via ImageData created on the destination context.
+ * Never pass a cross-realm / constructed ImageData into putImageData (Firefox).
+ */
+function putRgba(
+  ctx: CanvasRenderingContext2D,
+  rgba: ArrayLike<number>,
+  width: number,
+  height: number,
+): void {
+  const expected = width * height * 4
+  if (width < 1 || height < 1 || rgba.length !== expected) {
+    throw new Error(
+      `Invalid overlay RGBA (${width}×${height}, len=${rgba.length}; need ${expected})`,
+    )
+  }
+  let imageData: ImageData
+  try {
+    imageData = ctx.createImageData(width, height)
+  } catch {
+    imageData = new ImageData(width, height)
+  }
+  imageData.data.set(rgba)
+  ctx.putImageData(imageData, 0, 0)
+}
 
 /** Cap overlay working resolution for large uploads (display still CSS-scaled). */
 const OVERLAY_MAX_EDGE = 640
@@ -133,6 +161,7 @@ export function ReviewDiagnosticsPanel({
   maskRevision,
   summary,
   onMaskRepaired,
+  onPeelUndoAvailabilityChange,
 }: ReviewDiagnosticsPanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const peelHistoryRef = useRef(new MaskHistory())
@@ -142,6 +171,11 @@ export function ReviewDiagnosticsPanel({
   /** Findings (incl. sampleIndices) in sourceScaleRef coordinates. */
   const findingsForOverlayRef = useRef<DiagnosticFinding[]>([])
   const overlayScratchRef = useRef<HTMLCanvasElement | null>(null)
+  /** Revision the current peel preview was computed against. */
+  const peelPreviewRevisionRef = useRef<number | null>(null)
+  const peelPreviewImageRef = useRef<string | null>(null)
+  /** Skip clearing peel history when this panel caused the revision bump. */
+  const ignoreNextRevisionClearRef = useRef(false)
 
   const [overlay, setOverlay] = useState<DiagnosticOverlayKind>(
     needsReview ? 'fragments' : 'none',
@@ -197,21 +231,43 @@ export function ReviewDiagnosticsPanel({
     return c
   }
 
+  const setUndoAvailable = (next: boolean) => {
+    setCanUndoPeel(next)
+    onPeelUndoAvailabilityChange?.(next)
+  }
+
   // Reset peel/cache only when switching images — never when summary updates.
   useEffect(() => {
     sourceImageRef.current = null
     sourceKeyRef.current = ''
     sourceScaleRef.current = { dw: 0, dh: 0 }
     findingsForOverlayRef.current = []
+    peelPreviewRevisionRef.current = null
+    peelPreviewImageRef.current = null
+    ignoreNextRevisionClearRef.current = false
     setLiveSummary(summary)
     setPeelPreview(null)
     setPeelError(null)
     setOverlayError(null)
     peelHistoryRef.current.clear()
-    setCanUndoPeel(false)
+    setUndoAvailable(false)
     setOverlay(needsReview ? 'fragments' : 'none')
     // eslint-disable-next-line react-hooks/exhaustive-deps -- image switch only
   }, [imageId])
+
+  // External mask edits invalidate peel preview/history (except our own apply/undo).
+  useEffect(() => {
+    if (ignoreNextRevisionClearRef.current) {
+      ignoreNextRevisionClearRef.current = false
+      return
+    }
+    setPeelPreview(null)
+    peelPreviewRevisionRef.current = null
+    peelPreviewImageRef.current = null
+    peelHistoryRef.current.clear()
+    setUndoAvailable(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- revision identity only
+  }, [maskRevision])
 
   // Re-diagnose when the saved mask revision changes.
   useEffect(() => {
@@ -231,7 +287,7 @@ export function ReviewDiagnosticsPanel({
           mask: diagMask,
           imageData,
           profile: 'neural',
-          method: methodUsed ?? 'bg-remove-sdk-rmbg1.4',
+          method: methodUsed ?? 'birefnet-lite-512',
           hasManualEdits,
           maskRevision,
         })
@@ -296,12 +352,55 @@ export function ReviewDiagnosticsPanel({
           overlay,
           scaledFindings,
         )
+        if (
+          overlayData.width !== dw ||
+          overlayData.height !== dh ||
+          overlayData.data.length !== dw * dh * 4
+        ) {
+          throw new Error(
+            `Diagnostic overlay buffer size mismatch (${overlayData.width}×${overlayData.height}, len=${overlayData.data.length}; need ${dw}×${dh})`,
+          )
+        }
         const scratch = getOverlayScratch(dw, dh)
         const octx = scratch.getContext('2d')
         if (!octx) throw new Error('Could not create overlay canvas')
         octx.clearRect(0, 0, dw, dh)
-        octx.putImageData(overlayData, 0, 0)
+        // Always allocate ImageData from THIS canvas context. `new ImageData(...)`
+        // from a shared helper is rejected by Firefox putImageData
+        // ("Argument 1 does not implement interface ImageData") even when
+        // instanceof ImageData is true in some realms.
+        putRgba(octx, overlayData.data, dw, dh)
+        ctx.globalAlpha = 0.85
         ctx.drawImage(scratch, 0, 0)
+        ctx.globalAlpha = 1
+
+        // Visualize pending peel candidate as red REMOVE diff (non-destructive).
+        if (
+          peelPreview &&
+          peelPreviewImageRef.current === imageId &&
+          peelPreviewRevisionRef.current === maskRevision
+        ) {
+          const cand =
+            peelPreview.candidate.width === dw &&
+            peelPreview.candidate.height === dh
+              ? peelPreview.candidate
+              : resizeMaskNearest(peelPreview.candidate, dw, dh)
+          const diffRgba = new Uint8ClampedArray(dw * dh * 4)
+          for (let i = 0; i < dw * dh; i += 1) {
+            const was = scaledMask.data[i]! >= 128
+            const stays = cand.data[i]! >= 128
+            if (was && !stays) {
+              const o = i * 4
+              diffRgba[o] = 220
+              diffRgba[o + 1] = 40
+              diffRgba[o + 2] = 40
+              diffRgba[o + 3] = 160
+            }
+          }
+          octx.clearRect(0, 0, dw, dh)
+          putRgba(octx, diffRgba, dw, dh)
+          ctx.drawImage(scratch, 0, 0)
+        }
       } catch (err) {
         if (!cancelled) {
           setOverlayError(
@@ -319,7 +418,16 @@ export function ReviewDiagnosticsPanel({
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- paint on overlay/revision only
-  }, [imageId, objectUrl, width, height, overlay, maskRevision, liveSummary])
+  }, [
+    imageId,
+    objectUrl,
+    width,
+    height,
+    overlay,
+    maskRevision,
+    liveSummary,
+    peelPreview,
+  ])
 
   const refreshAfterMaskChange = async () => {
     const current = getMask(imageId)
@@ -333,13 +441,15 @@ export function ReviewDiagnosticsPanel({
       mask: diagMask,
       imageData,
       profile: 'neural',
-      method: methodUsed ?? 'bg-remove-sdk-rmbg1.4',
+      method: methodUsed ?? 'birefnet-lite-512',
       hasManualEdits: true,
       maskRevision: maskRevision + 1,
+      resized: false,
     })
     findingsForOverlayRef.current = diagnostics.findings
     const next = toSummary(diagnostics)
     setLiveSummary(next)
+    ignoreNextRevisionClearRef.current = true
     onMaskRepaired(
       next,
       diagnostics.needsReview,
@@ -352,15 +462,22 @@ export function ReviewDiagnosticsPanel({
   const handlePreviewPeel = async () => {
     setPeelBusy(true)
     setPeelError(null)
+    const expectedImageId = imageId
+    const expectedRevision = maskRevision
     try {
-      const current = getMask(imageId)
+      const current = getMask(expectedImageId)
       if (!current) throw new Error('No mask loaded')
       const { data: imageData, dw, dh } = await ensureSourceImage()
+      if (imageId !== expectedImageId || maskRevision !== expectedRevision) {
+        return
+      }
       const peelMask =
         current.width === dw && current.height === dh
           ? current
           : resizeMaskNearest(current, dw, dh)
       const preview = previewBorderStudioPeel(peelMask, imageData)
+      peelPreviewRevisionRef.current = expectedRevision
+      peelPreviewImageRef.current = expectedImageId
       setPeelPreview(preview)
     } catch (err) {
       setPeelError(err instanceof Error ? err.message : 'Peel preview failed')
@@ -371,6 +488,14 @@ export function ReviewDiagnosticsPanel({
 
   const handleApplyPeel = async () => {
     if (!peelPreview?.recommendApply) return
+    if (
+      peelPreviewImageRef.current !== imageId ||
+      peelPreviewRevisionRef.current !== maskRevision
+    ) {
+      setPeelError('Peel preview is stale — generate a new preview')
+      setPeelPreview(null)
+      return
+    }
     setPeelBusy(true)
     setPeelError(null)
     try {
@@ -380,16 +505,37 @@ export function ReviewDiagnosticsPanel({
         peelPreview.candidate.width === current.width &&
         peelPreview.candidate.height === current.height
           ? peelPreview.candidate
-          : // Avoid full-res RGB decode on iPhone — upsample preview peel.
-            resizeMaskNearest(
-              peelPreview.candidate,
-              current.width,
-              current.height,
-            )
+          : // Upsample only the peeled candidate — soft alpha elsewhere preserved
+            // by applying REMOVE-only delta rather than replacing all bytes.
+            null
       peelHistoryRef.current.push(cloneMaskBuffer(current))
-      applyBorderStudioPeel(current, candidate)
-      setCanUndoPeel(peelHistoryRef.current.canUndo)
+      if (candidate) {
+        applyBorderStudioPeel(current, candidate)
+      } else {
+        const up = resizeMaskNearest(
+          peelPreview.candidate,
+          current.width,
+          current.height,
+        )
+        // Preview was computed on a downscaled mask; only clear pixels that
+        // the peel removed so untouched soft alpha is not nearest-quantized.
+        const down = resizeMaskNearest(current, up.width, up.height)
+        for (let i = 0; i < down.data.length; i += 1) {
+          if (down.data[i]! >= 128 && peelPreview.candidate.data[i]! < 128) {
+            down.data[i] = 0
+          }
+        }
+        const merged = resizeMaskNearest(down, current.width, current.height)
+        for (let i = 0; i < current.data.length; i += 1) {
+          if (merged.data[i]! < 128 && current.data[i]! >= 128) {
+            current.data[i] = 0
+          }
+        }
+      }
+      setUndoAvailable(peelHistoryRef.current.canUndo)
       setPeelPreview(null)
+      peelPreviewRevisionRef.current = null
+      peelPreviewImageRef.current = null
       await refreshAfterMaskChange()
     } catch (err) {
       setPeelError(err instanceof Error ? err.message : 'Peel apply failed')
@@ -407,7 +553,10 @@ export function ReviewDiagnosticsPanel({
       const previous = peelHistoryRef.current.undo(current)
       if (!previous) throw new Error('Nothing to undo')
       current.data.set(previous.data)
-      setCanUndoPeel(peelHistoryRef.current.canUndo)
+      setUndoAvailable(peelHistoryRef.current.canUndo)
+      setPeelPreview(null)
+      peelPreviewRevisionRef.current = null
+      peelPreviewImageRef.current = null
       await refreshAfterMaskChange()
     } catch (err) {
       setPeelError(err instanceof Error ? err.message : 'Undo peel failed')
@@ -418,7 +567,7 @@ export function ReviewDiagnosticsPanel({
 
   const mask: MaskPixelBuffer | undefined = getMask(imageId)
 
-  if (!needsReview && findings.length === 0) {
+  if (!needsReview && findings.length === 0 && !canUndoPeel && !peelPreview) {
     return null
   }
 
@@ -551,7 +700,12 @@ export function ReviewDiagnosticsPanel({
           <button
             type="button"
             className="button"
-            disabled={peelBusy || !peelPreview?.recommendApply}
+            disabled={
+              peelBusy ||
+              !peelPreview?.recommendApply ||
+              peelPreviewImageRef.current !== imageId ||
+              peelPreviewRevisionRef.current !== maskRevision
+            }
             onClick={() => void handleApplyPeel()}
             data-testid="review-peel-apply"
           >

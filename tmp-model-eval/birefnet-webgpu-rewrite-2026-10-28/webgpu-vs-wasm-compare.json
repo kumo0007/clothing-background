@@ -1,0 +1,66 @@
+{
+  "ok": true,
+  "equivalenceClass": "acceptable-measured-deviation",
+  "rows": [
+    {
+      "path": "/testdata/clothing/01_hoodie.jpg",
+      "logitMaxAbsDiff": 2.424278,
+      "logitMeanAbsDiff": 0.342952,
+      "exactMask": false,
+      "iou": 0.9990438652606671,
+      "falseGarmentRemovalPct": 0.0298,
+      "backgroundLeakagePct": 0.0233,
+      "edgeArtifactPx": 139,
+      "keepRef": 0.5543365478515625,
+      "keepHyp": 0.5542716979980469
+    },
+    {
+      "path": "/testdata/clothing/03_tshirt.jpg",
+      "logitMaxAbsDiff": 2.101527,
+      "logitMeanAbsDiff": 0.461316,
+      "exactMask": false,
+      "iou": 0.9992220502088796,
+      "falseGarmentRemovalPct": 0.0134,
+      "backgroundLeakagePct": 0.0248,
+      "edgeArtifactPx": 100,
+      "keepRef": 0.49010467529296875,
+      "keepHyp": 0.4902191162109375
+    },
+    {
+      "path": "/testdata/clothing/08_sneakers.jpg",
+      "logitMaxAbsDiff": 3.095092,
+      "logitMeanAbsDiff": 0.290103,
+      "exactMask": false,
+      "iou": 0.9988619161795742,
+      "falseGarmentRemovalPct": 0.0149,
+      "backgroundLeakagePct": 0.0244,
+      "edgeArtifactPx": 103,
+      "keepRef": 0.3449974060058594,
+      "keepHyp": 0.3450927734375
+    },
+    {
+      "path": "/testdata/clothing/09_handbag.jpg",
+      "logitMaxAbsDiff": 2.831041,
+      "logitMeanAbsDiff": 0.350759,
+      "exactMask": false,
+      "iou": 0.9983639863130881,
+      "falseGarmentRemovalPct": 0.0309,
+      "backgroundLeakagePct": 0.0275,
+      "edgeArtifactPx": 153,
+      "keepRef": 0.356475830078125,
+      "keepHyp": 0.3564414978027344
+    },
+    {
+      "path": "/testdata/clothing/polo-5.png",
+      "logitMaxAbsDiff": 3.027661,
+      "logitMeanAbsDiff": 0.339408,
+      "exactMask": false,
+      "iou": 0.9989673475288626,
+      "falseGarmentRemovalPct": 0.0679,
+      "backgroundLeakagePct": 0.0084,
+      "edgeArtifactPx": 200,
+      "keepRef": 0.7387313842773438,
+      "keepHyp": 0.7381362915039062
+    }
+  ]
+}

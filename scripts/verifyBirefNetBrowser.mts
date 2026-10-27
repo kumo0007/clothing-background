@@ -72,6 +72,7 @@ async function serveStatic(rootPath: string, port: number) {
         'Content-Length': String(body.length),
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'require-corp',
+        'Cross-Origin-Resource-Policy': 'same-origin',
       })
       res.end(body)
     } catch (err) {

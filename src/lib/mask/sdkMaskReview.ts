@@ -33,6 +33,7 @@ export function reviewSdkMask(
   sourceImageData: ImageData | undefined,
   extras: {
     resized?: boolean
+    resizedSuspicious?: boolean
     method?: string
     maskRevision?: number
     hasManualEdits?: boolean
@@ -42,8 +43,9 @@ export function reviewSdkMask(
     mask,
     imageData: sourceImageData,
     profile: 'neural',
-    method: extras.method ?? 'bg-remove-sdk-rmbg1.4',
+    method: extras.method ?? 'birefnet-lite-512',
     resized: extras.resized ?? false,
+    resizedSuspicious: extras.resizedSuspicious ?? false,
     maskRevision: extras.maskRevision,
     hasManualEdits: extras.hasManualEdits,
   })

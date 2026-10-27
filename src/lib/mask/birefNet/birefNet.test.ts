@@ -12,11 +12,13 @@ import {
   BIREFNET_INPUT_SIZE,
   BIREFNET_MEAN,
   BIREFNET_METHOD,
+  BIREFNET_ONNX_FP16_BYTES,
   BIREFNET_PROVIDER,
   BIREFNET_STD,
 } from './constants'
 import {
   resetBirefNetSessionForTests,
+  setFetchBirefNetModelBytesForTests,
   setSharedBirefNetSessionForTests,
 } from './session'
 
@@ -172,8 +174,10 @@ describe('BiRefNet preprocess / postprocess', () => {
 describe('segmentWithBirefNet (mocked session)', () => {
   beforeEach(() => {
     resetBirefNetSessionForTests()
+    setFetchBirefNetModelBytesForTests(async () => new Uint8Array(8))
   })
   afterEach(() => {
+    setFetchBirefNetModelBytesForTests(null)
     resetBirefNetSessionForTests()
   })
 
@@ -310,4 +314,138 @@ describe('segmentWithBirefNet (mocked session)', () => {
       }),
     ).rejects.toThrow(/simulated ORT crash/i)
   })
+
+  it('falls back WASM when WebGPU logits are degenerate (no silent KEEP=0)', async () => {
+    const size = BIREFNET_INPUT_SIZE
+    const bad = new Float32Array(size * size).fill(-4)
+    const good = new Float32Array(size * size).fill(3)
+    let webgpuRuns = 0
+    let wasmCreateCalls = 0
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) =>
+            name.toLowerCase() === 'content-length'
+              ? String(BIREFNET_ONNX_FP16_BYTES)
+              : null,
+        },
+      })),
+    )
+
+    setSharedBirefNetSessionForTests({
+      session: {
+        inputNames: ['input_image'],
+        outputNames: ['output_image'],
+        run: async () => {
+          webgpuRuns += 1
+          return {
+            output_image: { data: bad, dims: [1, 1, size, size] },
+          }
+        },
+      } as never,
+      device: 'webgpu',
+      inputName: 'input_image',
+      outputName: 'output_image',
+    })
+
+    const ort = await import('onnxruntime-web')
+    vi.mocked(ort.InferenceSession.create).mockImplementation(async () => {
+      wasmCreateCalls += 1
+      return {
+        inputNames: ['input_image'],
+        outputNames: ['output_image'],
+        run: async () => ({
+          output_image: { data: good, dims: [1, 1, size, size] },
+        }),
+      } as never
+    })
+
+    const { runBirefNetInference } = await import('./session')
+    const input = new Float32Array(3 * size * size)
+    const result = await runBirefNetInference(input)
+    expect(webgpuRuns).toBe(1)
+    expect(wasmCreateCalls).toBeGreaterThanOrEqual(1)
+    expect(result.device).toBe('wasm')
+    expect(result.fallbackReason).toMatch(/degenerate logits/i)
+    expect(logitsLookDegenerate(result.logits)).toBe(false)
+    expect(result.logits[0]).toBe(3)
+    vi.unstubAllGlobals()
+  })
+
+  it('throws if WASM retry after WebGPU also looks degenerate', async () => {
+    const size = BIREFNET_INPUT_SIZE
+    const bad = new Float32Array(size * size).fill(-5)
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) =>
+            name.toLowerCase() === 'content-length'
+              ? String(BIREFNET_ONNX_FP16_BYTES)
+              : null,
+        },
+      })),
+    )
+
+    setSharedBirefNetSessionForTests({
+      session: {
+        inputNames: ['input_image'],
+        outputNames: ['output_image'],
+        run: async () => ({
+          output_image: { data: bad, dims: [1, 1, size, size] },
+        }),
+      } as never,
+      device: 'webgpu',
+      inputName: 'input_image',
+      outputName: 'output_image',
+    })
+
+    const ort = await import('onnxruntime-web')
+    vi.mocked(ort.InferenceSession.create).mockImplementation(async () => {
+      return {
+        inputNames: ['input_image'],
+        outputNames: ['output_image'],
+        run: async () => ({
+          output_image: { data: bad, dims: [1, 1, size, size] },
+        }),
+      } as never
+    })
+
+    const { runBirefNetInference } = await import('./session')
+    await expect(
+      runBirefNetInference(new Float32Array(3 * size * size)),
+    ).rejects.toThrow(/WASM retry also produced degenerate logits/i)
+    vi.unstubAllGlobals()
+  })
 })
+
+describe('formatBirefNetInitFailureMessage', () => {
+  it('names BiRefNet and ~94MB weights — never RMBG', async () => {
+    const { formatBirefNetInitFailureMessage } = await import('./errors')
+    const network = formatBirefNetInitFailureMessage('Failed to fetch')
+    expect(network).toMatch(/BiRefNet/i)
+    expect(network).toMatch(/~94MB/i)
+    expect(network).not.toMatch(/RMBG/i)
+    expect(network).not.toMatch(/44MB/i)
+
+    const contentLength = formatBirefNetInitFailureMessage(
+      'Content-Length header of network response exceeds response Body.',
+    )
+    expect(contentLength).toMatch(/BiRefNet/i)
+    expect(contentLength).toMatch(/~94MB/i)
+    expect(contentLength).not.toMatch(/RMBG/i)
+
+    const preserved = formatBirefNetInitFailureMessage(
+      'Model init failed (network down).',
+    )
+    expect(preserved).toBe('Model init failed (network down).')
+  })
+})
+

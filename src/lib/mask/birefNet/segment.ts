@@ -14,12 +14,14 @@ import {
   assertUsableMask,
   logitsToMaskBuffer,
 } from './postprocess'
+import { refineTexturedBorderLeak } from './refineTexturedBorderLeak'
 import {
   preloadBirefNetModel,
   runBirefNetInference,
   type BirefNetDevice,
   type BirefNetProgress,
 } from './session'
+import { resizeMaskNearest } from '../apiTransparentPngMask'
 
 export type BirefNetSegmentResult = {
   mask: MaskPixelBuffer
@@ -121,7 +123,7 @@ export async function segmentWithBirefNet(
     stage: 'Building soft alpha mask…',
   })
 
-  const mask = logitsToMaskBuffer(
+  let mask = logitsToMaskBuffer(
     logits,
     mw,
     mh,
@@ -136,7 +138,15 @@ export async function segmentWithBirefNet(
   // IoU on every sampled fixture while growing KEEP 3–11%. That helper is for
   // RMBG-style under-recall in bgRemoveSdk — not this checkpoint.
 
-  const reviewRgb: ImageData | undefined =
+  // Expected model upsample (512 → source). Suspicious only if dims are wrong.
+  const expectedResample = mw !== sourceWidth || mh !== sourceHeight
+  const resizedSuspicious =
+    mask.width !== sourceWidth || mask.height !== sourceHeight
+
+  // Color-aware refine/diagnostics need matching RGB. Prefer full-res source;
+  // when decode was capped for memory, downscale the mask for refine only and
+  // write peeled pixels back via nearest upsample of the delta (border-only).
+  const fullResRgb =
     options.sourceImageData &&
     options.sourceImageData.width === mask.width &&
     options.sourceImageData.height === mask.height
@@ -146,13 +156,80 @@ export async function segmentWithBirefNet(
         ? sourceImageData
         : undefined
 
-  const review = reviewSdkMask(mask, reviewRgb, {
-    resized: true,
+  let texturedNote: string | undefined
+  if (fullResRgb) {
+    const refined = refineTexturedBorderLeak(mask, fullResRgb)
+    if (refined.applied) {
+      mask = refined.mask
+      texturedNote = refined.reason
+    }
+  } else if (
+    sourceImageData.width > 0 &&
+    sourceImageData.height > 0 &&
+    (sourceImageData.width !== mask.width ||
+      sourceImageData.height !== mask.height)
+  ) {
+    // Cap path: refine on matching dims, then map removed pixels back.
+    const small = resizeMaskNearest(
+      mask,
+      sourceImageData.width,
+      sourceImageData.height,
+    )
+    const beforeSmall = new Uint8ClampedArray(small.data)
+    const refined = refineTexturedBorderLeak(small, sourceImageData)
+    if (refined.applied) {
+      const up = resizeMaskNearest(refined.mask, mask.width, mask.height)
+      const beforeUp = resizeMaskNearest(
+        { width: small.width, height: small.height, data: beforeSmall },
+        mask.width,
+        mask.height,
+      )
+      const next = {
+        width: mask.width,
+        height: mask.height,
+        data: new Uint8ClampedArray(mask.data),
+      }
+      for (let i = 0; i < next.data.length; i += 1) {
+        // Only clear pixels that the refine peeled (were KEEP, now BG).
+        if (beforeUp.data[i]! >= 128 && up.data[i]! < 128) {
+          next.data[i] = 0
+        }
+      }
+      mask = next
+      texturedNote = refined.reason
+    }
+  }
+
+  assertUsableMask(mask)
+
+  // Color-aware diagnostics require matching dims. Prefer full-res RGB; else
+  // use the capped decode + a nearest-resized mask clone (mask store stays full-res).
+  let reviewMask = mask
+  let reviewImage = fullResRgb
+  if (
+    !reviewImage &&
+    (sourceImageData.width !== mask.width ||
+      sourceImageData.height !== mask.height)
+  ) {
+    reviewMask = resizeMaskNearest(
+      mask,
+      sourceImageData.width,
+      sourceImageData.height,
+    )
+    reviewImage = sourceImageData
+  } else if (!reviewImage) {
+    reviewImage = sourceImageData
+  }
+
+  const review = reviewSdkMask(reviewMask, reviewImage, {
+    resized: expectedResample || resizedSuspicious,
+    resizedSuspicious,
     method: BIREFNET_METHOD,
   })
 
   const reviewReasons = [...review.reasons]
   if (epFallback) reviewReasons.push(epFallback)
+  if (texturedNote) reviewReasons.push(texturedNote)
 
   const t1 =
     typeof performance !== 'undefined' ? performance.now() : Date.now()
@@ -168,7 +245,7 @@ export async function segmentWithBirefNet(
     diagnostics: review.diagnostics,
     genuineModelInference: true,
     device,
-    resized: true,
+    resized: expectedResample || resizedSuspicious,
     elapsedMs: Math.round(t1 - t0),
   }
 }

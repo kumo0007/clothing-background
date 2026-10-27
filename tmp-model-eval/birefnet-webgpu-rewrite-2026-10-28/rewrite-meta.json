@@ -1,0 +1,10 @@
+{
+  "stockSha256": "eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516",
+  "rewrittenPath": "D:\\project\\tmp-model-eval\\birefnet-webgpu-rewrite-2026-10-28\\model_fp16.gathernd_rewrite.onnx",
+  "rewrittenBytes": 98510727,
+  "rewrittenSha256": "7f0dfdabbb7a0c588bd4a1e155bb291b470cbd2030af7779fb47ec8514499f8e",
+  "gatherNdReplaced": 80,
+  "gatherNdRemaining": 0,
+  "scatterNdUntouched": 72,
+  "note": "Experimental only \u2014 must not replace public/models/.../model_fp16.onnx"
+}

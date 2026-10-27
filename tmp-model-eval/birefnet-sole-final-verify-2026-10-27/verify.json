@@ -1,0 +1,121 @@
+{
+  "generatedAt": "2026-10-27T15:00:57.119Z",
+  "weights": {
+    "path": "D:\\project\\public\\models\\studioludens\\birefnet-lite-512\\onnx\\model_fp16.onnx",
+    "bytes": 98484532,
+    "sha256": "eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516",
+    "verified": true
+  },
+  "runtime": {
+    "method": "birefnet-lite-512",
+    "ep": "wasm",
+    "initMs": 8881,
+    "firstInferMs": 11198,
+    "sessionReused": true
+  },
+  "fixtures": [
+    {
+      "id": "dark-hoodie",
+      "note": "dark garment",
+      "methodUsed": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "width": 298,
+      "height": 292,
+      "maskW": 298,
+      "maskH": 292,
+      "dimsMatch": true,
+      "keepPct": 55.43,
+      "degenerate": false,
+      "inferMs": 11198,
+      "garmentRgbUnchanged": true,
+      "underRecallWouldApply": true,
+      "underRecallReason": "thin-keep-corridor keep 0.554",
+      "productionUsesUnderRecall": false,
+      "cutout": "transparent/dark-hoodie-cutout.png"
+    },
+    {
+      "id": "white-tshirt",
+      "note": "white on light",
+      "methodUsed": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "width": 294,
+      "height": 292,
+      "maskW": 294,
+      "maskH": 292,
+      "dimsMatch": true,
+      "keepPct": 49.04,
+      "degenerate": false,
+      "inferMs": 10472,
+      "garmentRgbUnchanged": true,
+      "underRecallWouldApply": true,
+      "underRecallReason": "thin-keep-corridor keep 0.490",
+      "productionUsesUnderRecall": false,
+      "cutout": "transparent/white-tshirt-cutout.png"
+    },
+    {
+      "id": "white-sneakers",
+      "note": "white sneakers",
+      "methodUsed": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "width": 294,
+      "height": 291,
+      "maskW": 294,
+      "maskH": 291,
+      "dimsMatch": true,
+      "keepPct": 34.5,
+      "degenerate": false,
+      "inferMs": 10495,
+      "garmentRgbUnchanged": true,
+      "underRecallWouldApply": true,
+      "underRecallReason": "pale-gap keep 0.345 pale 0.911",
+      "productionUsesUnderRecall": false,
+      "cutout": "transparent/white-sneakers-cutout.png"
+    },
+    {
+      "id": "open-handbag",
+      "note": "open handbag",
+      "methodUsed": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "width": 294,
+      "height": 291,
+      "maskW": 294,
+      "maskH": 291,
+      "dimsMatch": true,
+      "keepPct": 35.68,
+      "degenerate": false,
+      "inferMs": 10714,
+      "garmentRgbUnchanged": true,
+      "underRecallWouldApply": true,
+      "underRecallReason": "pale-gap keep 0.357 pale 0.574",
+      "productionUsesUnderRecall": false,
+      "cutout": "transparent/open-handbag-cutout.png"
+    },
+    {
+      "id": "polo-carpet-closeup",
+      "note": "polo carpet close-up (collar) or tee fallback",
+      "methodUsed": "birefnet-lite-512",
+      "provider": "onnxruntime-web-wasm",
+      "width": 694,
+      "height": 917,
+      "maskW": 694,
+      "maskH": 917,
+      "dimsMatch": true,
+      "keepPct": 73.89,
+      "degenerate": false,
+      "inferMs": 10504,
+      "garmentRgbUnchanged": true,
+      "underRecallWouldApply": false,
+      "underRecallReason": "ok",
+      "productionUsesUnderRecall": false,
+      "cutout": "transparent/polo-carpet-closeup-cutout.png"
+    }
+  ],
+  "failureProbe": {
+    "allNegativeLogitsFlaggedDegenerate": true
+  },
+  "productionPathNotes": [
+    "App Batch → autoMaskCornersForImage → segmentWithBirefNet only",
+    "repairSdkUnderRecall not applied on BiRefNet segment path",
+    "No RMBG/Lab/ISNet/contour in App.tsx auto-mask imports"
+  ]
+}

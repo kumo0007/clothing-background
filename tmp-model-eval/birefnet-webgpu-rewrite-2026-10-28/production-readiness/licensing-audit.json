@@ -1,0 +1,35 @@
+{
+  "ok": true,
+  "blockers": [],
+  "risks": [
+    "BiRefNet training data includes DIS5K — commercial products must review DIS5K dataset terms separately from MIT model weights.",
+    "WebGPU EP remains opt-in (VITE_BIREFNET_WEBGPU=1). Shipping rewrite would require a second hashed artifact and explicit EP policy.",
+    "WebGPU vs WASM masks are not bit-identical (IoU≥0.998). Golden SHA fixtures are WASM-locked; GPU masks would need a separate acceptance policy.",
+    "ScatterND (72) and Sum (20) untouched — may still CPU-fallback on some adapters; monitor host↔device copies / memory on low-end GPUs.",
+    "ORT GatherND WebGPU fix (#32733) still draft; upgrading ORT later may make stock graph work without rewrite."
+  ],
+  "dependencies": {
+    "onnxruntimeWeb": "^1.21.0",
+    "onnxruntimeWebLicense": "MIT",
+    "playwrightCoreDev": "^1.48.2",
+    "newNpmRuntimeDepsForThisExperiment": [],
+    "note": "No new npm runtime dependencies were added for the rewrite experiment. Python onnx used offline for graph surgery only.",
+    "unrelatedRuntimeDepsPresent": []
+  },
+  "models": {
+    "stockPath": "public/models/studioludens/birefnet-lite-512/onnx/model_fp16.onnx",
+    "stockSha256": "eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516",
+    "stockLicense": "MIT weights (studioludens/birefnet-lite-512); upstream ZhengPeng7/BiRefNet MIT",
+    "rewritePath": "tmp-model-eval/birefnet-webgpu-rewrite-2026-10-28/model_fp16.gathernd_rewrite.onnx",
+    "rewriteSha256": "7f0dfdabbb7a0c588bd4a1e155bb291b470cbd2030af7779fb47ec8514499f8e",
+    "rewriteLicense": "Same MIT weights; topology-only surgery; not a redistributed alternate trained model",
+    "isolatedFromPublicModels": true
+  },
+  "deploymentConstraints": [
+    "Must not overwrite production model_fp16.onnx without SHA constant + golden policy update",
+    "WebGPU requires Chromium-family browser with navigator.gpu; Firefox/WebKit currently unsupported for this EP path",
+    "COOP/COEP helpful for WASM threads but not required for single-thread WASM fallback",
+    "Dual-hosting rewrite ONNX adds ~98.5MB CDN weight if productized",
+    "Default production path remains WASM-preferring unless VITE_BIREFNET_WEBGPU=1"
+  ]
+}

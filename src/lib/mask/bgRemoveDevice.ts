@@ -147,6 +147,12 @@ export function isWeightDownloadNetworkFailure(message: string): boolean {
   if (/TypeError:\s*NetworkError/i.test(m)) return true
   if (/^Failed to fetch$/i.test(m)) return true
   if (/TypeError:\s*Failed to fetch/i.test(m)) return true
+  // Firefox / ORT: Content-Length claims more bytes than the body delivered
+  // (truncated download, proxy, or compressed response mismatch).
+  if (/Content-Length header of network response exceeds response Body/i.test(m)) {
+    return true
+  }
+  if (/content-length.*exceeds.*body/i.test(m)) return true
   return false
 }
 

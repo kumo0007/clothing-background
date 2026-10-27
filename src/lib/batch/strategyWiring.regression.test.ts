@@ -67,7 +67,7 @@ function disagree(a: MaskPixelBuffer, b: MaskPixelBuffer): number {
 
 /**
  * Library/scripts still use runAutoMaskPipeline('auto') = Lab-seed.
- * UI Batch → Auto-mask uses bg-remove-sdk (see autoMaskCorners.ts).
+ * UI Batch → Auto-mask uses BiRefNet only (see autoMaskCorners.ts).
  * Contour / ISNet remain opt-in for audits only.
  */
 async function scriptAutoMask(

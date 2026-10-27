@@ -1,0 +1,651 @@
+{
+  "generatedAt": "2026-10-27T19:42:47.466Z",
+  "experimental": true,
+  "productionPathUnchanged": true,
+  "method": "birefnet-lite-512",
+  "modelUrl": "/experiments/birefnet-webgpu-rewrite/model_fp16.gathernd_rewrite.onnx",
+  "hardCases": [
+    {
+      "id": "white-tshirt-light-bg",
+      "rel": "testdata/clothing/03_tshirt.jpg",
+      "tags": [
+        "white-garment",
+        "light-background",
+        "low-contrast-edge"
+      ]
+    },
+    {
+      "id": "white-sneakers",
+      "rel": "testdata/clothing/08_sneakers.jpg",
+      "tags": [
+        "sneakers",
+        "white-on-light",
+        "fine-edge"
+      ]
+    },
+    {
+      "id": "open-handbag-handles",
+      "rel": "testdata/clothing/09_handbag.jpg",
+      "tags": [
+        "handbag",
+        "thin-handles"
+      ]
+    },
+    {
+      "id": "slip-dress-low-contrast",
+      "rel": "testdata/clothing/07_slip_dress.jpg",
+      "tags": [
+        "low-contrast-edge",
+        "drape"
+      ]
+    },
+    {
+      "id": "polo-carpet-1",
+      "rel": "testdata/clothing/polo-1.png",
+      "tags": [
+        "carpet-background",
+        "polo"
+      ]
+    },
+    {
+      "id": "polo-carpet-5-closeup",
+      "rel": "testdata/clothing/polo-5.png",
+      "tags": [
+        "carpet-background",
+        "closeup",
+        "low-contrast-edge"
+      ]
+    },
+    {
+      "id": "polo-carpet-6-hem",
+      "rel": "testdata/clothing/polo-6.jpg",
+      "tags": [
+        "carpet-background",
+        "hard-case",
+        "hem"
+      ]
+    },
+    {
+      "id": "polo-carpet-8-tape",
+      "rel": "testdata/clothing/polo-8.jpg",
+      "tags": [
+        "carpet-background",
+        "hard-case",
+        "tape"
+      ]
+    },
+    {
+      "id": "dark-hoodie",
+      "rel": "testdata/clothing/01_hoodie.jpg",
+      "tags": [
+        "baseline"
+      ]
+    },
+    {
+      "id": "coat",
+      "rel": "testdata/clothing/05_coat.jpg",
+      "tags": [
+        "outerwear"
+      ]
+    }
+  ],
+  "browserMatrix": [
+    {
+      "browser": "chrome",
+      "available": true,
+      "webgpuSupported": true,
+      "report": {
+        "ok": true,
+        "mode": "probe",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+        "hasGpu": true,
+        "adapter": {
+          "vendor": "intel",
+          "architecture": "gen-9",
+          "description": null
+        },
+        "adapterError": null,
+        "crossOriginIsolated": true
+      },
+      "logs": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "browser": "edge",
+      "available": true,
+      "webgpuSupported": true,
+      "report": {
+        "ok": true,
+        "mode": "probe",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+        "hasGpu": true,
+        "adapter": {
+          "vendor": "intel",
+          "architecture": "gen-9",
+          "description": null
+        },
+        "adapterError": null,
+        "crossOriginIsolated": true
+      },
+      "logs": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "browser": "firefox",
+      "available": true,
+      "webgpuSupported": false,
+      "report": {
+        "ok": true,
+        "mode": "probe",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0",
+        "hasGpu": false,
+        "adapter": null,
+        "adapterError": null,
+        "crossOriginIsolated": true
+      },
+      "logs": []
+    },
+    {
+      "browser": "webkit",
+      "available": false,
+      "reason": "playwright channel/engine not installed or launch failed",
+      "webgpuSupported": false
+    }
+  ],
+  "hardCaseQuality": {
+    "report": {
+      "ok": false,
+      "mode": "quality",
+      "rows": [
+        {
+          "path": "/testdata/clothing/03_tshirt.jpg",
+          "wasm": {
+            "keepRatio": 0.4901,
+            "rawMin": -20.038894653320312,
+            "rawMax": 16.728609085083008,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": 1037871666,
+            "ms": 11597,
+            "dims": [
+              294,
+              292
+            ]
+          },
+          "webgpu": {
+            "keepRatio": 0.4902,
+            "rawMin": -20.796875,
+            "rawMax": 16.9375,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": 2137218184,
+            "ms": 9048
+          },
+          "iou": 0.9992220502088796,
+          "falseGarmentRemovalPct": 0.0134,
+          "backgroundLeakagePct": 0.0248,
+          "invalid": false
+        },
+        {
+          "path": "/testdata/clothing/08_sneakers.jpg",
+          "wasm": {
+            "keepRatio": 0.345,
+            "rawMin": -19.118488311767578,
+            "rawMax": 18.285240173339844,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": 323323167,
+            "ms": 11997,
+            "dims": [
+              294,
+              291
+            ]
+          },
+          "webgpu": {
+            "keepRatio": 0.3451,
+            "rawMin": -19.609375,
+            "rawMax": 18.390625,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": -1312813006,
+            "ms": 6178
+          },
+          "iou": 0.9988619161795742,
+          "falseGarmentRemovalPct": 0.0149,
+          "backgroundLeakagePct": 0.0244,
+          "invalid": false
+        },
+        {
+          "path": "/testdata/clothing/09_handbag.jpg",
+          "wasm": {
+            "keepRatio": 0.3565,
+            "rawMin": -22.354835510253906,
+            "rawMax": 16.868091583251953,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": 663234259,
+            "ms": 11732,
+            "dims": [
+              294,
+              291
+            ]
+          },
+          "webgpu": {
+            "keepRatio": 0.3564,
+            "rawMin": -23.125,
+            "rawMax": 16.703125,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": -887403016,
+            "ms": 6008
+          },
+          "iou": 0.9983639863130881,
+          "falseGarmentRemovalPct": 0.0309,
+          "backgroundLeakagePct": 0.0275,
+          "invalid": false
+        },
+        {
+          "path": "/testdata/clothing/07_slip_dress.jpg",
+          "wasm": {
+            "keepRatio": 0.2449,
+            "rawMin": -25.974140167236328,
+            "rawMax": 18.18256950378418,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": 1442342908,
+            "ms": 11654,
+            "dims": [
+              374,
+              527
+            ]
+          },
+          "webgpu": {
+            "keepRatio": 0.2453,
+            "rawMin": -26.671875,
+            "rawMax": 18.828125,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": -1784539469,
+            "ms": 6056
+          },
+          "iou": 0.9979476654694716,
+          "falseGarmentRemovalPct": 0.005,
+          "backgroundLeakagePct": 0.0454,
+          "invalid": false
+        },
+        {
+          "path": "/testdata/clothing/polo-1.png",
+          "wasm": {
+            "keepRatio": 0.4003,
+            "rawMin": -24.588476181030273,
+            "rawMax": 22.351062774658203,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": -1459663513,
+            "ms": 11358,
+            "dims": [
+              686,
+              911
+            ]
+          },
+          "webgpu": {
+            "keepRatio": 0.4002,
+            "rawMin": -25.703125,
+            "rawMax": 22.96875,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": 27695957,
+            "ms": 5852
+          },
+          "iou": 0.9989998285420357,
+          "falseGarmentRemovalPct": 0.0275,
+          "backgroundLeakagePct": 0.0126,
+          "invalid": false
+        },
+        {
+          "path": "/testdata/clothing/polo-5.png",
+          "wasm": {
+            "keepRatio": 0.7387,
+            "rawMin": -19.136272430419922,
+            "rawMax": 15.650774955749512,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": -301090296,
+            "ms": 11671,
+            "dims": [
+              694,
+              917
+            ]
+          },
+          "webgpu": {
+            "keepRatio": 0.7381,
+            "rawMin": -19.84375,
+            "rawMax": 16.28125,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": -65990150,
+            "ms": 6207
+          },
+          "iou": 0.9989673475288626,
+          "falseGarmentRemovalPct": 0.0679,
+          "backgroundLeakagePct": 0.0084,
+          "invalid": false
+        },
+        {
+          "path": "/testdata/clothing/polo-6.jpg",
+          "wasm": {
+            "keepRatio": 0.1549,
+            "rawMin": -17.553043365478516,
+            "rawMax": 12.34805965423584,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": 1587405590,
+            "ms": 12146,
+            "dims": [
+              692,
+              921
+            ]
+          },
+          "webgpu": {
+            "keepRatio": 0.1755,
+            "rawMin": -21.953125,
+            "rawMax": 16.265625,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": -501591610,
+            "ms": 6358
+          },
+          "iou": 0.8742669177000152,
+          "falseGarmentRemovalPct": 0.0748,
+          "backgroundLeakagePct": 2.1416,
+          "invalid": false
+        },
+        {
+          "path": "/testdata/clothing/polo-8.jpg",
+          "wasm": {
+            "keepRatio": 0.1721,
+            "rawMin": -21.647438049316406,
+            "rawMax": 16.067270278930664,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": 1149359922,
+            "ms": 11808,
+            "dims": [
+              1024,
+              769
+            ]
+          },
+          "webgpu": {
+            "keepRatio": 0.1719,
+            "rawMin": -22.5,
+            "rawMax": 16.4375,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": -713969705,
+            "ms": 5969
+          },
+          "iou": 0.9960377191429077,
+          "falseGarmentRemovalPct": 0.042,
+          "backgroundLeakagePct": 0.0263,
+          "invalid": false
+        },
+        {
+          "path": "/testdata/clothing/01_hoodie.jpg",
+          "wasm": {
+            "keepRatio": 0.5543,
+            "rawMin": -16.73105812072754,
+            "rawMax": 17.323205947875977,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": -634209231,
+            "ms": 11647,
+            "dims": [
+              298,
+              292
+            ]
+          },
+          "webgpu": {
+            "keepRatio": 0.5543,
+            "rawMin": -17.046875,
+            "rawMax": 17.8125,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": -2146700285,
+            "ms": 5891
+          },
+          "iou": 0.9990438652606671,
+          "falseGarmentRemovalPct": 0.0298,
+          "backgroundLeakagePct": 0.0233,
+          "invalid": false
+        },
+        {
+          "path": "/testdata/clothing/05_coat.jpg",
+          "wasm": {
+            "keepRatio": 0.3925,
+            "rawMin": -17.11648941040039,
+            "rawMax": 15.192541122436523,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": -2038216860,
+            "ms": 12000,
+            "dims": [
+              296,
+              292
+            ]
+          },
+          "webgpu": {
+            "keepRatio": 0.3923,
+            "rawMin": -17.890625,
+            "rawMax": 15.515625,
+            "nonFinite": 0,
+            "degenerate": false,
+            "fingerprint": 977800002,
+            "ms": 6138
+          },
+          "iou": 0.9991740997687479,
+          "falseGarmentRemovalPct": 0.0267,
+          "backgroundLeakagePct": 0.0057,
+          "invalid": false
+        }
+      ],
+      "minIou": 0.8742669177000152,
+      "maxFalseRemoval": 0.0748,
+      "maxBgLeak": 2.1416
+    },
+    "logs": [
+      "\u001b[0;93m2026-10-28 04:43:02.518584 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:02.535864 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.306874 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.307258 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.307584 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.0/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.308039 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.308344 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.308619 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.1/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.309008 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.309294 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.309584 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.2/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.309994 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.310294 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:03.310629 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.687089 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.688369 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.704694 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.0/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.722405 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.723069 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.745765 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.1/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.762909 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.763404 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.791369 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.2/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.820325 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.820800 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:17.834119 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.641540 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.641925 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.642194 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.0/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.642540 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.642810 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.643065 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.1/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.643510 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.643920 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.644329 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.2/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.644905 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.645310 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:18.645599 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:43:21.541829 [W:onnxruntime:, session_state.cc:1263 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf",
+      "\u001b[0;93m2026-10-28 04:43:21.542075 [W:onnxruntime:, session_state.cc:1265 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.\u001b[m"
+    ]
+  },
+  "lifecycle": {
+    "report": {
+      "ok": true,
+      "mode": "lifecycle",
+      "coldMs": 11180,
+      "repeats": 8,
+      "inferMs": [
+        9277,
+        5738,
+        5683,
+        5502,
+        5538,
+        5577,
+        5845,
+        5549
+      ],
+      "warmMedianMs": 5683,
+      "batch5Ms": [
+        5484,
+        5580,
+        5779,
+        5959,
+        5782
+      ],
+      "batch5TotalMs": 28584,
+      "keepRatios": [
+        0.5543,
+        0.5543,
+        0.5543,
+        0.5543,
+        0.5543,
+        0.5543,
+        0.5543,
+        0.5543
+      ],
+      "keepSpan": 0,
+      "fingerprintStable": true,
+      "fingerprints": [
+        -2146700285,
+        -2146700285,
+        -2146700285,
+        -2146700285,
+        -2146700285,
+        -2146700285,
+        -2146700285,
+        -2146700285
+      ],
+      "heapUsedMbSeries": [
+        12.7,
+        17.87,
+        21.98,
+        27.56,
+        33.04,
+        38.28,
+        43.52,
+        49.45
+      ],
+      "heapGrowthMb": 36.75,
+      "peakUsedJSHeapMb": 103.05,
+      "endMem": {
+        "usedJSHeapMb": 77.04,
+        "totalJSHeapMb": 85.05
+      },
+      "note": "Same input must be stable; JS heap growth is a coarse proxy (GPU VRAM not exposed)"
+    },
+    "logs": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "\u001b[0;93m2026-10-28 04:46:33.879419 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:33.881949 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:33.896760 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.0/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:33.914534 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:33.915004 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:33.930639 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.1/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:33.947014 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:33.947809 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:33.977099 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.2/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.001599 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.002069 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.014064 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.719869 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.720419 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.720819 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.0/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.721359 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.721779 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.722144 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.1/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.722669 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.723139 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.723790 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.2/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.724694 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.725284 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:34.725844 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:46:37.633384 [W:onnxruntime:, session_state.cc:1263 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf",
+      "\u001b[0;93m2026-10-28 04:46:37.633624 [W:onnxruntime:, session_state.cc:1265 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.\u001b[m"
+    ]
+  },
+  "webgpuUnavailable": {
+    "report": {
+      "ok": true,
+      "mode": "unavailable",
+      "hasGpu": true,
+      "webgpuError": "unexpected: WebGPU session created while testing unavailable path",
+      "wasmFallback": {
+        "ok": true,
+        "keepRatio": 0.4901
+      },
+      "didNotAcceptInvalidMask": true,
+      "note": "Experimental harness: when WebGPU unavailable, WASM rewrite still yields valid KEEP"
+    },
+    "logs": [
+      "\u001b[0;93m2026-10-28 04:48:04.113540 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.124514 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.875254 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.875619 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.875890 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.0/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.876275 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.876589 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.876845 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.1/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.877185 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.877445 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.877695 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.2/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.878045 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.878294 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:04.878530 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:07.660955 [W:onnxruntime:, session_state.cc:1263 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf",
+      "\u001b[0;93m2026-10-28 04:48:07.661185 [W:onnxruntime:, session_state.cc:1265 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.519100 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.520034 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.536149 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.0/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.557925 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.558629 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.576094 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.1/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.600264 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.601159 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.642759 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.2/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.678769 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.679474 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:14.698884 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.532600 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.532999 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.0_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.533319 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.0/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.533704 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.534064 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.1_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.535634 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.1/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.536159 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.536534 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.2_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.536959 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.2/Ceil_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.537419 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div_1'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.537744 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Div node '/bb/layers.3_1/Div'\u001b[m",
+      "\u001b[0;93m2026-10-28 04:48:15.538225 [W:onnxruntime:, constant_folding.cc:269 ApplyImpl] Could not find a CPU kernel and hence can't constant fold Ceil node '/bb/layers.3/Ceil_1'\u001b[m"
+    ]
+  }
+}

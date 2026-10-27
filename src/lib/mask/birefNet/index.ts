@@ -30,3 +30,4 @@ export {
   segmentWithBirefNet,
   type BirefNetSegmentResult,
 } from './segment'
+export { formatBirefNetInitFailureMessage } from './errors'
