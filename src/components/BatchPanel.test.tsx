@@ -6,7 +6,7 @@ import { BatchPanel } from './BatchPanel'
 afterEach(() => cleanup())
 
 describe('BatchPanel — local auto-mask UI', () => {
-  it('describes BiRefNet-only processing without a model selector', () => {
+  it('shows Batch actions without model selector or download blurb', () => {
     render(
       <BatchPanel
         imageCount={2}
@@ -28,22 +28,20 @@ describe('BatchPanel — local auto-mask UI', () => {
     )
 
     expect(screen.getByTestId('batch-panel')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Batch' })).toBeInTheDocument()
     expect(screen.getByTestId('batch-auto-mask')).toBeInTheDocument()
     expect(
       screen.queryByTestId('batch-auto-mask-strategy'),
     ).not.toBeInTheDocument()
+    expect(screen.queryByTestId('batch-auto-mask-backend')).not.toBeInTheDocument()
     expect(screen.queryByText(/ISNet/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/contour-first/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/GrabCut/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Poof/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/RMBG/i)).not.toBeInTheDocument()
-    expect(screen.getByText(/on this device/i)).toBeInTheDocument()
-    expect(screen.getByTestId('batch-auto-mask-backend')).toHaveTextContent(
-      /BiRefNet/i,
-    )
-    expect(screen.getByTestId('batch-auto-mask-backend').tagName).not.toBe(
-      'SELECT',
-    )
+    expect(screen.queryByText(/on this device/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/94/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/BiRefNet/i)).not.toBeInTheDocument()
     expect(screen.getByTestId('batch-start-cta')).toBeInTheDocument()
     expect(screen.getByTestId('batch-pending-count')).toHaveTextContent(
       /2.*pending/,

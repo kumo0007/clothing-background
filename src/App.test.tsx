@@ -113,6 +113,7 @@ describe('App Phase 1', () => {
 
   beforeEach(() => {
     cleanup()
+    sessionStorage.clear()
     autoMaskMock.mockReset()
     preloadBirefMock.mockReset()
     preloadBirefMock.mockResolvedValue({
@@ -269,12 +270,9 @@ describe('App Phase 1', () => {
 
     await screen.findByTestId('batch-panel')
     expect(screen.getByTestId('batch-auto-mask')).toBeInTheDocument()
-    expect(screen.getByTestId('batch-auto-mask-backend')).toHaveTextContent(
-      /BiRefNet/i,
-    )
-    expect(screen.getByTestId('batch-auto-mask-backend').tagName).not.toBe(
-      'SELECT',
-    )
+    expect(screen.queryByTestId('batch-auto-mask-backend')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Masking model/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Tips for iPhone/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/ISNet/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Poof/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/RMBG/i)).not.toBeInTheDocument()
@@ -393,6 +391,77 @@ describe('App Phase 1', () => {
       /8.*masked/,
     )
     expect(screen.queryByTestId('batch-pending-count')).not.toBeInTheDocument()
+  })
+
+  it('seven-image batch keeps queue progressing; one failure does not clear uploads', async () => {
+    const user = userEvent.setup()
+    const order: string[] = []
+    let call = 0
+    autoMaskMock.mockImplementation(async (imageId: string) => {
+      call += 1
+      order.push(imageId)
+      if (call === 4) {
+        throw new Error('worker OOM on photo-4')
+      }
+      return {
+        confidence: 0.88,
+        needsReview: false,
+        requestedMethod: 'birefnet',
+        methodUsed: 'birefnet-lite-512',
+        genuineModelInference: true,
+        device: 'wasm',
+      }
+    })
+
+    render(<App />)
+    const files = Array.from({ length: 7 }, (_, i) =>
+      new File([new Uint8Array([i + 1])], `safari-${i + 1}.jpg`, {
+        type: 'image/jpeg',
+      }),
+    )
+    await user.upload(screen.getByTestId('image-file-input'), files)
+    expect(screen.getByTestId('batch-pending-count')).toHaveTextContent(
+      /7.*pending/,
+    )
+    await user.click(await screen.findByTestId('batch-auto-mask'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('batch-masked-count')).toHaveTextContent(
+        /6.*masked/,
+      )
+      expect(screen.getByTestId('batch-failed-count')).toHaveTextContent(
+        /1.*failed/,
+      )
+    })
+    expect(autoMaskMock).toHaveBeenCalledTimes(7)
+    expect(order).toHaveLength(7)
+    expect(screen.queryByTestId('batch-pending-count')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('batch-running-count')).not.toBeInTheDocument()
+    // Uploads remain — failure must not wipe the gallery.
+    expect(screen.getByTestId('thumbnail-gallery').querySelectorAll('li')).toHaveLength(
+      7,
+    )
+    expect(screen.getByTestId('upload-error')).toHaveTextContent(/safari-4|photo-4|OOM/i)
+  })
+
+  it('interrupt marker warns without claiming batch resume or restoring images', async () => {
+    sessionStorage.setItem(
+      'garment.safariBatchInterrupt.v1',
+      JSON.stringify({
+        runId: 'automask-test',
+        queued: 7,
+        completed: 2,
+        failed: 0,
+        wall: Date.now(),
+      }),
+    )
+    render(<App />)
+    expect(await screen.findByTestId('upload-error')).toHaveTextContent(
+      /not resumed/i,
+    )
+    expect(screen.getByTestId('upload-error')).toHaveTextContent(/2\/7/i)
+    expect(screen.queryByTestId('thumbnail-gallery')).not.toBeInTheDocument()
+    expect(sessionStorage.getItem('garment.safariBatchInterrupt.v1')).toBeNull()
   })
 
   it('does not claim manual edits after auto-mask alone', async () => {

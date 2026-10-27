@@ -41,9 +41,10 @@ describe('commercial model gate (BiRefNet sole auto-mask)', () => {
       join(root, 'src/components/BatchPanel.tsx'),
       'utf8',
     )
-    expect(batch).toMatch(/BiRefNet/)
+    expect(batch).not.toMatch(/BiRefNet/)
     expect(batch).not.toMatch(/Masking model/)
     expect(batch).not.toMatch(/Tips for iPhone/)
+    expect(batch).not.toMatch(/94/)
     expect(batch).not.toMatch(/RMBG-1\.4/)
     expect(batch).not.toMatch(/rmbg1\.4/)
     expect(batch).not.toMatch(/onAutoMaskBackendChange/)

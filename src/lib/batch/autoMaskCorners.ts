@@ -1,8 +1,11 @@
 import { loadHtmlImage } from '../image/loadHtmlImage'
-import { imageDataFromObjectUrl } from '../image/imageDataFromUrl'
-import { getOrCreateMask, setMask } from '../mask/maskStore'
+import { setMask } from '../mask/maskStore'
 import type { BirefNetProgress } from '../mask/birefNet'
 import type { MaskDiagnosticSummary } from '../../types/mask'
+import {
+  estimateImageBuffersBytes,
+  logSafariDiag,
+} from '../diagnostics/safariBatchDiagnostics'
 
 /** Sole automatic segmentation backend for Batch auto-mask. */
 export type AutoMaskBackend = 'birefnet'
@@ -63,13 +66,14 @@ async function resolveSourceImageBlob(
     return sourceFile
   }
 
+  // Fallback only when File is missing: one HTMLImage → canvas → PNG.
+  // Production Batch always passes image.file, so this path is rare.
   const img = await loadHtmlImage(objectUrl)
   const w = img.naturalWidth || img.width || width
   const h = img.naturalHeight || img.height || height
   if (w < 1 || h < 1) {
     throw new Error('Could not read the uploaded image for local auto-mask.')
   }
-
   const canvas = document.createElement('canvas')
   canvas.width = w
   canvas.height = h
@@ -78,7 +82,6 @@ async function resolveSourceImageBlob(
     throw new Error('Could not read the uploaded image for local auto-mask.')
   }
   ctx.drawImage(img, 0, 0)
-
   const encoded = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob((blob) => resolve(blob), 'image/png')
   })
@@ -88,26 +91,6 @@ async function resolveSourceImageBlob(
     )
   }
   return encoded
-}
-
-async function decodeSourceImageData(
-  objectUrl: string,
-  width: number,
-  height: number,
-): Promise<ImageData | undefined> {
-  try {
-    const repairEdge = 1600
-    const long = Math.max(width, height)
-    if (long <= repairEdge) {
-      return await imageDataFromObjectUrl(objectUrl, width, height)
-    }
-    const scale = repairEdge / long
-    const dw = Math.max(1, Math.round(width * scale))
-    const dh = Math.max(1, Math.round(height * scale))
-    return await imageDataFromObjectUrl(objectUrl, dw, dh)
-  } catch {
-    return undefined
-  }
 }
 
 export async function autoMaskCornersForImage(
@@ -121,24 +104,33 @@ export async function autoMaskCornersForImage(
   /** @deprecated Ignored — BiRefNet is the only automatic backend. */
   _preferredBackend: AutoMaskBackend = 'birefnet',
 ): Promise<AutoMaskCornersResult> {
-  getOrCreateMask(imageId, width, height)
+  const est = estimateImageBuffersBytes(width, height)
+  logSafariDiag('memory_estimate', 'before segment', {
+    imageId,
+    width,
+    height,
+    rgbaBytes: est.rgbaBytes,
+    maskBytes: est.maskBytes,
+    tensor512Bytes: est.tensor512Bytes,
+    hasSourceFile: Boolean(sourceFile && sourceFile.size > 0),
+  })
 
-  await loadHtmlImage(objectUrl)
-
+  // Skip early mask allocation and HTMLImage/RGBA warm-decodes.
+  // Those retained a full-res empty mask + decoded bitmap + RGBA buffer on top
+  // of BiRefNet WASM — a major Safari peak-memory contributor. segmentWithBirefNet
+  // performs a single capped decode for preprocess/review.
   const imageBlob = await resolveSourceImageBlob(
     objectUrl,
     width,
     height,
     sourceFile,
   )
-  const sourceImageData = await decodeSourceImageData(objectUrl, width, height)
 
   const { segmentWithBirefNet, BIREFNET_METHOD } = await import(
     '../mask/birefNet'
   )
   const result = await segmentWithBirefNet(imageBlob, width, height, {
     onProgress,
-    sourceImageData,
   })
   setMask(imageId, result.mask)
   const diagnosticSummary = toSummary({

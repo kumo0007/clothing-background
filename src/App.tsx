@@ -17,7 +17,17 @@ import { buildResultsZip, downloadBlob } from './lib/batch/exportZip'
 import type { ExportFormat } from './lib/export/exportImage'
 import { isAppleMobileUserAgent } from './lib/mask/bgRemoveDevice'
 import { formatBirefNetInitFailureMessage } from './lib/mask/birefNet/errors'
-import { clearAllMasks, deleteMask, getMask } from './lib/mask/maskStore'
+import { deleteMask, getMask } from './lib/mask/maskStore'
+import {
+  attachSafariBatchLifecycleListeners,
+  clearSafariBatchInterrupt,
+  endSafariBatchRun,
+  logSafariDiag,
+  markSafariBatchInterrupt,
+  readSafariBatchInterrupt,
+  startSafariBatchRun,
+  yieldForSafariMemoryPressure,
+} from './lib/diagnostics/safariBatchDiagnostics'
 import {
   createDefaultAdjustments,
   type ImageAdjustments,
@@ -176,16 +186,34 @@ function App() {
   )
 
   useEffect(() => {
+    logSafariDiag('app_mount', 'App mounted')
+    const detachLifecycle = attachSafariBatchLifecycleListeners()
+    const interrupted = readSafariBatchInterrupt()
+      if (interrupted) {
+      // Marker in sessionStorage ⇒ page/session recovered after a soft reload.
+      // This is NOT a batch resume: uploads/masks are still in-memory only and
+      // are gone after a tab kill. Hard WebContent kills wipe sessionStorage too.
+      setError(
+        `Safari interrupted an in-progress batch (run ${interrupted.runId}: ${interrupted.completed}/${interrupted.queued} done). ` +
+          `This is a warning only — the batch was not resumed. Re-upload if images are missing, then Auto-mask fewer photos at a time on iPhone.`,
+      )
+      clearSafariBatchInterrupt()
+      logSafariDiag('lifecycle', 'recovered_interrupt_marker_not_resume', {
+        runId: interrupted.runId,
+        completed: interrupted.completed,
+        queued: interrupted.queued,
+      })
+    }
     return () => {
-      batchGenerationRef.current += 1
+      logSafariDiag('app_unmount', 'App unmount cleanup')
+      detachLifecycle()
+      // Do not bump batchGenerationRef here: React Strict Mode remounts in
+      // development would cancel an in-flight batch started after remount.
+      // Clear-all / a new Auto-mask run still bumps the generation intentionally.
       autoMaskInFlightRef.current = false
-      for (const image of imagesRef.current) {
-        URL.revokeObjectURL(image.objectUrl)
-      }
-      for (const asset of sharedBackgroundsRef.current) {
-        URL.revokeObjectURL(asset.objectUrl)
-      }
-      clearAllMasks()
+      // Do NOT revoke object URLs or clearAllMasks here. Strict Mode remounts
+      // would wipe uploads mid-session; a true tab kill discards blob URLs.
+      // Explicit Clear / Remove still revoke.
     }
   }, [])
 
@@ -393,6 +421,8 @@ function App() {
   }, [])
 
   const handleClear = useCallback(() => {
+    logSafariDiag('state_reset', 'Clear all')
+    clearSafariBatchInterrupt()
     batchGenerationRef.current += 1
     autoMaskInFlightRef.current = false
     setBatchBusy(false)
@@ -563,10 +593,27 @@ function App() {
 
       const generation = ++batchGenerationRef.current
       const isCurrent = () => generation === batchGenerationRef.current
+      const runId = startSafariBatchRun('automask')
+      const appleMobile = isAppleMobileUserAgent(
+        typeof navigator !== 'undefined' ? navigator.userAgent : '',
+        typeof navigator !== 'undefined' ? navigator.maxTouchPoints ?? 0 : 0,
+      )
 
       autoMaskInFlightRef.current = true
       setBatchBusy(true)
       setError(null)
+      logSafariDiag('batch_start', 'queue built', {
+        runId,
+        queued: queue.length,
+        scope,
+        appleMobile,
+      })
+      markSafariBatchInterrupt({
+        runId,
+        queued: queue.length,
+        completed: 0,
+        failed: 0,
+      })
 
       const markQueuePhase = (
         phase: MaskStateMeta['processingPhase'],
@@ -592,13 +639,17 @@ function App() {
 
       try {
         markQueuePhase('loading-model')
-        if (!isCurrent()) return
+        if (!isCurrent()) {
+          logSafariDiag('queue_cancel', 'stale generation before model init')
+          return
+        }
         setBatchProgress(
           `Loading BiRefNet for ${queue.length} image${
             queue.length === 1 ? '' : 's'
           }…`,
         )
         try {
+          logSafariDiag('model_init_start', 'preloadBirefNetModel')
           const { preloadBirefNetModel } = await import('./lib/mask/birefNet')
           const handle = await preloadBirefNetModel((progress) => {
             if (!isCurrent()) return
@@ -608,6 +659,9 @@ function App() {
             }
           })
           if (!isCurrent()) return
+          logSafariDiag('model_init_end', 'model ready', {
+            device: handle.device,
+          })
           // Clear loading-model on the whole queue so only the active image shows running.
           markQueuePhase('pending')
           setBatchProgress(
@@ -619,6 +673,9 @@ function App() {
               ? initErr.message
               : 'Failed to load BiRefNet.'
           const message = formatBirefNetInitFailureMessage(raw)
+          logSafariDiag('error', 'model init failed', {
+            message: raw.slice(0, 160),
+          })
           if (!isCurrent()) return
           markQueuePhase('failed', {
             autoFailed: true,
@@ -628,6 +685,7 @@ function App() {
           })
           setError(message)
           setBatchProgress(`Auto-mask stopped: ${message}`)
+          endSafariBatchRun(false, { failCount: queue.length })
           return
         }
 
@@ -642,6 +700,12 @@ function App() {
 
         const runOne = async (image: UploadedImage, ordinal: number) => {
           if (!isCurrent()) return
+          logSafariDiag('image_running', undefined, {
+            ordinal,
+            imageId: image.id,
+            width: image.width,
+            height: image.height,
+          })
           setProjects((previous) => {
             const current = previous[image.id] ?? createProjectFields()
             return {
@@ -688,10 +752,24 @@ function App() {
               // Pass File directly — never re-fetch blob: URLs (Firefox/iOS NetworkError).
               image.file,
             )
-            if (!isCurrent()) return
+            if (!isCurrent()) {
+              // Clear / newer batch bumped generation while inference ran —
+              // drop the late maskStore write so it cannot pollute the next run.
+              deleteMask(image.id)
+              logSafariDiag('queue_cancel', 'discarded stale mask write', {
+                imageId: image.id,
+                ordinal,
+              })
+              return
+            }
             methodsSeen.add(auto.methodUsed)
             successCount += 1
             if (auto.needsReview) reviewFlagged += 1
+            logSafariDiag('image_success', undefined, {
+              ordinal,
+              imageId: image.id,
+              needsReview: auto.needsReview,
+            })
             setProjects((previous) => {
               const current = previous[image.id] ?? createProjectFields()
               return {
@@ -726,6 +804,11 @@ function App() {
                 : 'BiRefNet auto-mask failed.'
             const message = formatBirefNetInitFailureMessage(raw)
             failures.push(`${image.name}: ${message}`)
+            logSafariDiag('image_failure', undefined, {
+              ordinal,
+              imageId: image.id,
+              message: raw.slice(0, 160),
+            })
             setProjects((previous) => {
               const current = previous[image.id] ?? createProjectFields()
               return {
@@ -744,6 +827,20 @@ function App() {
                 },
               }
             })
+          } finally {
+            markSafariBatchInterrupt({
+              runId,
+              queued: queue.length,
+              completed: successCount,
+              failed: failCount,
+              currentOrdinal: ordinal,
+            })
+            // Yield only on Apple mobile — peak WASM+decode pressure is iPhone-
+            // specific; desktop/tests stay synchronous between images.
+            if (appleMobile) {
+              await yieldForSafariMemoryPressure()
+              await new Promise<void>((r) => setTimeout(r, 50))
+            }
           }
         }
 
@@ -751,7 +848,10 @@ function App() {
           { length: Math.min(concurrency, queue.length) },
           async () => {
             while (nextIndex < queue.length) {
-              if (!isCurrent()) return
+              if (!isCurrent()) {
+                logSafariDiag('queue_cancel', 'stale generation in worker')
+                return
+              }
               const index = nextIndex
               nextIndex += 1
               await runOne(queue[index]!, index + 1)
@@ -762,6 +862,11 @@ function App() {
         if (!isCurrent()) return
 
         const used = [...methodsSeen].join(', ') || 'birefnet-lite-512'
+        endSafariBatchRun(failCount === 0, {
+          successCount,
+          failCount,
+          reviewFlagged,
+        })
         if (failCount > 0) {
           setError(failures.slice(0, 3).join(' · '))
           setBatchProgress(
@@ -784,8 +889,12 @@ function App() {
           caught instanceof Error
             ? caught.message
             : 'Batch auto-mask failed.'
+        logSafariDiag('error', 'batch threw', {
+          message: message.slice(0, 160),
+        })
         setError(message)
         setBatchProgress(`Auto-mask stopped: ${message}`)
+        endSafariBatchRun(false)
       } finally {
         if (isCurrent()) {
           autoMaskInFlightRef.current = false

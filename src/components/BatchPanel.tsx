@@ -60,12 +60,6 @@ export function BatchPanel({
       <div className="batch-panel__header">
         <div className="batch-panel__title">
           <h2 id="batch-heading">Batch</h2>
-          <p className="batch-panel__hint">
-            Remove backgrounds on this device with{' '}
-            <strong data-testid="batch-auto-mask-backend">BiRefNet</strong>{' '}
-            (~94&nbsp;MB first download). Keep this tab open on Wi‑Fi for the
-            first run.
-          </p>
         </div>
         <div className="batch-panel__stats" aria-label="Batch status">
           <span className="batch-panel__stat">
